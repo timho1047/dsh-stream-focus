@@ -1,7 +1,6 @@
 {
   "name": "dsh-stream-focus",
   "version": "0.1.0",
-  "private": true,
   "description": "DSH plugin: smooths running-turn thinking and tool output across all Work details modes, with a capped following window in Compact/Standard and row-level pacing in Detailed/Verbose.",
   "type": "module",
   "license": "MIT",
@@ -35,7 +34,8 @@
     "locale/*.json",
     "icon.svg",
     "README.md",
-    "README.en.md"
+    "README.en.md",
+    "LICENSE"
   ],
   "scripts": {
     "build:host": "tsc -p tsconfig.json",
@@ -81,5 +81,26 @@
     "@deepseek-ai/dsh-client-ui-slots": "link:../../deepseek-harness/packages/client/ui-slots",
     "@types/react": "^18.3.0",
     "react": "^18.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timho1047/dsh-stream-focus.git"
+  },
+  "bugs": {
+    "url": "https://github.com/timho1047/dsh-stream-focus/issues"
+  },
+  "homepage": "https://github.com/timho1047/dsh-stream-focus#readme",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "streaming",
+    "transcript",
+    "reasoning",
+    "tools",
+    "work-details"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

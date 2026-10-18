@@ -1,0 +1,56 @@
+name: release
+
+# Tag-driven release:
+#   1. Run `pnpm run verify` locally and commit the rebuilt lib/.
+#   2. `npm version patch|minor|major` (or edit package.json + commit).
+#   3. `git push --follow-tags`.
+#
+# The first npm publish must be done manually (npm publish --access public),
+# then configure this workflow as a Trusted Publisher on npmjs.com:
+#   owner: timho1047
+#   repo: dsh-stream-focus
+#   workflow: release.yml
+# After that, v* tags publish through OIDC with provenance and create the
+# matching GitHub Release. No NPM_TOKEN secret is required.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      # OIDC trusted publishing needs npm >= 11.5.1.
+      - run: npm install -g npm@latest
+      - name: Check tag matches package version
+        run: |
+          node -e "const p=require('./package.json'); const tag=process.env.GITHUB_REF_NAME.replace(/^v/,''); if(p.version!==tag){console.error('Tag '+tag+' does not match package version '+p.version); process.exit(1)}"
+      - name: Check committed build artifacts
+        run: |
+          test -f lib/index.js
+          test -f lib/client.js
+          node --check lib/index.js
+          node --check lib/client.js
+          npm pack --dry-run
+      - name: Publish to npm
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "${NAME}@${VERSION} is already published; skipping npm publish."
+          else
+            npm publish --access public --provenance
+          fi
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}

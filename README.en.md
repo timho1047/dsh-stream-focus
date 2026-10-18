@@ -61,6 +61,35 @@ Refresh the browser page after installation. All four Work details modes are enh
 - Character pacing adds roughly 100ms of visual latency. While streaming, the visible prefix is shown; the complete text is rendered as soon as the block settles. Copying during streaming copies the currently visible prefix.
 - Normal assistant prose has no official Content Factory, so it uses line-level bottom fading rather than per-character pacing. True per-character pacing requires an official prose Factory.
 
+## Release
+
+Releases are tag-driven through GitHub Actions:
+
+1. Verify and commit the rebuilt artifacts locally:
+   ```bash
+   pnpm run verify
+   git add -A
+   git commit -m "chore: release vX.Y.Z"
+   ```
+2. The first npm publish must be manual:
+   ```bash
+   npm publish --access public
+   git tag v0.1.0
+   git push origin v0.1.0
+   ```
+   The workflow sees that the version already exists, skips npm publish, and creates the GitHub Release. Then configure a Trusted Publisher on npmjs.com:
+   - Owner: `timho1047`
+   - Repository: `dsh-stream-focus`
+   - Workflow: `release.yml`
+3. Later releases:
+   ```bash
+   npm version patch   # or minor / major
+   git push --follow-tags
+   ```
+   Pushing a `v*` tag makes `release.yml` publish to npm through OIDC and create the GitHub Release. No `NPM_TOKEN` secret is required.
+
+CI intentionally does not run a full `pnpm install`/test pass because the local devDependencies link to the DSH checkout. Run `pnpm run verify` locally and commit the latest `lib/` before tagging.
+
 ## Development
 
 ```bash
