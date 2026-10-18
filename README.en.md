@@ -81,6 +81,7 @@ Releases are tag-driven through GitHub Actions:
    - Owner: `timho1047`
    - Repository: `dsh-stream-focus`
    - Workflow: `release.yml`
+   - Permission: `Publish` (not only `Stage publish`)
 3. Later releases:
    ```bash
    npm version patch   # or minor / major

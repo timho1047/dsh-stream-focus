@@ -77,6 +77,7 @@ dsh plugin --profile web add /path/to/dsh-stream-focus
    - Owner: `timho1047`
    - Repository: `dsh-stream-focus`
    - Workflow: `release.yml`
+   - Permission: `Publish`（不要只选 `Stage publish`）
 3. 后续发布：
    ```bash
    npm version patch   # 或 minor / major

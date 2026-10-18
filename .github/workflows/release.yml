@@ -10,6 +10,7 @@ name: release
 #   owner: timho1047
 #   repo: dsh-stream-focus
 #   workflow: release.yml
+#   permission: Publish (not only "Stage publish")
 # After that, v* tags publish through OIDC with provenance and create the
 # matching GitHub Release. No NPM_TOKEN secret is required.
 on:
