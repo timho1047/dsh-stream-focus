@@ -94,9 +94,11 @@ export class NormalOutputSmoother {
   private animateBlock(element: Element): void {
     if (this.animated.has(element) || typeof element.animate !== 'function') return
     this.animated.add(element)
+    // Qwen-style stream-in: opacity only, 600ms ease-in. DSH has no token
+    // spans, so this is applied to the smallest renderable block instead.
     const animation = element.animate(
-      [{ opacity: 0.2, transform: 'translateY(3px)' }, { opacity: 1, transform: 'translateY(0)' }],
-      { duration: 280, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' },
+      [{ opacity: 0 }, { opacity: 1 }],
+      { duration: 600, easing: 'ease-in' },
     )
     this.animations.add(animation)
     animation.addEventListener('finish', () => { this.animations.delete(animation) }, { once: true })

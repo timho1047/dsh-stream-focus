@@ -21,7 +21,7 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 - The active window keeps the tallest height it has shown; switching from thinking to tools only scrolls its inner content, so the outer transcript never rolls back because the window became shorter.
 - A light 16px fade at the window bottom makes new lines enter softly rather than snapping in.
 - Streaming assistant prose gets a 20px line fade at the message root; it is removed as soon as streaming ends.
-- New paragraphs, lists, and code blocks in reasoning and normal prose fade in with a small upward motion; character reveal avoids splitting combining marks and ZWJ emoji.
+- New paragraphs, lists, and code blocks in reasoning and normal prose fade in with a 600ms ease-in opacity transition and no movement; character reveal avoids splitting combining marks and ZWJ emoji.
 - While normal prose grows or a row open/close animation runs, the outer transcript is kept on its floor instead of lagging one frame.
 - Tool rows auto-open independently of whether the outer transcript happens to be pinned to the bottom.
 - No custom background, border, radius, or padding: the window keeps the official process-group appearance.
