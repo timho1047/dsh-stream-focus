@@ -72,6 +72,8 @@ Refresh the browser page after installation. All four Work details modes are enh
 
 This plugin was inspired by [dsh-streamfold](https://github.com/rezon-aki/dsh-streamfold). Thanks to [@rezon-aki](https://github.com/rezon-aki) for the exploration and implementation.
 
+Thanks also to [dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-stream): its CSS Custom Highlight character fade, reveal/follow separation, and time-based integration were important references for later improvements. Thanks to [@Laplace-bit](https://github.com/Laplace-bit) for the exploration and implementation.
+
 ## Development
 
 ```bash

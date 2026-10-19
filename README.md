@@ -72,6 +72,8 @@ dsh plugin --profile web add dsh-stream-focus
 
 本插件的开发受到 [dsh-streamfold](https://github.com/rezon-aki/dsh-streamfold) 的启发。感谢 [@rezon-aki](https://github.com/rezon-aki) 的探索与实现。
 
+也感谢 [dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-stream)：它的 CSS Custom Highlight 字符淡入、揭示与跟随分离、基于时间的物理积分，为本插件的后续改进提供了重要启发。感谢 [@Laplace-bit](https://github.com/Laplace-bit) 的探索与实现。
+
 ## 开发
 
 ```bash
