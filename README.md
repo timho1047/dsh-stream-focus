@@ -1,6 +1,6 @@
 # dsh-stream-focus
 
-[English](README.en.md) | 中文
+[English](README.en.md) | 中文 | [Landing page](https://timho1047.github.io/dsh-stream-focus/)
 
 在 DSH 内置的四档工作步骤展示模式上增强运行中的思考/工具展示。
 

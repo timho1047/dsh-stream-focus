@@ -3,113 +3,873 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>dsh-stream-focus — mode demos</title>
-  <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #f6f6f7;
-      --surface: #ffffff;
-      --text: #1f2328;
-      --muted: #656d76;
-      --border: #d8dee4;
-      --accent: #0969da;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0d1117;
-        --surface: #161b22;
-        --text: #e6edf3;
-        --muted: #8b949e;
-        --border: #30363d;
-        --accent: #58a6ff;
+  <title>dsh-stream-focus — smooth, focused streaming for DSH</title>
+  <meta name="description" content="A zero-config DSH plugin that keeps the running thought and tool call in view, with frame-paced text and a capped following window across all four Work details modes.">
+  <meta name="theme-color" content="#f5f6f4">
+  <link rel="canonical" href="https://timho1047.github.io/dsh-stream-focus/">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="dsh-stream-focus — smooth, focused streaming for DSH">
+  <meta property="og:description" content="Frame-paced thinking, a following tool window, and mode-aware folding for all four DSH Work details modes.">
+  <meta property="og:url" content="https://timho1047.github.io/dsh-stream-focus/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <script>
+    (() => {
+      document.documentElement.classList.add('js');
+      try {
+        const saved = localStorage.getItem('dsh-stream-focus-theme');
+        const system = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = saved === 'light' || saved === 'dark' ? saved : system;
+      } catch {
+        document.documentElement.dataset.theme = 'light';
       }
+    })();
+  </script>
+  <style>
+    :root,
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f6f4;
+      --surface: #ffffff;
+      --surface-2: #eef1f4;
+      --text: #171a1f;
+      --muted: #68707c;
+      --faint: #8c949f;
+      --border: #e1e4e7;
+      --border-strong: #cbd2da;
+      --accent: #2b6cb0;
+      --accent-ink: #1e5187;
+      --accent-soft: #e7f0fa;
+      --accent-on: #ffffff;
+      --code-bg: #0f141a;
+      --code-text: #eaf0f6;
+      --chip: #f0f3f6;
+      --shadow: 0 30px 70px -38px rgba(30, 48, 72, 0.38);
+      --header: rgba(245, 246, 244, 0.84);
     }
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0b0e12;
+      --surface: #11161d;
+      --surface-2: #171e27;
+      --text: #eef2f6;
+      --muted: #97a2b0;
+      --faint: #74808e;
+      --border: #232b35;
+      --border-strong: #35404d;
+      --accent: #71aaff;
+      --accent-ink: #a7c8ff;
+      --accent-soft: #13253a;
+      --accent-on: #08111d;
+      --code-bg: #070a0e;
+      --code-text: #e9f0f7;
+      --chip: #1a222c;
+      --shadow: 0 34px 80px -42px rgba(0, 0, 0, 0.8);
+      --header: rgba(11, 14, 18, 0.82);
+    }
+
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       background: var(--bg);
       color: var(--text);
-      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font: 16px/1.65 ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
     }
-    main { width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 72px; }
-    header { max-width: 720px; margin-bottom: 36px; }
-    h1 { font-size: clamp(28px, 5vw, 42px); line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.02em; }
-    p { margin: 0; color: var(--muted); }
-    a { color: var(--accent); }
-    .badge {
-      display: inline-block; margin-bottom: 18px; padding: 4px 10px;
-      border: 1px solid var(--border); border-radius: 999px;
-      color: var(--muted); font-size: 13px;
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(60rem 40rem at 82% -10%, var(--accent-soft), transparent 60%),
+        linear-gradient(to right, var(--border) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+      background-size: auto, 72px 72px, 72px 72px;
+      opacity: 0.48;
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
     }
-    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
-    .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; overflow: hidden;
+    a { color: inherit; }
+    img, video { max-width: 100%; }
+    button { font: inherit; }
+    ::selection { background: var(--accent); color: var(--accent-on); }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+      border-radius: 4px;
     }
-    .card header { margin: 0; padding: 20px 22px 14px; max-width: none; }
-    .card h2 { margin: 0 0 4px; font-size: 20px; }
-    .card p { font-size: 14px; }
-    video { display: block; width: 100%; height: auto; background: #000; }
-    .foot { margin-top: 32px; font-size: 14px; }
-    @media (max-width: 760px) {
-      main { padding-top: 32px; }
-      .grid { grid-template-columns: 1fr; }
+    .skip-link {
+      position: fixed;
+      top: -100px;
+      left: 16px;
+      z-index: 100;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: var(--text);
+      color: var(--bg);
+      text-decoration: none;
+    }
+    .skip-link:focus { top: 16px; }
+    .wrap { width: min(1160px, calc(100% - 48px)); margin-inline: auto; }
+
+    /* Header */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid transparent;
+      background: var(--header);
+      backdrop-filter: blur(18px) saturate(140%);
+      transition: border-color 180ms ease, background 180ms ease;
+    }
+    .site-header.is-scrolled { border-color: var(--border); }
+    .nav { height: 68px; display: flex; align-items: center; gap: 36px; }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 650;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+    }
+    .brand-mark img { width: 22px; height: 22px; }
+    .nav-links { display: flex; align-items: center; gap: 26px; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 160ms ease;
+    }
+    .nav-links a:hover, .nav-links a.is-active { color: var(--text); }
+    .nav-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .icon-btn {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+    .icon-btn:hover { color: var(--text); border-color: var(--border-strong); transform: translateY(-1px); }
+    .icon-btn svg { width: 16px; height: 16px; }
+    [data-theme="light"] .moon, [data-theme="dark"] .sun { display: none; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      padding: 0 18px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: var(--accent-on); }
+    .btn-primary:hover { background: var(--accent-ink); }
+    .btn-secondary { border-color: var(--border-strong); background: var(--surface); color: var(--text); }
+    .btn-secondary:hover { border-color: var(--accent); }
+    .btn-small { min-height: 34px; padding: 0 13px; font-size: 13px; }
+    .btn svg { width: 15px; height: 15px; }
+
+    /* Hero */
+    .hero { padding: 88px 0 104px; display: grid; grid-template-columns: 1.08fr 0.92fr; gap: 64px; align-items: center; }
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 22px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+    .kicker::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(48px, 6vw, 78px);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+      font-weight: 690;
+      text-wrap: balance;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+    .lede {
+      max-width: 540px;
+      margin: 26px 0 0;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.62;
+      text-wrap: pretty;
+    }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, auto);
+      gap: 30px;
+      width: fit-content;
+      max-width: 100%;
+      margin: 42px 0 0;
+      padding: 20px 0 0;
+      border-top: 1px solid var(--border);
+    }
+    .stats div { display: grid; gap: 2px; }
+    .stats dt {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--faint);
+    }
+    .stats dd { margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -0.03em; }
+
+    .hero-visual { position: relative; min-width: 0; }
+    .hero-visual::before {
+      content: "";
+      position: absolute;
+      inset: -28px -22px auto auto;
+      width: 180px;
+      height: 180px;
+      border: 1px solid var(--border-strong);
+      border-radius: 50%;
+      opacity: 0.55;
+    }
+    .preview {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-strong);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .preview-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: 42px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-2);
+    }
+    .dots { display: flex; gap: 5px; }
+    .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); }
+    .preview-title {
+      margin-left: 4px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .live {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .live::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    .preview video { display: block; width: 100%; aspect-ratio: 720 / 702; object-fit: cover; background: #000; }
+    .preview-foot {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .preview-foot span + span::before { content: "·"; margin-right: 12px; color: var(--border-strong); }
+    .preview-toggle {
+      margin-left: auto;
+      border: 0;
+      background: transparent;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .floating-chip {
+      position: absolute;
+      left: -18px;
+      bottom: 64px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface);
+      box-shadow: 0 12px 30px -18px rgba(0, 0, 0, 0.4);
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
+    .floating-chip svg { width: 14px; height: 14px; color: var(--accent); }
+
+    /* Sections */
+    .section { padding: 96px 0; }
+    .section + .section { border-top: 1px solid var(--border); }
+    .section-head { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 38px; }
+    .section-head > div { max-width: 660px; }
+    .section-label {
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+    h2 {
+      margin: 0;
+      font-size: clamp(32px, 4vw, 48px);
+      line-height: 1.08;
+      letter-spacing: -0.045em;
+      font-weight: 670;
+      text-wrap: balance;
+    }
+    .section-head p:last-child { margin: 14px 0 0; color: var(--muted); max-width: 560px; font-size: 15px; }
+    .section-link {
+      flex: none;
+      color: var(--muted);
+      font-size: 13px;
+      text-decoration: none;
+      border-bottom: 1px solid var(--border-strong);
+      padding-bottom: 2px;
+    }
+    .section-link:hover { color: var(--text); border-color: var(--accent); }
+
+    .feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--border); }
+    .feature {
+      min-height: 210px;
+      padding: 26px;
+      background: var(--surface);
+      transition: background 180ms ease;
+    }
+    .feature:hover { background: var(--surface-2); }
+    .feature-icon {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      margin-bottom: 34px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--accent);
+      background: var(--bg);
+    }
+    .feature-icon svg { width: 17px; height: 17px; }
+    .feature h3 { margin: 0 0 8px; font-size: 16px; letter-spacing: -0.02em; }
+    .feature p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.6; }
+
+    .mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .mode-card {
+      position: relative;
+      padding: 28px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: var(--surface);
+      transition: border-color 180ms ease, transform 180ms ease;
+    }
+    .mode-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .mode-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .mode-num { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; color: var(--faint); letter-spacing: 0.1em; }
+    .mode-card h3 { margin: 0; font-size: 23px; letter-spacing: -0.035em; }
+    .mode-card p { margin: 12px 0 26px; max-width: 410px; color: var(--muted); font-size: 14px; }
+    .mode-card a { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 600; }
+    .mode-card a span { transition: transform 160ms ease; }
+    .mode-card a:hover span { transform: translate(2px, 2px); }
+
+    .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .demo-card { overflow: hidden; border: 1px solid var(--border); border-radius: 13px; background: var(--surface); }
+    .demo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 19px 20px 15px; }
+    .demo-head h3 { margin: 0; font-size: 18px; letter-spacing: -0.025em; }
+    .demo-head span { color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .demo-card video { display: block; width: 100%; aspect-ratio: 720 / 702; object-fit: cover; background: #000; border-top: 1px solid var(--border); }
+    .demo-note { padding: 12px 20px 16px; color: var(--muted); font-size: 12px; }
+
+    /* Install */
+    .install-section { padding: 96px 0 104px; }
+    .install-panel {
+      display: grid;
+      grid-template-columns: 0.9fr 1.1fr;
+      gap: 48px;
+      align-items: center;
+      padding: 42px;
+      border-radius: 16px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      box-shadow: var(--shadow);
+    }
+    .install-panel h2 { max-width: 420px; color: #f4f7fa; }
+    .install-panel .section-label { color: #86b7f5; }
+    .install-panel p { max-width: 440px; margin: 16px 0 0; color: #9eabb9; font-size: 14px; }
+    .install-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+    .install-meta span { padding: 5px 9px; border: 1px solid #2c3947; border-radius: 6px; color: #aebbc9; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 10px; }
+    .terminal { border: 1px solid #2a3541; border-radius: 11px; overflow: hidden; background: #080c11; }
+    .terminal-bar { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 13px; border-bottom: 1px solid #1d252e; }
+    .terminal-bar .dots i { background: #36414d; }
+    .terminal-bar span { color: #788594; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+    .terminal-body { position: relative; padding: 24px 18px; }
+    .terminal-line { display: flex; gap: 10px; align-items: flex-start; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; line-height: 1.7; }
+    .terminal-line .prompt { color: #6ea8ef; user-select: none; }
+    .terminal-line code { color: #dce7f3; overflow-wrap: anywhere; }
+    .terminal-copy {
+      margin-top: 18px;
+      border: 1px solid #344252;
+      border-radius: 7px;
+      background: #131b24;
+      color: #c8d5e2;
+      padding: 7px 11px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .terminal-copy:hover { border-color: #6ea8ef; color: #fff; }
+    .terminal-note { margin-top: 14px; color: #72808f; font-size: 11px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+    /* Footer */
+    .footer { border-top: 1px solid var(--border); padding: 30px 0 38px; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    .footer-brand { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; }
+    .footer-brand img { width: 18px; height: 18px; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+    .footer a { color: var(--muted); text-decoration: none; font-size: 12px; }
+    .footer a:hover { color: var(--text); }
+
+    /* Reveal */
+    html.js [data-reveal] { opacity: 0; transform: translateY(12px); transition: opacity 600ms cubic-bezier(.2,.7,.2,1), transform 600ms cubic-bezier(.2,.7,.2,1); }
+    html.js [data-reveal].is-visible { opacity: 1; transform: none; }
+
+    @media (max-width: 960px) {
+      .hero { grid-template-columns: 1fr; gap: 54px; padding-top: 64px; }
+      .hero-visual { max-width: 620px; }
+      .feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .install-panel { grid-template-columns: 1fr; gap: 30px; padding: 32px; }
+    }
+    @media (max-width: 720px) {
+      .wrap { width: min(100% - 32px, 1160px); }
+      .nav { height: 60px; gap: 18px; }
+      .nav-links { display: none; }
+      .brand span:last-child { display: none; }
+      .hero { padding: 52px 0 72px; }
+      h1 { font-size: clamp(44px, 13vw, 62px); }
+      .lede { font-size: 16px; }
+      .stats { grid-template-columns: repeat(2, auto); gap: 20px 32px; }
+      .section { padding: 72px 0; }
+      .section-head { display: block; }
+      .section-link { display: inline-block; margin-top: 16px; }
+      .feature-grid, .mode-grid, .demo-grid { grid-template-columns: 1fr; }
+      .feature { min-height: 0; }
+      .floating-chip { left: auto; right: 10px; bottom: 58px; }
+      .install-panel { padding: 26px 20px; }
+      .terminal-line { font-size: 11px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+      html.js [data-reveal] { opacity: 1; transform: none; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <header>
-      <div class="badge">30fps · 720p · 12s previews</div>
-      <h1>dsh-stream-focus mode demos</h1>
-      <p>Running-turn thinking and tool output across the four DSH Work details modes. Each clip starts with long reasoning and includes several sequential Bash calls.</p>
-    </header>
+  <a class="skip-link" href="#main">Skip to content</a>
 
-    <div class="grid">
-      <section class="card" id="compact">
-        <header>
-          <h2>Compact</h2>
-          <p>Minimal process group; the current group opens while running.</p>
-        </header>
-        <video controls playsinline preload="metadata" poster="demo/compact.jpg">
-          <source src="demo/compact.mp4" type="video/mp4">
-        </video>
-      </section>
-
-      <section class="card" id="standard">
-        <header>
-          <h2>Standard</h2>
-          <p>Capped, bottom-following window with live step detail.</p>
-        </header>
-        <video controls playsinline preload="metadata" poster="demo/standard.jpg">
-          <source src="demo/standard.mp4" type="video/mp4">
-        </video>
-      </section>
-
-      <section class="card" id="detailed">
-        <header>
-          <h2>Detailed</h2>
-          <p>Flat current-turn rows; older automatic rows fold as the step changes.</p>
-        </header>
-        <video controls playsinline preload="metadata" poster="demo/detailed.jpg">
-          <source src="demo/detailed.mp4" type="video/mp4">
-        </video>
-      </section>
-
-      <section class="card" id="verbose">
-        <header>
-          <h2>Verbose</h2>
-          <p>Flat rows; earlier rows stay open instead of folding automatically.</p>
-        </header>
-        <video controls playsinline preload="metadata" poster="demo/verbose.jpg">
-          <source src="demo/verbose.mp4" type="video/mp4">
-        </video>
-      </section>
+  <header class="site-header" id="top">
+    <div class="wrap nav">
+      <a class="brand" href="#top" aria-label="dsh-stream-focus home">
+        <span class="brand-mark"><img src="icon.svg" alt=""></span>
+        <span>dsh-stream-focus</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#features">Features</a>
+        <a href="#modes">Modes</a>
+        <a href="#demos">Demos</a>
+        <a href="#install">Install</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch color theme">
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20.5 14.1A8.5 8.5 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z"/></svg>
+        </button>
+        <a class="btn btn-secondary btn-small" href="https://github.com/timho1047/dsh-stream-focus" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .8a11.2 11.2 0 0 0-3.54 21.83c.56.1.77-.24.77-.54v-1.9c-3.13.68-3.79-1.33-3.79-1.33-.51-1.3-1.25-1.65-1.25-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.72 1.16 1.72 1.16 1 1.72 2.63 1.22 3.27.93.1-.73.39-1.22.71-1.5-2.5-.28-5.13-1.25-5.13-5.57 0-1.23.44-2.24 1.16-3.03-.12-.29-.5-1.43.11-2.99 0 0 .95-.3 3.1 1.16a10.8 10.8 0 0 1 5.65 0c2.15-1.46 3.1-1.16 3.1-1.16.61 1.56.23 2.7.11 2.99.72.79 1.16 1.8 1.16 3.03 0 4.33-2.63 5.28-5.14 5.56.4.35.76 1.03.76 2.08v3.08c0 .3.2.65.78.54A11.2 11.2 0 0 0 12 .8Z"/></svg>
+          GitHub
+        </a>
+      </div>
     </div>
+  </header>
 
-    <p class="foot">
-      <a href="https://github.com/timho1047/dsh-stream-focus">Source and installation</a>
-    </p>
+  <main id="main">
+    <section class="wrap hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="kicker">DSH client plugin · zero config</p>
+        <h1 id="hero-title">Keep the stream<br><em>in focus.</em></h1>
+        <p class="lede">A calmer way to watch DSH work. The current thought opens, the tool window follows, and every character arrives on the frame it should — across all four Work details modes.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#install">Install the plugin</a>
+          <a class="btn btn-secondary" href="#demos">Watch 30fps demos</a>
+        </div>
+        <dl class="stats" aria-label="Project facts">
+          <div><dt>Modes</dt><dd>4</dd></div>
+          <div><dt>Demos</dt><dd>30fps</dd></div>
+          <div><dt>Settings</dt><dd>0</dd></div>
+          <div><dt>Tests</dt><dd>51</dd></div>
+        </dl>
+      </div>
+
+      <div class="hero-visual">
+        <div class="preview">
+          <div class="preview-bar">
+            <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="preview-title">dsh / standard / running</span>
+            <span class="live">live</span>
+          </div>
+          <video id="hero-video" muted loop playsinline preload="metadata" poster="demo/standard.jpg" aria-label="Standard mode preview">
+            <source src="demo/standard.mp4" type="video/mp4">
+          </video>
+          <div class="preview-foot">
+            <span>capped window</span><span>bottom-following</span>
+            <button class="preview-toggle" id="preview-toggle" type="button" aria-label="Play Standard mode preview">Play</button>
+          </div>
+        </div>
+        <div class="floating-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 17V7M9 17V10M14 17V5M19 17v-4"/></svg>
+          character-paced
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap section" id="features" aria-labelledby="features-title">
+      <div class="section-head" data-reveal>
+        <div>
+          <p class="section-label">What changed</p>
+          <h2 id="features-title">Less chasing. More reading.</h2>
+          <p>DSH already streams well. This plugin removes the last rough edges: the current step stays visible, movement is eased, and native chrome stays native.</p>
+        </div>
+      </div>
+      <div class="feature-grid">
+        <article class="feature" data-reveal>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M22 12h-3"/></svg></span>
+          <h3>Follows the run</h3>
+          <p>The newest thinking or tool call opens automatically. Previous automatic rows fold when the step moves on.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 16h4l2-8 3 12 2-7h3l2 3h2"/></svg></span>
+          <h3>Frame-paced reveal</h3>
+          <p>Characters arrive by animation frame instead of chunk. Grapheme boundaries keep accents and emoji intact.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="11" height="4" rx="1"/><path d="M16.5 13H21M16.5 17H21M3 17h9"/></svg></span>
+          <h3>Mode-aware structure</h3>
+          <p>Grouped window behavior in Compact and Standard; flat-row pacing in Detailed and Verbose.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m8.8 12 2.1 2.1 4.3-4.4"/></svg></span>
+          <h3>Focus-safe</h3>
+          <p>Automatic clicks never steal focus or leave a ring behind. Keyboard focus stays exactly where the user put it.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 13h4M7 16h7"/></svg></span>
+          <h3>Native by design</h3>
+          <p>No injected background, border, radius, or padding. The window uses the official process-group surface.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span>
+          <h3>Zero settings</h3>
+          <p>Enable the plugin and refresh. There is nothing to tune, no session data to write, and no network calls to make.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap section" id="modes" aria-labelledby="modes-title">
+      <div class="section-head" data-reveal>
+        <div>
+          <p class="section-label">Four modes, one plugin</p>
+          <h2 id="modes-title">Behave like the mode you chose.</h2>
+          <p>Compact and Standard keep the official process group. Detailed and Verbose keep their flat rows. The plugin adapts instead of forcing one shape everywhere.</p>
+        </div>
+        <a class="section-link" href="#demos">See them running →</a>
+      </div>
+      <div class="mode-grid">
+        <article class="mode-card" data-reveal>
+          <div class="mode-top"><h3>Compact</h3><span class="mode-num">01 / quiet</span></div>
+          <p>The running group opens while needed, then folds back when the step changes. Minimal output, still in view.</p>
+          <a href="#compact">Watch Compact <span>↘</span></a>
+        </article>
+        <article class="mode-card" data-reveal>
+          <div class="mode-top"><h3>Standard</h3><span class="mode-num">02 / window</span></div>
+          <p>The full treatment: capped height, bottom-following, live step detail, and a soft edge instead of a hard cut.</p>
+          <a href="#standard">Watch Standard <span>↘</span></a>
+        </article>
+        <article class="mode-card" data-reveal>
+          <div class="mode-top"><h3>Detailed</h3><span class="mode-num">03 / flat</span></div>
+          <p>Current-turn rows stay flat. The current row opens, and older automatic rows close as execution moves on.</p>
+          <a href="#detailed">Watch Detailed <span>↘</span></a>
+        </article>
+        <article class="mode-card" data-reveal>
+          <div class="mode-top"><h3>Verbose</h3><span class="mode-num">04 / open</span></div>
+          <p>Every row stays visible. The current row still opens automatically; nothing is folded behind your back.</p>
+          <a href="#verbose">Watch Verbose <span>↘</span></a>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap section" id="demos" aria-labelledby="demos-title">
+      <div class="section-head" data-reveal>
+        <div>
+          <p class="section-label">Recorded in DSH</p>
+          <h2 id="demos-title">The four modes, actually running.</h2>
+          <p>Each clip starts with extended reasoning and then runs three sequential Bash calls. 30fps, 720p, no audio.</p>
+        </div>
+        <a class="section-link" href="https://github.com/timho1047/dsh-stream-focus#readme">Read the docs →</a>
+      </div>
+      <div class="demo-grid">
+        <article class="demo-card" id="compact" data-reveal>
+          <div class="demo-head"><h3>Compact</h3><span>12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/compact.jpg" aria-label="Compact mode demo">
+            <source src="demo/compact.mp4" type="video/mp4">
+          </video>
+          <p class="demo-note">Running group opens; previous group folds on step change.</p>
+        </article>
+        <article class="demo-card" id="standard" data-reveal>
+          <div class="demo-head"><h3>Standard</h3><span>12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/standard.jpg" aria-label="Standard mode demo">
+            <source src="demo/standard.mp4" type="video/mp4">
+          </video>
+          <p class="demo-note">Capped window, eased bottom-following, and live step detail.</p>
+        </article>
+        <article class="demo-card" id="detailed" data-reveal>
+          <div class="demo-head"><h3>Detailed</h3><span>12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/detailed.jpg" aria-label="Detailed mode demo">
+            <source src="demo/detailed.mp4" type="video/mp4">
+          </video>
+          <p class="demo-note">Flat current-turn rows; older automatic rows close as the run advances.</p>
+        </article>
+        <article class="demo-card" id="verbose" data-reveal>
+          <div class="demo-head"><h3>Verbose</h3><span>12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/verbose.jpg" aria-label="Verbose mode demo">
+            <source src="demo/verbose.mp4" type="video/mp4">
+          </video>
+          <p class="demo-note">Everything stays open; the newest row still comes into view.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap install-section" id="install" aria-labelledby="install-title">
+      <div class="install-panel" data-reveal>
+        <div>
+          <p class="section-label">Get started</p>
+          <h2 id="install-title">One command. Zero settings.</h2>
+          <p>Install from npm, refresh the DSH Web UI, and keep working. The plugin only touches the running Turn and restores the official view when it ends.</p>
+          <div class="install-meta">
+            <span>DSH ≥ 0.2.1-rc.2</span>
+            <span>Node ≥ 22.19</span>
+            <span>MIT</span>
+          </div>
+        </div>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span>terminal</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-line">
+              <span class="prompt" aria-hidden="true">$</span>
+              <code id="install-command">dsh plugin --profile web add dsh-stream-focus</code>
+            </div>
+            <button class="terminal-copy" id="copy-command" type="button">Copy command</button>
+            <p class="terminal-note">Then refresh the DSH Web UI. Works in all four Work details modes.</p>
+            <p class="sr-only" id="copy-status" aria-live="polite"></p>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <img src="icon.svg" alt="">
+        <span>dsh-stream-focus · built for DSH</span>
+      </div>
+      <nav class="footer-links" aria-label="Project links">
+        <a href="https://github.com/timho1047/dsh-stream-focus">GitHub</a>
+        <a href="https://www.npmjs.com/package/dsh-stream-focus">npm</a>
+        <a href="https://github.com/timho1047/dsh-stream-focus#readme">README</a>
+        <a href="https://github.com/rezon-aki/dsh-streamfold">Inspired by dsh-streamfold</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const themeButton = document.getElementById('theme-toggle');
+      const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      const saveTheme = (theme) => {
+        try { localStorage.setItem('dsh-stream-focus-theme', theme); } catch {}
+      };
+      const applyTheme = (theme) => {
+        root.dataset.theme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0b0e12' : '#f5f6f4');
+        if (themeButton) themeButton.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+      };
+      applyTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
+      themeButton?.addEventListener('click', () => {
+        const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        saveTheme(next);
+      });
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (event) => {
+        try {
+          if (localStorage.getItem('dsh-stream-focus-theme')) return;
+        } catch {}
+        applyTheme(event.matches ? 'dark' : 'light');
+      });
+
+      const header = document.querySelector('.site-header');
+      const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
+      onScroll();
+      window.addEventListener('scroll', onScroll, { passive: true });
+
+      const video = document.getElementById('hero-video');
+      const previewToggle = document.getElementById('preview-toggle');
+      const updatePreviewButton = () => {
+        if (!video || !previewToggle) return;
+        const paused = video.paused;
+        previewToggle.textContent = paused ? 'Play' : 'Pause';
+        previewToggle.setAttribute('aria-label', paused ? 'Play Standard mode preview' : 'Pause Standard mode preview');
+      };
+      const startPreview = () => {
+        if (!video || motionQuery.matches) return;
+        video.play().then(updatePreviewButton).catch(updatePreviewButton);
+      };
+      previewToggle?.addEventListener('click', () => {
+        if (!video) return;
+        if (video.paused) startPreview();
+        else video.pause();
+      });
+      video?.addEventListener('play', updatePreviewButton);
+      video?.addEventListener('pause', updatePreviewButton);
+      startPreview();
+      motionQuery.addEventListener('change', (event) => {
+        if (event.matches) video?.pause();
+      });
+
+      const copyButton = document.getElementById('copy-command');
+      const command = document.getElementById('install-command')?.textContent?.trim() ?? '';
+      const status = document.getElementById('copy-status');
+      copyButton?.addEventListener('click', async () => {
+        let copied = false;
+        try {
+          await navigator.clipboard.writeText(command);
+          copied = true;
+        } catch {
+          const area = document.createElement('textarea');
+          area.value = command;
+          area.setAttribute('readonly', '');
+          area.style.position = 'fixed';
+          area.style.opacity = '0';
+          document.body.appendChild(area);
+          area.select();
+          try { copied = document.execCommand('copy'); } catch {}
+          area.remove();
+        }
+        copyButton.textContent = copied ? 'Copied' : 'Copy failed';
+        if (status) status.textContent = copied ? 'Install command copied to clipboard.' : 'Could not copy the install command.';
+        window.setTimeout(() => { copyButton.textContent = 'Copy command'; }, 1800);
+      });
+
+      const reveals = [...document.querySelectorAll('[data-reveal]')];
+      if (motionQuery.matches || !('IntersectionObserver' in window)) {
+        reveals.forEach((element) => element.classList.add('is-visible'));
+      } else {
+        const revealObserver = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            entry.target.classList.add('is-visible');
+            revealObserver.unobserve(entry.target);
+          }
+        }, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+        reveals.forEach((element) => revealObserver.observe(element));
+      }
+
+      const navLinks = [...document.querySelectorAll('.nav-links a')];
+      const sections = navLinks.map((link) => document.querySelector(link.getAttribute('href'))).filter(Boolean);
+      if ('IntersectionObserver' in window && navLinks.length) {
+        const navObserver = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            navLinks.forEach((link) => link.classList.toggle('is-active', link.getAttribute('href') === '#' + entry.target.id));
+          }
+        }, { rootMargin: '-35% 0px -55% 0px' });
+        sections.forEach((section) => navObserver.observe(section));
+      }
+    })();
+  </script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "dsh-stream-focus",
+      "description": "A zero-config DSH plugin that keeps the running thought and tool call in view with frame-paced text and a capped following window.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "codeRepository": "https://github.com/timho1047/dsh-stream-focus",
+      "license": "https://opensource.org/licenses/MIT"
+    }
+  </script>
 </body>
 </html>
