@@ -12,17 +12,17 @@ English | [中文](README.md) | [Landing page](https://timho1047.github.io/dsh-s
 | Detailed | Keeps the current Turn flat inside the official container without faking a group cap; auto-opens the current thinking/tool row and closes older automatic rows. |
 | Verbose | Keeps the flat presentation; auto-opens the current thinking/tool row but never closes older rows, preserving “always expanded” semantics. |
 
-All modes share: character-paced reasoning, line-level fading for normal assistant prose, fade-in for new paragraphs/lists/code blocks, and focus-safe automatic actions.
+All modes share: character-paced reasoning, line-level fading plus character highlight fading for normal assistant prose, fade-in for new paragraphs/lists/code blocks, and focus-safe automatic actions.
 
 - While reasoning streams, the current Think row opens automatically, and new tail graphemes fade in through the CSS Custom Highlight API without DOM spans. Reveal speed is normalized by elapsed time for consistent 60Hz/120Hz behavior. The official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
-- Reasoning is revealed smoothly by animation frame, and window scrolling is eased by frame, avoiding chunked character pops and whole-block jumps.
+- Reasoning is revealed smoothly by animation frame, avoiding chunked character pops and whole-block jumps. Inner scrolling stays with the official process scroll.
 - A process group appears at its real height with a short ~180ms opacity fade instead of collapsing and expanding again.
 - The active window disables horizontal overflow and the official top/bottom edge masks, avoiding intermittent horizontal scrollbars and a partially faded vertical scrollbar. The native thumb is hidden in the active window and replaced with a 3px progress line whose height transitions smoothly, so it no longer flickers as content grows by line. 
 - The active window keeps the tallest height it has shown; switching from thinking to tools only scrolls its inner content, so the outer transcript never rolls back because the window became shorter.
 - A light 16px fade at the window bottom makes new lines enter softly rather than snapping in.
 - Streaming assistant prose gets a 20px line fade at the message root; it is removed as soon as streaming ends.
 - New paragraphs, lists, and code blocks in reasoning and normal prose fade in with a 600ms ease-in opacity transition and no movement; character reveal avoids splitting combining marks and ZWJ emoji.
-- While normal prose grows or a row open/close animation runs, the outer transcript is kept on its floor instead of lagging one frame.
+- While normal prose grows, the outer transcript is kept on its floor instead of lagging one frame. Row switches freeze the window height instead of repeatedly moving the outer scroller during the animation.
 - Tool rows auto-open independently of whether the outer transcript happens to be pinned to the bottom.
 - No custom background, border, radius, or padding: the window keeps the official process-group appearance.
 - Automatic opens temporarily suppress the title button’s `focus()`, and pointer clicks move focus away afterwards, so no focus ring is left behind. Keyboard focus keeps the official accessible behavior.
@@ -66,7 +66,7 @@ Refresh the browser page after installation. All four Work details modes are enh
 - Only Compact / Standard have an official process group; their window height uses the official `min(400px, 50vh)`. Detailed / Verbose keep the official flat structure without an added group cap.
 - Automatic row switches use a ~180ms height + opacity transition; manual row clicks keep the official instant toggle. A process group’s first appearance uses a 180ms opacity fade.
 - Character pacing adds roughly 100ms of visual latency. While streaming, the visible prefix is shown; the complete text is rendered as soon as the block settles. Copying during streaming copies the currently visible prefix.
-- Normal assistant prose has no official Content Factory, so it uses line-level bottom fading rather than per-character pacing. True per-character pacing requires an official prose Factory.
+- Normal assistant prose has no official Content Factory, so it cannot be paced per character. It currently uses a tail character highlight fade plus line-level bottom fading. True per-character pacing requires an official prose Factory.
 
 ## Acknowledgements
 
@@ -82,10 +82,11 @@ pnpm run verify   # typecheck + build + 53 tests
 ```
 
 - `src/client/decision.ts`: pure state machine deciding which rows the current window should own.
-- `src/client/conductor.ts`: Compact / Standard process-group window, bottom pinning, and scroll easing.
+- `src/client/conductor.ts`: Compact / Standard process-group window, height freezing, styles, and progress line.
 - `src/client/flat-rows.ts`: Detailed / Verbose flat-row auto-expansion.
 - `src/client/mode-policy.ts`: four-mode resolution and conductor selection.
 - `src/client/paced-body.tsx`: reasoning Body Slot replacement that paces text through the official Content Factory.
-- `src/client/normal-smoothing.ts`: normal-prose line fading and new-block fade-in.
+- `src/client/normal-smoothing.ts`: normal-prose line fading, character highlight fading, and new-block fade-in.
+- `src/client/highlight-fade.ts`: CSS Custom Highlight character fade.
 - `src/client/pacing.ts`: pure math for character reveal and scroll easing.
 - `tests/`: mode policy, state machine, pacing math, and jsdom interaction tests.

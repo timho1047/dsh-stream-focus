@@ -12,7 +12,7 @@
 | Detailed | 当前轮次在官方容器内平铺，不伪造组级窗口；自动展开当前思考/工具行，并收起旧的自动展开行。 |
 | Verbose | 平铺显示，自动展开当前思考/工具行，但不自动收起旧行，尊重“永远展开”的语义。 |
 
-四档共享：思考正文逐字平滑、普通正文行级渐隐、新段落/列表/代码块淡入、自动操作不抢焦点。
+四档共享：思考正文逐字平滑、普通正文行级渐隐与字符淡入、新段落/列表/代码块淡入、自动操作不抢焦点。
 
 - 思考流式输出时，自动展开当前思考行；官方过程组本身成为限高、内部自动贴底的窗口。
 - 思考正文用 CSS Custom Highlight API 对尾部新字素做透明度淡入，不插 span、不改 Markdown DOM；揭示速度按 elapsed time 归一化，60Hz/120Hz 手感一致。窗口内部滚动跟随使用官方 process scroll，插件不重复写 `scrollTop`，避免两套跟随互相抢滚动。
@@ -22,7 +22,7 @@
 - 窗口底部有一层 16px 的轻渐隐，滚动跟随也更柔和，新行从底部淡入而不是硬切。
 - 普通助手正文流式输出时，在消息根部加 20px 的底部行渐隐；输出结束后立即移除。
 - 思考与普通正文中新出现的段落、列表、代码块会做一次 600ms ease-in 的透明度淡入（无位移）；逐字揭示会避开组合音标和 ZWJ emoji 边界。
-- 普通正文增长和行展开/收起动画期间，会持续压住外层会话尾部，避免页面滞后一帧。
+- 普通正文增长期间会持续压住外层会话尾部；行切换通过冻结窗口高度避免外层位移，不再在动画期间反复改外层滚动。
 - 工具行自动展开不再以外层会话是否刚好贴底为前提；窗口展开期间会同步压住外层尾部，避免页面滞后一帧。
 - 不添加自定义背景、边框、圆角或内边距，窗口外观完全沿用官方过程组。
 - 自动展开时临时屏蔽标题按钮的 `focus()`；鼠标点击标题后也会移走焦点，不留下焦点环。键盘聚焦保持官方的可访问焦点行为。
@@ -66,7 +66,7 @@ dsh plugin --profile web add dsh-stream-focus
 - 只有 Compact / Standard 有官方过程组，窗口高度沿用其 `min(400px, 50vh)`；Detailed / Verbose 保持官方平铺结构，不添加组级限高。
 - 插件自动切换行时，思考和工具行的展开/收起使用约 180ms 的高度 + 透明度过渡；手动点击行仍沿用官方即时切换。过程组首次出现使用 180ms 透明度淡入。
 - 字符平滑会带来约 100ms 的视觉延迟；流式期间显示的是思考原文的可见前缀，结束后立即切回完整文本。复制正在流式输出的内容时会得到当前可见前缀。
-- 普通助手正文没有官方 Content Factory，因此采用行级底部渐隐，而不是逐字 pacing；真正的逐字平滑需要官方增加一个正文 Factory。
+- 普通助手正文没有官方 Content Factory，无法逐字 pacing；目前使用尾部字符 Highlight 淡入 + 行级底部渐隐。真正的逐字 pacing 需要官方增加一个正文 Factory。
 
 ## 致谢
 
@@ -82,10 +82,11 @@ pnpm run verify   # typecheck + build + 53 个测试
 ```
 
 - `src/client/decision.ts`：纯状态机，决定本轮窗口应该打开/关闭哪些行。
-- `src/client/conductor.ts`：Compact / Standard 的过程组窗口、贴底与滚动缓动。
+- `src/client/conductor.ts`：Compact / Standard 的过程组窗口、高度冻结、样式与进度线。
 - `src/client/flat-rows.ts`：Detailed / Verbose 的平铺行自动展开。
 - `src/client/mode-policy.ts`：四档模式解析与 conductor 选择。
 - `src/client/paced-body.tsx`：替换 reasoning Body Slot，通过官方 Content Factory 平滑揭示思考正文。
-- `src/client/normal-smoothing.ts`：普通正文行级渐隐与新块淡入。
+- `src/client/normal-smoothing.ts`：普通正文行级渐隐、字符高亮淡入与新块淡入。
+- `src/client/highlight-fade.ts`：CSS Custom Highlight 字符级淡入。
 - `src/client/pacing.ts`：字符揭示与滚动缓动的纯数学。
 - `tests/`：模式策略、状态机、节奏计算、jsdom 交互测试。
