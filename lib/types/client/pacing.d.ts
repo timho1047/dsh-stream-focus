@@ -9,9 +9,10 @@
  *
  * @param current - currently revealed UTF-16 length.
  * @param target - complete text being revealed.
+ * @param elapsedMs - elapsed frame time; clamped so a stalled frame does not dump a burst.
  * @returns the next revealed UTF-16 length.
  */
-export declare function nextRevealLength(current: number, target: string): number;
+export declare function nextRevealLength(current: number, target: string, elapsedMs?: number): number;
 /**
  * Move the window one frame toward its newest content.
  *

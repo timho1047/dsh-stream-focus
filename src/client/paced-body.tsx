@@ -76,12 +76,15 @@ function usePacedText(text: string, enabled: boolean): string {
     }
 
     if (frameRef.current !== null) cancelAnimationFrame(frameRef.current)
-    const tick = (): void => {
+    let previousTime: number | null = null
+    const tick = (time: number): void => {
       frameRef.current = null
       const target = targetRef.current
       const current = visibleRef.current
       if (current >= target.length) return
-      const next = nextRevealLength(current, target)
+      const elapsed = previousTime === null ? 1000 / 60 : time - previousTime
+      previousTime = time
+      const next = nextRevealLength(current, target, elapsed)
       visibleRef.current = next
       setVisible(next)
       if (next < target.length) frameRef.current = requestAnimationFrame(tick)

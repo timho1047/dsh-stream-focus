@@ -14,6 +14,7 @@ export declare class NormalOutputSmoother {
     private readonly previous;
     private readonly animated;
     private readonly animations;
+    private readonly fade;
     /**
      * @param doc - document that owns the transcript.
      * @param win - window supplying MutationObserver.

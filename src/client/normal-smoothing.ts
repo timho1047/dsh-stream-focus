@@ -1,3 +1,5 @@
+import { HighlightFade } from './highlight-fade.ts'
+
 const BLOCK_SELECTOR = 'p,pre,ul,ol,li,table,blockquote,h1,h2,h3,h4,h5,h6,hr'
 
 /**
@@ -14,6 +16,7 @@ export class NormalOutputSmoother {
   private readonly previous = new WeakMap<HTMLElement, { mask: string; webkit: string }>()
   private readonly animated = new WeakSet<Element>()
   private readonly animations = new Set<Animation>()
+  private readonly fade: HighlightFade
 
   /**
    * @param doc - document that owns the transcript.
@@ -22,7 +25,9 @@ export class NormalOutputSmoother {
   constructor(
     private readonly doc: Document = document,
     private readonly win: Window & typeof globalThis = window,
-  ) {}
+  ) {
+    this.fade = new HighlightFade(doc, win, 'dsh-stream-fade')
+  }
 
   /** Observe streaming assistant roots. Idempotent. */
   start(): void {
@@ -57,6 +62,7 @@ export class NormalOutputSmoother {
     this.roots.clear()
     for (const animation of this.animations) animation.cancel()
     this.animations.clear()
+    this.fade.stop()
   }
 
   /** Reconcile masks against the currently streaming Assistant roots. Public for tests. */
@@ -122,6 +128,7 @@ export class NormalOutputSmoother {
         webkit: root.style.getPropertyValue('-webkit-mask-image'),
       })
       root.dataset.streamFade = ''
+      this.fade.observe(root)
       const mask = 'linear-gradient(to bottom, #000 calc(100% - 20px), rgba(0, 0, 0, 0.4) 100%)'
       root.style.setProperty('mask-image', mask)
       root.style.setProperty('-webkit-mask-image', mask)
@@ -130,6 +137,7 @@ export class NormalOutputSmoother {
 
   private clear(root: HTMLElement): void {
     this.roots.delete(root)
+    this.fade.unobserve(root)
     const previous = this.previous.get(root)
     delete root.dataset.streamFade
     if (previous?.mask === undefined || previous.mask === '') root.style.removeProperty('mask-image')

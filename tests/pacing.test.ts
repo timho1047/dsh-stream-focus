@@ -12,6 +12,13 @@ describe('nextRevealLength', () => {
     expect(nextRevealLength(99, 'short')).toBe(5)
   })
 
+  it('advances by elapsed time rather than frame count', () => {
+    const target = 'x'.repeat(240)
+    expect(nextRevealLength(0, target)).toBe(40)
+    expect(nextRevealLength(0, target, 1000 / 120)).toBe(20)
+    expect(nextRevealLength(0, target, 100)).toBe(77)
+  })
+
   it('keeps combining marks attached to their base character', () => {
     const target = 'a\u0301b'
     expect(target.length).toBe(3)

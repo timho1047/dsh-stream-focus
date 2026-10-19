@@ -1,4 +1,5 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
+import { HighlightFade } from './highlight-fade.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -62,6 +63,7 @@ export class StreamWindowConductor {
   private progressTrack: HTMLElement | null = null
   private progressThumb: HTMLElement | null = null
   private progressFrame: number | null = null
+  private textFade: HighlightFade | null = null
   private outerGuard: { observer: ResizeObserver; group: HTMLElement } | null = null
   private openAnimation: {
     body: HTMLElement
@@ -209,6 +211,8 @@ export class StreamWindowConductor {
     body.style.maskImage = 'none'
     this.attachFade(group)
     this.attachProgress(group, body)
+    this.textFade = new HighlightFade(this.doc, this.win, 'dsh-stream-process')
+    this.textFade.observe(content ?? group)
     body.addEventListener('scroll', this.onProgressScroll, { passive: true })
     body.addEventListener('wheel', this.onReaderGesture, { passive: true })
     body.addEventListener('touchstart', this.onReaderGesture, { passive: true })

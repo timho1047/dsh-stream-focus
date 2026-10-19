@@ -15,7 +15,7 @@
 四档共享：思考正文逐字平滑、普通正文行级渐隐、新段落/列表/代码块淡入、自动操作不抢焦点。
 
 - 思考流式输出时，自动展开当前思考行；官方过程组本身成为限高、内部自动贴底的窗口。
-- 思考正文按 animation frame 平滑揭示；窗口内部滚动跟随使用官方 process scroll，插件不重复写 `scrollTop`，避免两套跟随互相抢滚动。
+- 思考正文用 CSS Custom Highlight API 对尾部新字素做透明度淡入，不插 span、不改 Markdown DOM；揭示速度按 elapsed time 归一化，60Hz/120Hz 手感一致。窗口内部滚动跟随使用官方 process scroll，插件不重复写 `scrollTop`，避免两套跟随互相抢滚动。
 - 过程组首次自动展开时用约 180ms 的透明度淡入，窗口直接以真实高度出现，不再先折叠再展开。
 - 运行中的窗口禁止横向溢出，并关闭过程组自带的上下渐隐遮罩，避免横向滚动条间歇出现、纵向滚动条被遮罩成半虚化。原生滚动条 thumb 在活动窗口内隐藏，右侧改用一条高度平滑过渡的 3px 进度线，避免内容按行增长时 thumb 一跳一跳地缩小。
 - 活动窗口保持已经出现过的最大高度；思考切换到工具时只滚动内部内容，不再让外层会话因窗口变矮而回滚。
@@ -61,6 +61,7 @@ dsh plugin --profile web add dsh-stream-focus
 
 ## 已知限制
 
+- 字符淡入依赖 CSS Custom Highlight API；不支持的浏览器会自动回退为普通文本渲染。
 - 依赖 ui-chat 的语义 DOM（`data-chat-group-key`、`data-variant="think"`、`data-tool`、`data-sample="bash"`、`data-disclosure-row`、`data-chat-running`、`data-chat-following-tail`）。上游属性改名时插件会静默不生效，需要跟进。
 - 只有 Compact / Standard 有官方过程组，窗口高度沿用其 `min(400px, 50vh)`；Detailed / Verbose 保持官方平铺结构，不添加组级限高。
 - 插件自动切换行时，思考和工具行的展开/收起使用约 180ms 的高度 + 透明度过渡；手动点击行仍沿用官方即时切换。过程组首次出现使用 180ms 透明度淡入。
@@ -75,7 +76,7 @@ dsh plugin --profile web add dsh-stream-focus
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 51 个测试
+pnpm run verify   # typecheck + build + 53 个测试
 ```
 
 - `src/client/decision.ts`：纯状态机，决定本轮窗口应该打开/关闭哪些行。

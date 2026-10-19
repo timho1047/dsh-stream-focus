@@ -1,7 +1,8 @@
 /** Frame-level pacing math shared by text reveal and window following. */
 
-/** Frames used to catch up with newly arrived text; keeps latency near 100ms. */
-const CATCH_UP_FRAMES = 6
+/** Time used to catch up with newly arrived text; keeps latency near 100ms. */
+const CATCH_UP_MS = 100
+const FRAME_MS = 1000 / 60
 
 /** Fraction of the remaining scroll distance consumed per frame. */
 const FOLLOW_EASING = 0.22
@@ -22,11 +23,12 @@ const FOLLOW_SNAP_PX = 0.25
  *
  * @param current - currently revealed UTF-16 length.
  * @param target - complete text being revealed.
+ * @param elapsedMs - elapsed frame time; clamped so a stalled frame does not dump a burst.
  * @returns the next revealed UTF-16 length.
  */
-export function nextRevealLength(current: number, target: string): number {
+export function nextRevealLength(current: number, target: string, elapsedMs = FRAME_MS): number {
   if (current >= target.length) return target.length
-  const step = Math.max(1, Math.ceil((target.length - current) / CATCH_UP_FRAMES))
+  const step = Math.max(1, Math.ceil((((target.length - current) * Math.min(elapsedMs, 32)) / CATCH_UP_MS) - 1e-9))
   let next = Math.min(target.length, current + step)
   if (next < target.length
     && isHighSurrogate(target.charCodeAt(next - 1))

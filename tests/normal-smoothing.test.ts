@@ -1,5 +1,20 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { NormalOutputSmoother } from '../src/client/normal-smoothing.ts'
+import { HighlightFade } from '../src/client/highlight-fade.ts'
+
+describe('HighlightFade fallback', () => {
+  it('does not throw when the Highlight API is unavailable', () => {
+    const root = document.createElement('div')
+    root.textContent = 'hello'
+    document.body.append(root)
+    const fade = new HighlightFade(document, window)
+    fade.observe(root)
+    root.textContent = 'hello world'
+    fade.unobserve(root)
+    fade.stop()
+    expect(root.dataset.highlightFade).toBeUndefined()
+  })
+})
 
 describe('NormalOutputSmoother', () => {
   let smoother: NormalOutputSmoother | null = null

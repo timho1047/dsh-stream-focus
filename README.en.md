@@ -14,7 +14,7 @@ English | [中文](README.md) | [Landing page](https://timho1047.github.io/dsh-s
 
 All modes share: character-paced reasoning, line-level fading for normal assistant prose, fade-in for new paragraphs/lists/code blocks, and focus-safe automatic actions.
 
-- While reasoning streams, the current Think row opens automatically; the official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
+- While reasoning streams, the current Think row opens automatically, and new tail graphemes fade in through the CSS Custom Highlight API without DOM spans. Reveal speed is normalized by elapsed time for consistent 60Hz/120Hz behavior. The official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
 - Reasoning is revealed smoothly by animation frame, and window scrolling is eased by frame, avoiding chunked character pops and whole-block jumps.
 - A process group appears at its real height with a short ~180ms opacity fade instead of collapsing and expanding again.
 - The active window disables horizontal overflow and the official top/bottom edge masks, avoiding intermittent horizontal scrollbars and a partially faded vertical scrollbar. The native thumb is hidden in the active window and replaced with a 3px progress line whose height transitions smoothly, so it no longer flickers as content grows by line. 
@@ -61,6 +61,7 @@ Refresh the browser page after installation. All four Work details modes are enh
 
 ## Known limitations
 
+- Character fading uses the CSS Custom Highlight API; browsers without it fall back to normal text rendering.
 - Depends on ui-chat semantic DOM (`data-chat-group-key`, `data-variant="think"`, `data-tool`, `data-sample="bash"`, `data-disclosure-row`, `data-chat-running`, `data-chat-following-tail`). If upstream renames them, the plugin silently stops applying until updated.
 - Only Compact / Standard have an official process group; their window height uses the official `min(400px, 50vh)`. Detailed / Verbose keep the official flat structure without an added group cap.
 - Automatic row switches use a ~180ms height + opacity transition; manual row clicks keep the official instant toggle. A process group’s first appearance uses a 180ms opacity fade.
@@ -75,7 +76,7 @@ This plugin was inspired by [dsh-streamfold](https://github.com/rezon-aki/dsh-st
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 51 tests
+pnpm run verify   # typecheck + build + 53 tests
 ```
 
 - `src/client/decision.ts`: pure state machine deciding which rows the current window should own.
