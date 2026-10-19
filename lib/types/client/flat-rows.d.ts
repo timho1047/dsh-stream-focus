@@ -41,6 +41,9 @@ export declare class FlatRowConductor {
     private readonly onOuterScroll;
     private readonly onOuterScrollEnd;
     private scheduleOuterCheck;
+    /** Restart the check after an automatic row motion so it fires after that motion. */
+    private armOuterCheck;
+    private startOuterCheck;
     private deferSync;
     private candidate;
     private schedule;

@@ -20,7 +20,7 @@ All notable changes are documented here. Each release has Chinese first, English
 
 #### 修复
 
-- Detailed / Verbose 的外层会话 follow 增加布局增长后的延迟单次重挂，避免自动展开/收起被误判为读者滚动。
+- Detailed / Verbose 的外层会话 follow 在自动行切换和工具展开动画结束后重新计时并做单次重挂，避免布局变化被误判为读者滚动。
 - 当内容在原生 smooth follow 结束前继续增长时，在 `scrollend` 后以及内容增长后的延迟窗口内做单次重挂，避免 follow intent 被误判为读者滚动，并覆盖浏览器不触发 `scrollend` 的情况。
 
 ### English
@@ -37,7 +37,7 @@ All notable changes are documented here. Each release has Chinese first, English
 
 #### Fixed
 
-- Added a delayed one-shot outer-transcript re-anchor for Detailed / Verbose so automatic row layout changes are not mistaken for reader scrolling.
+- Added a delayed one-shot outer-transcript re-anchor that restarts after automatic row and tool-expansion motion in Detailed / Verbose, so layout changes are not mistaken for reader scrolling.
 - When content grows again before native smooth follow ends, re-anchor once after `scrollend` and after a short growth-settle window, covering browsers that do not emit a usable `scrollend`.
 
 ## [0.1.1] - 2026-10-19

@@ -101,6 +101,7 @@ export class FlatRowConductor {
     if (!this.active || this.transitionTimer !== null) return
     const running = this.doc.querySelector<HTMLElement>(RUNNING_SELECTOR)
     if (running === null) return
+    if (this.doc.querySelector('[data-chat-following-tail]') !== null) this.outerIntent = true
     const flow = running.closest<HTMLElement>(FLOW_SELECTOR)
     if (flow === null) return
     const slot = flow.querySelector<HTMLElement>(FLOW_SLOT_SELECTOR) ?? flow
@@ -199,6 +200,20 @@ export class FlatRowConductor {
 
   private scheduleOuterCheck(delay = 350): void {
     if (!this.outerIntent || this.outerCheckTimer !== null) return
+    this.startOuterCheck(delay)
+  }
+
+  /** Restart the check after an automatic row motion so it fires after that motion. */
+  private armOuterCheck(delay = 350): void {
+    if (!this.outerIntent) return
+    if (this.outerCheckTimer !== null) {
+      this.win.clearTimeout(this.outerCheckTimer)
+      this.outerCheckTimer = null
+    }
+    this.startOuterCheck(delay)
+  }
+
+  private startOuterCheck(delay: number): void {
     this.outerCheckTimer = this.win.setTimeout(() => {
       this.outerCheckTimer = null
       const outer = this.outer
@@ -300,12 +315,15 @@ export class FlatRowConductor {
 
   private openRow(element: HTMLElement): void {
     openDisclosure(element, this.win, () => this.click(element))
+    this.armOuterCheck(DISCLOSURE_MOTION_MS + 90)
   }
 
   private closeRow(element: HTMLElement): boolean {
-    return closeDisclosure(element, this.win, () => {
+    const animated = closeDisclosure(element, this.win, () => {
       if (this.active) this.click(element)
     }, this.pendingClose)
+    this.armOuterCheck(DISCLOSURE_MOTION_MS + 90)
+    return animated
   }
 
   private click(element: HTMLElement): void {
