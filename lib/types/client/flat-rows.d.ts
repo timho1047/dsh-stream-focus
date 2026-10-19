@@ -18,6 +18,10 @@ export declare class FlatRowConductor {
     private readonly manualRows;
     private readonly pendingClose;
     private transitionTimer;
+    private outer;
+    private outerIntent;
+    private outerGestureAt;
+    private outerCheckTimer;
     /**
      * @param mode - Detailed or Verbose.
      * @param doc - document owning the transcript.
@@ -30,6 +34,13 @@ export declare class FlatRowConductor {
     stop(): void;
     /** Reconcile the newest Turn's flat rows. Public for tests. */
     sync(): void;
+    private attachOuterFollow;
+    private detachOuterFollow;
+    private nearBottom;
+    private readonly onOuterGesture;
+    private readonly onOuterScroll;
+    private readonly onOuterScrollEnd;
+    private scheduleOuterCheck;
     private deferSync;
     private candidate;
     private schedule;

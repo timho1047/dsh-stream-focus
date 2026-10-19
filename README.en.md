@@ -80,7 +80,7 @@ Thanks also to [dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-str
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 55 tests
+pnpm run verify   # typecheck + build + 56 tests
 ```
 
 - `src/client/decision.ts`: pure state machine deciding which rows the current window should own.

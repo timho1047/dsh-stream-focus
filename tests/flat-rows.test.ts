@@ -114,6 +114,29 @@ describe('FlatRowConductor', () => {
     expect(open('r1')).toBe(true)
   })
 
+  it('re-anchors outer follow after layout growth in Detailed', async () => {
+    wireDocument()
+    mount(reasoning('r1'))
+    const outer = document.querySelector<HTMLElement>('[data-conversation-scroll]')
+    if (outer === null) throw new Error('missing outer scroller')
+    let scrollTop = 400
+    let scrollHeight = 800
+    Object.defineProperty(outer, 'clientHeight', { configurable: true, value: 400 })
+    Object.defineProperty(outer, 'scrollHeight', { configurable: true, get: () => scrollHeight })
+    Object.defineProperty(outer, 'scrollTop', {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => { scrollTop = value },
+    })
+
+    conductor = new FlatRowConductor('detailed', document, window)
+    conductor.start()
+    scrollHeight = 900
+    conductor.sync()
+    await new Promise<void>(resolve => { setTimeout(resolve, 420) })
+    expect(scrollTop).toBe(500)
+  })
+
   it('does not touch a settled row when no turn is running', () => {
     wireDocument()
     mount(reasoning('r1', 'ok'))
