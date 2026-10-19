@@ -92,4 +92,3 @@ pnpm run verify   # typecheck + build + 53 tests
 - `src/client/highlight-fade.ts`: CSS Custom Highlight character fade.
 - `src/client/pacing.ts`: pure math for character reveal and scroll easing.
 - `tests/`: mode policy, state machine, pacing math, and jsdom interaction tests.
-- `promo/`: Remotion source, final MP4, Bilibili cover and release copy; see [promo/README.md](promo/README.md).
