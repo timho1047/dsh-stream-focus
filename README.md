@@ -34,13 +34,15 @@
 
 ## 演示
 
-以下为四档模式的 30fps MP4 预览（720p，H.264）。点击播放器控件可放大或全屏。
+30fps、720p 的四档 MP4 演示（每段 12 秒）。GitHub README 不支持内嵌视频，点击封面会打开对应模式的 GitHub Pages 播放页。
 
 | Compact | Standard |
 |---|---|
-| <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.jpg" controls width="480"></video> | <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.jpg" controls width="480"></video> |
+| [![Compact](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.jpg)](https://timho1047.github.io/dsh-stream-focus/#compact) | [![Standard](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.jpg)](https://timho1047.github.io/dsh-stream-focus/#standard) |
 | **Detailed** | **Verbose** |
-| <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.jpg" controls width="480"></video> | <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.jpg" controls width="480"></video> |
+| [![Detailed](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.jpg)](https://timho1047.github.io/dsh-stream-focus/#detailed) | [![Verbose](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.jpg)](https://timho1047.github.io/dsh-stream-focus/#verbose) |
+
+[打开全部演示](https://timho1047.github.io/dsh-stream-focus/)
 
 ## 边界
 
