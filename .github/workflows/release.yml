@@ -30,8 +30,9 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      # OIDC trusted publishing needs npm >= 11.5.1.
-      - run: npm install -g npm@latest
+      # OIDC trusted publishing needs npm >= 11.5.1. Pin the current release
+      # line so a future npm major cannot break the release job.
+      - run: npm install -g npm@12.2.0
       - name: Check tag matches package version
         run: |
           node -e "const p=require('./package.json'); const tag=process.env.GITHUB_REF_NAME.replace(/^v/,''); if(p.version!==tag){console.error('Tag '+tag+' does not match package version '+p.version); process.exit(1)}"
