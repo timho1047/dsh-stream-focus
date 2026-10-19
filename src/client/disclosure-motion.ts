@@ -1,6 +1,7 @@
 /** Height/opacity motion around the official conditional disclosure bodies. */
 
-const MOTION_MS = 180
+export const DISCLOSURE_MOTION_MS = 180
+const MOTION_MS = DISCLOSURE_MOTION_MS
 const EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)'
 
 /**
@@ -31,7 +32,7 @@ export function openDisclosure(
     [{ height: '0px', opacity: 0 }, { height: `${height}px`, opacity: 1 }],
     { duration: MOTION_MS, easing: EASING },
   )
-  const stopGuard = guardOuterTail(element, win)
+  const stopGuard = holdOuterScroll(element, win)
   const clear = (): void => {
     stopGuard()
     body.style.overflow = ''
@@ -58,17 +59,17 @@ export function closeDisclosure(
   win: Window & typeof globalThis,
   toggle: () => void,
   pending: Set<HTMLElement>,
-): void {
-  if (pending.has(element)) return
+): boolean {
+  if (pending.has(element)) return false
   const body = findDisclosureBody(element)
   if (body === null || !canAnimate(body, win)) {
     toggle()
-    return
+    return false
   }
   const height = body.getBoundingClientRect().height
   if (height <= 0) {
     toggle()
-    return
+    return false
   }
   pending.add(element)
   body.style.overflow = 'hidden'
@@ -78,7 +79,7 @@ export function closeDisclosure(
     [{ height: `${height}px`, opacity: 1 }, { height: '0px', opacity: 0 }],
     { duration: MOTION_MS, easing: EASING },
   )
-  const stopGuard = guardOuterTail(element, win)
+  const stopGuard = holdOuterScroll(element, win)
   let settled = false
   const finish = (): void => {
     stopGuard()
@@ -92,6 +93,7 @@ export function closeDisclosure(
   }
   animation.addEventListener('finish', finish, { once: true })
   animation.addEventListener('cancel', finish, { once: true })
+  return true
 }
 
 /**
@@ -119,20 +121,37 @@ export function findDisclosureBody(element: HTMLElement): HTMLElement | null {
   return null
 }
 
-function guardOuterTail(element: HTMLElement, win: Window & typeof globalThis): () => void {
-  const doc = element.ownerDocument
+const outerHolds = new WeakMap<HTMLElement, number>()
+
+/** Whether a disclosure transition is currently holding an outer scroll container. */
+export function isOuterHeld(outer: HTMLElement): boolean {
+  return (outerHolds.get(outer) ?? 0) > 0
+}
+
+/**
+ * Freeze the outer transcript while a disclosure height animation runs.
+ *
+ * Pinning to the bottom here would move the content above the collapsing row
+ * down, then move it up again when the next row opens. Holding the scroll
+ * offset instead anchors everything above the transition in place.
+ */
+function holdOuterScroll(element: HTMLElement, win: Window & typeof globalThis): () => void {
   const outer = element.closest<HTMLElement>('[data-conversation-scroll]')
   if (outer === null) return () => {}
+  const top = outer.scrollTop
+  outerHolds.set(outer, (outerHolds.get(outer) ?? 0) + 1)
   let frame = 0
   const tick = (): void => {
-    if (doc.querySelector('[data-chat-following-tail]') !== null) {
-      const floor = Math.max(0, outer.scrollHeight - outer.clientHeight)
-      if (Math.abs(floor - outer.scrollTop) > 0.5) outer.scrollTop = floor
-    }
+    if (Math.abs(outer.scrollTop - top) > 0.5) outer.scrollTop = top
     frame = win.requestAnimationFrame(tick)
   }
   frame = win.requestAnimationFrame(tick)
-  return () => { win.cancelAnimationFrame(frame) }
+  return () => {
+    win.cancelAnimationFrame(frame)
+    const count = (outerHolds.get(outer) ?? 1) - 1
+    if (count <= 0) outerHolds.delete(outer)
+    else outerHolds.set(outer, count)
+  }
 }
 
 function canAnimate(body: HTMLElement, win: Window & typeof globalThis): boolean {

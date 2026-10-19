@@ -1,4 +1,5 @@
 /** Height/opacity motion around the official conditional disclosure bodies. */
+export declare const DISCLOSURE_MOTION_MS = 180;
 /**
  * Animate a disclosure open after its official click.
  *
@@ -22,7 +23,7 @@ export declare function openDisclosure(element: HTMLElement, win: Window & typeo
  * @param toggle - official click action.
  * @param pending - rows currently waiting for their close animation.
  */
-export declare function closeDisclosure(element: HTMLElement, win: Window & typeof globalThis, toggle: () => void, pending: Set<HTMLElement>): void;
+export declare function closeDisclosure(element: HTMLElement, win: Window & typeof globalThis, toggle: () => void, pending: Set<HTMLElement>): boolean;
 /**
  * Find the body belonging to a disclosure control.
  *
@@ -34,3 +35,5 @@ export declare function closeDisclosure(element: HTMLElement, win: Window & type
  * @returns the mounted body, if any.
  */
 export declare function findDisclosureBody(element: HTMLElement): HTMLElement | null;
+/** Whether a disclosure transition is currently holding an outer scroll container. */
+export declare function isOuterHeld(outer: HTMLElement): boolean;

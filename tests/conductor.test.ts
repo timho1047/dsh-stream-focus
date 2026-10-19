@@ -3,6 +3,29 @@ import { StreamWindowConductor } from '../src/client/conductor.ts'
 
 const FOLLOW_SETTLE_MS = 1200
 
+class TestAnimation {
+  private readonly listeners = new Map<string, () => void>()
+  addEventListener(type: string, listener: () => void): void { this.listeners.set(type, listener) }
+  fire(type: 'finish' | 'cancel'): void { this.listeners.get(type)?.() }
+}
+
+function animateBody(key: string): TestAnimation {
+  const variant = document.querySelector<HTMLElement>(`[data-chat-flow-key="${key}"] [data-variant="think"], [data-chat-flow-key="${key}"] [data-tool]`)
+  if (variant === null) throw new Error(`missing variant ${key}`)
+  const body = document.createElement('div')
+  variant.append(body)
+  Object.defineProperty(body, 'getBoundingClientRect', {
+    configurable: true,
+    value: () => ({ height: 120 } as DOMRect),
+  })
+  const animation = new TestAnimation()
+  Object.defineProperty(body, 'animate', {
+    configurable: true,
+    value: () => animation,
+  })
+  return animation
+}
+
 function reasoning(key: string, state: 'running' | 'ok' = 'running'): string {
   return `
     <div data-chat-flow-key="${key}" data-chat-flow-kind="assistant-step">
@@ -199,6 +222,28 @@ describe('StreamWindowConductor', () => {
 
     expect(open('t1')).toBe(false)
     expect(open('r2')).toBe(true)
+  })
+
+  it('waits for the old row to finish collapsing before opening the new one', async () => {
+    mount(group(reasoning('r1'), true))
+    conductor = new StreamWindowConductor(document, window)
+    conductor.start()
+    expect(open('r1')).toBe(true)
+
+    const content = document.querySelector('[data-step-process-content]')
+    if (content === null) throw new Error('missing content')
+    document.querySelector<HTMLElement>('[data-chat-flow-key="r1"] [data-variant="think"]')?.setAttribute('data-state', 'ok')
+    content.insertAdjacentHTML('beforeend', tool('t1'))
+    const collapse = animateBody('r1')
+    conductor.sync()
+
+    expect(open('r1')).toBe(true)
+    expect(open('t1')).toBe(false)
+
+    collapse.fire('finish')
+    await new Promise<void>(resolve => { setTimeout(resolve, 230) })
+    expect(open('r1')).toBe(false)
+    expect(open('t1')).toBe(true)
   })
 
   it('does not reopen a row the reader closed', () => {

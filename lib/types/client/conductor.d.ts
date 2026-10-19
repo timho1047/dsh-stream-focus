@@ -36,6 +36,7 @@ export declare class StreamWindowConductor {
     /** Reader's explicit open/closed choice per row key. */
     private readonly manualRows;
     private readonly pendingClose;
+    private transitionTimer;
     private autoClickDepth;
     /**
      * @param doc - document that owns the running Chat.
@@ -86,6 +87,7 @@ export declare class StreamWindowConductor {
     private groupHeader;
     private openRow;
     private closeRow;
+    private deferSync;
     private click;
     private restoreFocus;
     /**

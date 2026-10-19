@@ -1,4 +1,4 @@
-import { closeDisclosure, openDisclosure } from './disclosure-motion.ts'
+import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -9,7 +9,6 @@ import {
 const FLOW_SELECTOR = '[data-chat-flow]:not([data-step-process-content])'
 const FLOW_SLOT_SELECTOR = '[data-slot="conversation.chat.flow"]'
 const RUNNING_SELECTOR = '[data-chat-running]'
-const FOLLOWING_SELECTOR = '[data-chat-following-tail]'
 const DISCLOSURE_SELECTOR = '[data-disclosure-row][aria-expanded]'
 const BASH_SELECTOR = '[data-sample="bash"][aria-expanded]'
 const ATTRIBUTE_FILTER = [
@@ -40,6 +39,7 @@ export class FlatRowConductor {
   private readonly autoKeys = new Set<string>()
   private readonly manualRows = new Map<string, Exclude<ManualChoice, undefined>>()
   private readonly pendingClose = new Set<HTMLElement>()
+  private transitionTimer: number | null = null
 
   /**
    * @param mode - Detailed or Verbose.
@@ -81,6 +81,10 @@ export class FlatRowConductor {
       this.win.cancelAnimationFrame(this.frame)
       this.frame = null
     }
+    if (this.transitionTimer !== null) {
+      this.win.clearTimeout(this.transitionTimer)
+      this.transitionTimer = null
+    }
     this.pendingClose.clear()
     this.autoKeys.clear()
     this.manualRows.clear()
@@ -88,7 +92,7 @@ export class FlatRowConductor {
 
   /** Reconcile the newest Turn's flat rows. Public for tests. */
   sync(): void {
-    if (!this.active) return
+    if (!this.active || this.transitionTimer !== null) return
     const running = this.doc.querySelector<HTMLElement>(RUNNING_SELECTOR)
     if (running === null) return
     const flow = running.closest<HTMLElement>(FLOW_SELECTOR)
@@ -118,21 +122,35 @@ export class FlatRowConductor {
       candidates.push(model)
     }
     const decision = decideWindow({ open: true, suppressed: false, candidates })
-    for (const key of decision.open) {
-      const candidate = elements.get(key)
-      if (candidate === undefined || candidate.open || !candidate.element.isConnected) continue
-      this.openRow(candidate.element)
-      this.autoKeys.add(key)
-    }
+    const opens = decision.open
+      .map(key => elements.get(key))
+      .filter((candidate): candidate is NonNullable<typeof candidate> =>
+        candidate !== undefined && !candidate.open && candidate.element.isConnected)
+    let closeAnimated = false
     if (this.mode === 'detailed') {
       for (const key of decision.close) {
         const candidate = elements.get(key)
         if (candidate === undefined || !candidate.open || !candidate.element.isConnected) continue
-        this.closeRow(candidate.element)
+        if (this.closeRow(candidate.element)) closeAnimated = true
         this.autoKeys.delete(key)
       }
     }
-    this.pinOuter(flow)
+    if (closeAnimated && opens.length > 0) {
+      this.deferSync()
+      return
+    }
+    for (const candidate of opens) {
+      this.openRow(candidate.element)
+      this.autoKeys.add(candidate.key)
+    }
+  }
+
+  private deferSync(): void {
+    if (this.transitionTimer !== null) return
+    this.transitionTimer = this.win.setTimeout(() => {
+      this.transitionTimer = null
+      this.sync()
+    }, DISCLOSURE_MOTION_MS + 30)
   }
 
   private candidate(row: HTMLElement, order: number): FlatCandidate | undefined {
@@ -214,8 +232,8 @@ export class FlatRowConductor {
     openDisclosure(element, this.win, () => this.click(element))
   }
 
-  private closeRow(element: HTMLElement): void {
-    closeDisclosure(element, this.win, () => {
+  private closeRow(element: HTMLElement): boolean {
+    return closeDisclosure(element, this.win, () => {
       if (this.active) this.click(element)
     }, this.pendingClose)
   }
@@ -238,11 +256,4 @@ export class FlatRowConductor {
     if (this.doc.activeElement === element) element.blur()
   }
 
-  private pinOuter(flow: HTMLElement): void {
-    if (this.doc.querySelector(FOLLOWING_SELECTOR) === null) return
-    const outer = flow.closest<HTMLElement>('[data-conversation-scroll]')
-    if (outer === null) return
-    const floor = Math.max(0, outer.scrollHeight - outer.clientHeight)
-    if (Math.abs(floor - outer.scrollTop) > 0.5) outer.scrollTop = floor
-  }
 }

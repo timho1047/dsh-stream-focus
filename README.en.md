@@ -26,7 +26,7 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 - Tool rows auto-open independently of whether the outer transcript happens to be pinned to the bottom.
 - No custom background, border, radius, or padding: the window keeps the official process-group appearance.
 - Automatic opens temporarily suppress the title button’s `focus()`, and pointer clicks move focus away afterwards, so no focus ring is left behind. Keyboard focus keeps the official accessible behavior.
-- When thinking ends and tools begin, the previous Think row closes and the current tool row opens with a ~180ms height + opacity transition. Parallel tools open together, including the standalone Bash row (`data-sample="bash"`).
+- When thinking ends and tools begin, the previous Think row closes first, then the current tool row opens. The outer transcript is held in place during the transition, so content above neither drops nor gets pushed back. Rows use a ~180ms height + opacity transition. Parallel tools open together, including the standalone Bash row (`data-sample="bash"`).
 - When the next thinking step starts, the previous batch of automatic thinking/tool windows closes, leaving only the new Think window.
 - Rows opened manually are never auto-closed; groups or rows closed manually are never forced open.
 - If the reader scrolls the outer transcript away from the bottom, the plugin does not scroll it for them. Scrolling up inside the window pauses bottom-following; returning to the window bottom resumes it.
@@ -75,7 +75,7 @@ This plugin was inspired by [dsh-streamfold](https://github.com/rezon-aki/dsh-st
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 51 tests
+pnpm run verify   # typecheck + build + 53 tests
 ```
 
 - `src/client/decision.ts`: pure state machine deciding which rows the current window should own.

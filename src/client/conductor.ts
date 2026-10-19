@@ -1,5 +1,5 @@
 import { nextFollowTop } from './pacing.ts'
-import { closeDisclosure, openDisclosure } from './disclosure-motion.ts'
+import { DISCLOSURE_MOTION_MS, closeDisclosure, isOuterHeld, openDisclosure } from './disclosure-motion.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -78,6 +78,7 @@ export class StreamWindowConductor {
   /** Reader's explicit open/closed choice per row key. */
   private readonly manualRows = new Map<string, Exclude<ManualChoice, undefined>>()
   private readonly pendingClose = new Set<HTMLElement>()
+  private transitionTimer: number | null = null
   private autoClickDepth = 0
 
   /**
@@ -128,7 +129,7 @@ export class StreamWindowConductor {
 
   /** Reconcile the current DOM with the window decision. Public for tests. */
   sync(): void {
-    if (!this.active) return
+    if (!this.active || this.transitionTimer !== null) return
     const running = this.doc.querySelector<HTMLElement>(RUNNING_SELECTOR)
     if (running === null) {
       this.resetWindow()
@@ -167,21 +168,27 @@ export class StreamWindowConductor {
       return
     }
 
-    for (const key of decision.open) {
-      const candidate = snapshot.elements.get(key)
-      if (candidate === undefined || candidate.open || !candidate.element.isConnected) continue
-      this.openRow(candidate.element)
-      this.autoKeys.add(key)
-    }
+    const opens = decision.open
+      .map(key => snapshot.elements.get(key))
+      .filter((candidate): candidate is NonNullable<typeof candidate> =>
+        candidate !== undefined && !candidate.open && candidate.element.isConnected)
+    let closeAnimated = false
     for (const key of decision.close) {
       const candidate = snapshot.elements.get(key)
       if (candidate === undefined || !candidate.open || !candidate.element.isConnected) continue
-      this.closeRow(candidate.element)
+      if (this.closeRow(candidate.element)) closeAnimated = true
       this.autoKeys.delete(key)
     }
-    if (decision.open.length > 0 || decision.close.length > 0) {
+    if (closeAnimated && opens.length > 0) {
+      this.deferSync()
+    } else {
+      for (const candidate of opens) {
+        this.openRow(candidate.element)
+        this.autoKeys.add(candidate.key)
+      }
+    }
+    if (opens.length > 0 || decision.close.length > 0) {
       if (this.followAtBottom) this.pinFollowNow()
-      this.pinOuterNow(group)
       this.scheduleFollow()
     }
   }
@@ -270,7 +277,7 @@ export class StreamWindowConductor {
   /** Keep the outer transcript at its floor without waiting a frame for Chat's follow. */
   private pinOuterNow(group: HTMLElement): void {
     const outer = group.closest<HTMLElement>('[data-conversation-scroll]')
-    if (outer === null || this.doc.querySelector('[data-chat-following-tail]') === null) return
+    if (outer === null || isOuterHeld(outer) || this.doc.querySelector('[data-chat-following-tail]') === null) return
     const floor = Math.max(0, outer.scrollHeight - outer.clientHeight)
     if (Math.abs(floor - outer.scrollTop) > 0.5) outer.scrollTop = floor
   }
@@ -551,10 +558,18 @@ export class StreamWindowConductor {
     openDisclosure(element, this.win, () => this.click(element))
   }
 
-  private closeRow(element: HTMLElement): void {
-    closeDisclosure(element, this.win, () => {
+  private closeRow(element: HTMLElement): boolean {
+    return closeDisclosure(element, this.win, () => {
       if (this.active) this.click(element)
     }, this.pendingClose)
+  }
+
+  private deferSync(): void {
+    if (this.transitionTimer !== null) return
+    this.transitionTimer = this.win.setTimeout(() => {
+      this.transitionTimer = null
+      this.sync()
+    }, DISCLOSURE_MOTION_MS + 30)
   }
 
   private click(element: HTMLElement): void {
@@ -649,6 +664,10 @@ export class StreamWindowConductor {
 
   /** Close and forget every automatic open state. */
   private resetWindow(): void {
+    if (this.transitionTimer !== null) {
+      this.win.clearTimeout(this.transitionTimer)
+      this.transitionTimer = null
+    }
     this.cancelOpenAnimation()
     this.stopOuterGuard()
     this.detachFollow()

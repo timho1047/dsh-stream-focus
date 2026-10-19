@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { closeDisclosure, findDisclosureBody, openDisclosure } from '../src/client/disclosure-motion.ts'
+import { closeDisclosure, findDisclosureBody, isOuterHeld, openDisclosure } from '../src/client/disclosure-motion.ts'
 
 class FakeAnimation {
   private readonly listeners = new Map<string, () => void>()
@@ -15,11 +15,13 @@ class FakeAnimation {
 
 function fixture(): { row: HTMLElement; body: HTMLElement; animation: FakeAnimation } {
   document.body.innerHTML = `
-    <div>
+    <div data-conversation-scroll style="height: 400px">
       <div>
-        <div data-disclosure-row="true" aria-expanded="false"></div>
+        <div>
+          <div data-disclosure-row="true" aria-expanded="false"></div>
+        </div>
+        <div id="body">answer</div>
       </div>
-      <div id="body">answer</div>
     </div>`
   const row = document.querySelector<HTMLElement>('[data-disclosure-row]')
   const body = document.querySelector<HTMLElement>('#body')
@@ -55,11 +57,21 @@ describe('disclosure motion', () => {
     expect(body.style.opacity).toBe('')
   })
 
+  it('holds the outer scroll while a disclosure animates', () => {
+    const { row, animation } = fixture()
+    const outer = document.querySelector<HTMLElement>('[data-conversation-scroll]')
+    if (outer === null) throw new Error('missing outer')
+    openDisclosure(row, window, () => { row.setAttribute('aria-expanded', 'true') })
+    expect(isOuterHeld(outer)).toBe(true)
+    animation.fire('finish')
+    expect(isOuterHeld(outer)).toBe(false)
+  })
+
   it('delays close until the shrink animation finishes', () => {
     const { row, animation } = fixture()
     const pending = new Set<HTMLElement>()
     const toggle = vi.fn()
-    closeDisclosure(row, window, toggle, pending)
+    expect(closeDisclosure(row, window, toggle, pending)).toBe(true)
     expect(toggle).not.toHaveBeenCalled()
     expect(pending.has(row)).toBe(true)
     animation.fire('finish')
@@ -84,7 +96,7 @@ describe('disclosure motion', () => {
       value: undefined,
     })
     const toggle = vi.fn()
-    closeDisclosure(row, window, toggle, new Set())
+    expect(closeDisclosure(row, window, toggle, new Set())).toBe(false)
     expect(toggle).toHaveBeenCalledOnce()
   })
 })

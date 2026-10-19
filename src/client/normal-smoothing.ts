@@ -1,3 +1,5 @@
+import { isOuterHeld } from './disclosure-motion.ts'
+
 const BLOCK_SELECTOR = 'p,pre,ul,ol,li,table,blockquote,h1,h2,h3,h4,h5,h6,hr'
 
 /**
@@ -31,7 +33,9 @@ export class NormalOutputSmoother {
     const body = this.doc.body
     if (body !== null) {
       this.observer = new this.win.MutationObserver(records => {
-        this.pinOuter()
+        if (records.some(record => record.target instanceof Element && record.target.closest('[data-streaming]') !== null)) {
+          this.pinOuter()
+        }
         this.animateNewBlocks(records)
         this.reconcile()
       })
@@ -65,7 +69,7 @@ export class NormalOutputSmoother {
   private pinOuter(): void {
     if (this.doc.querySelector('[data-chat-following-tail]') === null) return
     const outer = this.doc.querySelector<HTMLElement>('[data-conversation-scroll]')
-    if (outer === null) return
+    if (outer === null || isOuterHeld(outer)) return
     const floor = Math.max(0, outer.scrollHeight - outer.clientHeight)
     if (Math.abs(floor - outer.scrollTop) > 0.5) outer.scrollTop = floor
   }

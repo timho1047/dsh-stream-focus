@@ -17,6 +17,7 @@ export declare class FlatRowConductor {
     private readonly autoKeys;
     private readonly manualRows;
     private readonly pendingClose;
+    private transitionTimer;
     /**
      * @param mode - Detailed or Verbose.
      * @param doc - document owning the transcript.
@@ -29,6 +30,7 @@ export declare class FlatRowConductor {
     stop(): void;
     /** Reconcile the newest Turn's flat rows. Public for tests. */
     sync(): void;
+    private deferSync;
     private candidate;
     private schedule;
     private onMutations;
@@ -36,5 +38,4 @@ export declare class FlatRowConductor {
     private openRow;
     private closeRow;
     private click;
-    private pinOuter;
 }
