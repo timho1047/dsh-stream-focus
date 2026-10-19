@@ -9,6 +9,7 @@
   <link rel="canonical" href="https://timho1047.github.io/dsh-stream-focus/">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
   <meta property="og:title" content="dsh-stream-focus — smooth, focused streaming for DSH">
   <meta property="og:description" content="Frame-paced thinking, a following tool window, and mode-aware folding for all four DSH Work details modes.">
   <meta property="og:url" content="https://timho1047.github.io/dsh-stream-focus/">
@@ -170,7 +171,22 @@
     }
     .icon-btn:hover { color: var(--text); border-color: var(--border-strong); transform: translateY(-1px); }
     .icon-btn svg { width: 16px; height: 16px; }
+    .lang-btn {
+      width: auto;
+      min-width: 44px;
+      padding: 0 10px;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: 0.01em;
+    }
     [data-theme="light"] .moon, [data-theme="dark"] .sun { display: none; }
+    html[lang="zh-CN"] h1 { font-size: clamp(42px, 5.4vw, 68px); line-height: 1.12; letter-spacing: -0.035em; }
+    html[lang="zh-CN"] .lede { line-height: 1.8; }
+    html[lang="zh-CN"] .hero-copy .kicker { letter-spacing: 0.08em; }
+    @media (max-width: 720px) {
+      html[lang="zh-CN"] h1 { font-size: clamp(40px, 12vw, 58px); }
+      .lang-btn { min-width: 40px; padding: 0 8px; }
+    }
     .btn {
       display: inline-flex;
       align-items: center;
@@ -425,8 +441,8 @@
     .mode-card h3 { margin: 0; font-size: 23px; letter-spacing: -0.035em; }
     .mode-card p { margin: 12px 0 26px; max-width: 410px; color: var(--muted); font-size: 14px; }
     .mode-card a { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 600; }
-    .mode-card a span { transition: transform 160ms ease; }
-    .mode-card a:hover span { transform: translate(2px, 2px); }
+    .mode-card a .arrow { transition: transform 160ms ease; }
+    .mode-card a:hover .arrow { transform: translate(2px, 2px); }
 
     .demo-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
     .demo-card { overflow: hidden; border: 1px solid var(--border); border-radius: 13px; background: var(--surface); }
@@ -523,21 +539,22 @@
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to content</a>
+  <a class="skip-link" href="#main" data-i18n="a11y.skip">Skip to content</a>
 
   <header class="site-header" id="top">
     <div class="wrap nav">
-      <a class="brand" href="#top" aria-label="dsh-stream-focus home">
+      <a class="brand" href="#top" aria-label="dsh-stream-focus home" data-i18n-aria="brand.home">
         <span class="brand-mark"><img src="icon.svg" alt=""></span>
         <span>dsh-stream-focus</span>
       </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="#features">Features</a>
-        <a href="#modes">Modes</a>
-        <a href="#demos">Demos</a>
-        <a href="#install">Install</a>
+      <nav class="nav-links" aria-label="Primary" data-i18n-aria="nav.aria">
+        <a href="#features" data-i18n="nav.features">Features</a>
+        <a href="#modes" data-i18n="nav.modes">Modes</a>
+        <a href="#demos" data-i18n="nav.demos">Demos</a>
+        <a href="#install" data-i18n="nav.install">Install</a>
       </nav>
       <div class="nav-actions">
+        <button class="icon-btn lang-btn" id="lang-toggle" type="button" aria-label="中文 — Switch to Chinese">中文</button>
         <button class="icon-btn" id="theme-toggle" type="button" aria-label="Switch color theme">
           <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></svg>
           <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M20.5 14.1A8.5 8.5 0 0 1 9.9 3.5 8.5 8.5 0 1 0 20.5 14.1Z"/></svg>
@@ -553,18 +570,18 @@
   <main id="main">
     <section class="wrap hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <p class="kicker">DSH client plugin · zero config</p>
-        <h1 id="hero-title">Keep the stream<br><em>in focus.</em></h1>
-        <p class="lede">A calmer way to watch DSH work. The current thought opens, the tool window follows, and every character arrives on the frame it should — across all four Work details modes.</p>
+        <p class="kicker" data-i18n="hero.kicker">DSH client plugin · zero config</p>
+        <h1 id="hero-title" data-i18n-html="hero.title">Keep the stream<br><em>in focus.</em></h1>
+        <p class="lede" data-i18n="hero.lede">A calmer way to watch DSH work. The current thought opens, the tool window follows, and every character arrives on the frame it should — across all four Work details modes.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#install">Install the plugin</a>
-          <a class="btn btn-secondary" href="#demos">Watch 30fps demos</a>
+          <a class="btn btn-primary" href="#install" data-i18n="hero.install">Install the plugin</a>
+          <a class="btn btn-secondary" href="#demos" data-i18n="hero.demos">Watch 30fps demos</a>
         </div>
-        <dl class="stats" aria-label="Project facts">
-          <div><dt>Modes</dt><dd>4</dd></div>
-          <div><dt>Demos</dt><dd>30fps</dd></div>
-          <div><dt>Settings</dt><dd>0</dd></div>
-          <div><dt>Tests</dt><dd>51</dd></div>
+        <dl class="stats" aria-label="Project facts" data-i18n-aria="stats.aria">
+          <div><dt data-i18n="stats.modes">Modes</dt><dd>4</dd></div>
+          <div><dt data-i18n="stats.demos">Demos</dt><dd>30fps</dd></div>
+          <div><dt data-i18n="stats.settings">Settings</dt><dd>0</dd></div>
+          <div><dt data-i18n="stats.tests">Tests</dt><dd>51</dd></div>
         </dl>
       </div>
 
@@ -572,20 +589,20 @@
         <div class="preview">
           <div class="preview-bar">
             <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="preview-title">dsh / standard / running</span>
-            <span class="live">live</span>
+            <span class="preview-title" data-i18n="preview.title">dsh / standard / running</span>
+            <span class="live" data-i18n="preview.live">live</span>
           </div>
-          <video id="hero-video" muted loop playsinline preload="metadata" poster="demo/standard.jpg" aria-label="Standard mode preview">
+          <video id="hero-video" muted loop playsinline preload="metadata" poster="demo/standard.jpg" aria-label="Standard mode preview" data-i18n-aria="preview.aria">
             <source src="demo/standard.mp4" type="video/mp4">
           </video>
           <div class="preview-foot">
-            <span>capped window</span><span>bottom-following</span>
+            <span data-i18n="preview.capped">capped window</span><span data-i18n="preview.bottom">bottom-following</span>
             <button class="preview-toggle" id="preview-toggle" type="button" aria-label="Play Standard mode preview">Play</button>
           </div>
         </div>
         <div class="floating-chip">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 17V7M9 17V10M14 17V5M19 17v-4"/></svg>
-          character-paced
+          <span data-i18n="preview.paced">character-paced</span>
         </div>
       </div>
     </section>
@@ -593,41 +610,41 @@
     <section class="wrap section" id="features" aria-labelledby="features-title">
       <div class="section-head" data-reveal>
         <div>
-          <p class="section-label">What changed</p>
-          <h2 id="features-title">Less chasing. More reading.</h2>
-          <p>DSH already streams well. This plugin removes the last rough edges: the current step stays visible, movement is eased, and native chrome stays native.</p>
+          <p class="section-label" data-i18n="features.label">What changed</p>
+          <h2 id="features-title" data-i18n="features.title">Less chasing. More reading.</h2>
+          <p data-i18n="features.lede">DSH already streams well. This plugin removes the last rough edges: the current step stays visible, movement is eased, and native chrome stays native.</p>
         </div>
       </div>
       <div class="feature-grid">
         <article class="feature" data-reveal>
           <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2"/><path d="M12 2v3M22 12h-3"/></svg></span>
-          <h3>Follows the run</h3>
-          <p>The newest thinking or tool call opens automatically. Previous automatic rows fold when the step moves on.</p>
+          <h3 data-i18n="feature.follow.title">Follows the run</h3>
+          <p data-i18n="feature.follow.body">The newest thinking or tool call opens automatically. Previous automatic rows fold when the step moves on.</p>
         </article>
         <article class="feature" data-reveal>
           <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 16h4l2-8 3 12 2-7h3l2 3h2"/></svg></span>
-          <h3>Frame-paced reveal</h3>
-          <p>Characters arrive by animation frame instead of chunk. Grapheme boundaries keep accents and emoji intact.</p>
+          <h3 data-i18n="feature.frame.title">Frame-paced reveal</h3>
+          <p data-i18n="feature.frame.body">Characters arrive by animation frame instead of chunk. Grapheme boundaries keep accents and emoji intact.</p>
         </article>
         <article class="feature" data-reveal>
           <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="11" width="11" height="4" rx="1"/><path d="M16.5 13H21M16.5 17H21M3 17h9"/></svg></span>
-          <h3>Mode-aware structure</h3>
-          <p>Grouped window behavior in Compact and Standard; flat-row pacing in Detailed and Verbose.</p>
+          <h3 data-i18n="feature.mode.title">Mode-aware structure</h3>
+          <p data-i18n="feature.mode.body">Grouped window behavior in Compact and Standard; flat-row pacing in Detailed and Verbose.</p>
         </article>
         <article class="feature" data-reveal>
           <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.6 3.2 8 7.5 9.5 4.3-1.5 7.5-4.9 7.5-9.5V6L12 3Z"/><path d="m8.8 12 2.1 2.1 4.3-4.4"/></svg></span>
-          <h3>Focus-safe</h3>
-          <p>Automatic clicks never steal focus or leave a ring behind. Keyboard focus stays exactly where the user put it.</p>
+          <h3 data-i18n="feature.focus.title">Focus-safe</h3>
+          <p data-i18n="feature.focus.body">Automatic clicks never steal focus or leave a ring behind. Keyboard focus stays exactly where the user put it.</p>
         </article>
         <article class="feature" data-reveal>
           <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M7 13h4M7 16h7"/></svg></span>
-          <h3>Native by design</h3>
-          <p>No injected background, border, radius, or padding. The window uses the official process-group surface.</p>
+          <h3 data-i18n="feature.native.title">Native by design</h3>
+          <p data-i18n="feature.native.body">No injected background, border, radius, or padding. The window uses the official process-group surface.</p>
         </article>
         <article class="feature" data-reveal>
           <span class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span>
-          <h3>Zero settings</h3>
-          <p>Enable the plugin and refresh. There is nothing to tune, no session data to write, and no network calls to make.</p>
+          <h3 data-i18n="feature.zero.title">Zero settings</h3>
+          <p data-i18n="feature.zero.body">Enable the plugin and refresh. There is nothing to tune, no session data to write, and no network calls to make.</p>
         </article>
       </div>
     </section>
@@ -635,32 +652,32 @@
     <section class="wrap section" id="modes" aria-labelledby="modes-title">
       <div class="section-head" data-reveal>
         <div>
-          <p class="section-label">Four modes, one plugin</p>
-          <h2 id="modes-title">Behave like the mode you chose.</h2>
-          <p>Compact and Standard keep the official process group. Detailed and Verbose keep their flat rows. The plugin adapts instead of forcing one shape everywhere.</p>
+          <p class="section-label" data-i18n="modes.label">Four modes, one plugin</p>
+          <h2 id="modes-title" data-i18n="modes.title">Behave like the mode you chose.</h2>
+          <p data-i18n="modes.lede">Compact and Standard keep the official process group. Detailed and Verbose keep their flat rows. The plugin adapts instead of forcing one shape everywhere.</p>
         </div>
-        <a class="section-link" href="#demos">See them running →</a>
+        <a class="section-link" href="#demos" data-i18n="modes.link">See them running →</a>
       </div>
       <div class="mode-grid">
         <article class="mode-card" data-reveal>
-          <div class="mode-top"><h3>Compact</h3><span class="mode-num">01 / quiet</span></div>
-          <p>The running group opens while needed, then folds back when the step changes. Minimal output, still in view.</p>
-          <a href="#compact">Watch Compact <span>↘</span></a>
+          <div class="mode-top"><h3>Compact</h3><span class="mode-num" data-i18n="mode.compact.num">01 / quiet</span></div>
+          <p data-i18n="mode.compact.body">The running group opens while needed, then folds back when the step changes. Minimal output, still in view.</p>
+          <a href="#compact"><span data-i18n="mode.compact.link">Watch Compact</span> <span class="arrow" aria-hidden="true">↘</span></a>
         </article>
         <article class="mode-card" data-reveal>
-          <div class="mode-top"><h3>Standard</h3><span class="mode-num">02 / window</span></div>
-          <p>The full treatment: capped height, bottom-following, live step detail, and a soft edge instead of a hard cut.</p>
-          <a href="#standard">Watch Standard <span>↘</span></a>
+          <div class="mode-top"><h3>Standard</h3><span class="mode-num" data-i18n="mode.standard.num">02 / window</span></div>
+          <p data-i18n="mode.standard.body">The full treatment: capped height, bottom-following, live step detail, and a soft edge instead of a hard cut.</p>
+          <a href="#standard"><span data-i18n="mode.standard.link">Watch Standard</span> <span class="arrow" aria-hidden="true">↘</span></a>
         </article>
         <article class="mode-card" data-reveal>
-          <div class="mode-top"><h3>Detailed</h3><span class="mode-num">03 / flat</span></div>
-          <p>Current-turn rows stay flat. The current row opens, and older automatic rows close as execution moves on.</p>
-          <a href="#detailed">Watch Detailed <span>↘</span></a>
+          <div class="mode-top"><h3>Detailed</h3><span class="mode-num" data-i18n="mode.detailed.num">03 / flat</span></div>
+          <p data-i18n="mode.detailed.body">Current-turn rows stay flat. The current row opens, and older automatic rows close as execution moves on.</p>
+          <a href="#detailed"><span data-i18n="mode.detailed.link">Watch Detailed</span> <span class="arrow" aria-hidden="true">↘</span></a>
         </article>
         <article class="mode-card" data-reveal>
-          <div class="mode-top"><h3>Verbose</h3><span class="mode-num">04 / open</span></div>
-          <p>Every row stays visible. The current row still opens automatically; nothing is folded behind your back.</p>
-          <a href="#verbose">Watch Verbose <span>↘</span></a>
+          <div class="mode-top"><h3>Verbose</h3><span class="mode-num" data-i18n="mode.verbose.num">04 / open</span></div>
+          <p data-i18n="mode.verbose.body">Every row stays visible. The current row still opens automatically; nothing is folded behind your back.</p>
+          <a href="#verbose"><span data-i18n="mode.verbose.link">Watch Verbose</span> <span class="arrow" aria-hidden="true">↘</span></a>
         </article>
       </div>
     </section>
@@ -668,40 +685,40 @@
     <section class="wrap section" id="demos" aria-labelledby="demos-title">
       <div class="section-head" data-reveal>
         <div>
-          <p class="section-label">Recorded in DSH</p>
-          <h2 id="demos-title">The four modes, actually running.</h2>
-          <p>Each clip starts with extended reasoning and then runs three sequential Bash calls. 30fps, 720p, no audio.</p>
+          <p class="section-label" data-i18n="demos.label">Recorded in DSH</p>
+          <h2 id="demos-title" data-i18n="demos.title">The four modes, actually running.</h2>
+          <p data-i18n="demos.lede">Each clip starts with extended reasoning and then runs three sequential Bash calls. 30fps, 720p, no audio.</p>
         </div>
-        <a class="section-link" href="https://github.com/timho1047/dsh-stream-focus#readme">Read the docs →</a>
+        <a class="section-link" href="https://github.com/timho1047/dsh-stream-focus#readme" data-i18n="demos.link">Read the docs →</a>
       </div>
       <div class="demo-grid">
         <article class="demo-card" id="compact" data-reveal>
-          <div class="demo-head"><h3>Compact</h3><span>12s · 30fps</span></div>
-          <video controls playsinline preload="none" poster="demo/compact.jpg" aria-label="Compact mode demo">
+          <div class="demo-head"><h3>Compact</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/compact.jpg" aria-label="Compact mode demo" data-i18n-aria="demo.compact.aria">
             <source src="demo/compact.mp4" type="video/mp4">
           </video>
-          <p class="demo-note">Running group opens; previous group folds on step change.</p>
+          <p class="demo-note" data-i18n="demo.compact.note">Running group opens; previous group folds on step change.</p>
         </article>
         <article class="demo-card" id="standard" data-reveal>
-          <div class="demo-head"><h3>Standard</h3><span>12s · 30fps</span></div>
-          <video controls playsinline preload="none" poster="demo/standard.jpg" aria-label="Standard mode demo">
+          <div class="demo-head"><h3>Standard</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/standard.jpg" aria-label="Standard mode demo" data-i18n-aria="demo.standard.aria">
             <source src="demo/standard.mp4" type="video/mp4">
           </video>
-          <p class="demo-note">Capped window, eased bottom-following, and live step detail.</p>
+          <p class="demo-note" data-i18n="demo.standard.note">Capped window, eased bottom-following, and live step detail.</p>
         </article>
         <article class="demo-card" id="detailed" data-reveal>
-          <div class="demo-head"><h3>Detailed</h3><span>12s · 30fps</span></div>
-          <video controls playsinline preload="none" poster="demo/detailed.jpg" aria-label="Detailed mode demo">
+          <div class="demo-head"><h3>Detailed</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/detailed.jpg" aria-label="Detailed mode demo" data-i18n-aria="demo.detailed.aria">
             <source src="demo/detailed.mp4" type="video/mp4">
           </video>
-          <p class="demo-note">Flat current-turn rows; older automatic rows close as the run advances.</p>
+          <p class="demo-note" data-i18n="demo.detailed.note">Flat current-turn rows; older automatic rows close as the run advances.</p>
         </article>
         <article class="demo-card" id="verbose" data-reveal>
-          <div class="demo-head"><h3>Verbose</h3><span>12s · 30fps</span></div>
-          <video controls playsinline preload="none" poster="demo/verbose.jpg" aria-label="Verbose mode demo">
+          <div class="demo-head"><h3>Verbose</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <video controls playsinline preload="none" poster="demo/verbose.jpg" aria-label="Verbose mode demo" data-i18n-aria="demo.verbose.aria">
             <source src="demo/verbose.mp4" type="video/mp4">
           </video>
-          <p class="demo-note">Everything stays open; the newest row still comes into view.</p>
+          <p class="demo-note" data-i18n="demo.verbose.note">Everything stays open; the newest row still comes into view.</p>
         </article>
       </div>
     </section>
@@ -709,9 +726,9 @@
     <section class="wrap install-section" id="install" aria-labelledby="install-title">
       <div class="install-panel" data-reveal>
         <div>
-          <p class="section-label">Get started</p>
-          <h2 id="install-title">One command. Zero settings.</h2>
-          <p>Install from npm, refresh the DSH Web UI, and keep working. The plugin only touches the running Turn and restores the official view when it ends.</p>
+          <p class="section-label" data-i18n="install.label">Get started</p>
+          <h2 id="install-title" data-i18n="install.title">One command. Zero settings.</h2>
+          <p data-i18n="install.lede">Install from npm, refresh the DSH Web UI, and keep working. The plugin only touches the running Turn and restores the official view when it ends.</p>
           <div class="install-meta">
             <span>DSH ≥ 0.2.1-rc.2</span>
             <span>Node ≥ 22.19</span>
@@ -721,7 +738,7 @@
         <div class="terminal">
           <div class="terminal-bar">
             <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span>terminal</span>
+            <span data-i18n="terminal.label">terminal</span>
           </div>
           <div class="terminal-body">
             <div class="terminal-line">
@@ -729,7 +746,7 @@
               <code id="install-command">dsh plugin --profile web add dsh-stream-focus</code>
             </div>
             <button class="terminal-copy" id="copy-command" type="button">Copy command</button>
-            <p class="terminal-note">Then refresh the DSH Web UI. Works in all four Work details modes.</p>
+            <p class="terminal-note" data-i18n="install.note">Then refresh the DSH Web UI. Works in all four Work details modes.</p>
             <p class="sr-only" id="copy-status" aria-live="polite"></p>
           </div>
         </div>
@@ -741,13 +758,13 @@
     <div class="wrap footer-inner">
       <div class="footer-brand">
         <img src="icon.svg" alt="">
-        <span>dsh-stream-focus · built for DSH</span>
+        <span data-i18n="footer.brand">dsh-stream-focus · built for DSH</span>
       </div>
-      <nav class="footer-links" aria-label="Project links">
+      <nav class="footer-links" aria-label="Project links" data-i18n-aria="footer.aria">
         <a href="https://github.com/timho1047/dsh-stream-focus">GitHub</a>
         <a href="https://www.npmjs.com/package/dsh-stream-focus">npm</a>
         <a href="https://github.com/timho1047/dsh-stream-focus#readme">README</a>
-        <a href="https://github.com/rezon-aki/dsh-streamfold">Inspired by dsh-streamfold</a>
+        <a href="https://github.com/rezon-aki/dsh-streamfold" data-i18n="footer.inspired">Inspired by dsh-streamfold</a>
       </nav>
     </div>
   </footer>
@@ -756,7 +773,200 @@
     (() => {
       const root = document.documentElement;
       const themeButton = document.getElementById('theme-toggle');
+      const langButton = document.getElementById('lang-toggle');
       const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+      const messages = {
+        en: {
+          'meta.title': 'dsh-stream-focus — smooth, focused streaming for DSH',
+          'meta.description': 'A zero-config DSH plugin that keeps the running thought and tool call in view, with frame-paced text and a capped following window across all four Work details modes.',
+          'a11y.skip': 'Skip to content',
+          'brand.home': 'dsh-stream-focus home',
+          'nav.aria': 'Primary',
+          'nav.features': 'Features',
+          'nav.modes': 'Modes',
+          'nav.demos': 'Demos',
+          'nav.install': 'Install',
+          'hero.kicker': 'DSH client plugin · zero config',
+          'hero.title': 'Keep the stream<br><em>in focus.</em>',
+          'hero.lede': 'A calmer way to watch DSH work. The current thought opens, the tool window follows, and every character arrives on the frame it should — across all four Work details modes.',
+          'hero.install': 'Install the plugin',
+          'hero.demos': 'Watch 30fps demos',
+          'stats.aria': 'Project facts',
+          'stats.modes': 'Modes',
+          'stats.demos': 'Demos',
+          'stats.settings': 'Settings',
+          'stats.tests': 'Tests',
+          'preview.title': 'dsh / standard / running',
+          'preview.live': 'live',
+          'preview.aria': 'Standard mode preview',
+          'preview.capped': 'capped window',
+          'preview.bottom': 'bottom-following',
+          'preview.paced': 'character-paced',
+          'preview.play': 'Play',
+          'preview.pause': 'Pause',
+          'preview.playAria': 'Play Standard mode preview',
+          'preview.pauseAria': 'Pause Standard mode preview',
+          'features.label': 'What changed',
+          'features.title': 'Less chasing. More reading.',
+          'features.lede': 'DSH already streams well. This plugin removes the last rough edges: the current step stays visible, movement is eased, and native chrome stays native.',
+          'feature.follow.title': 'Follows the run',
+          'feature.follow.body': 'The newest thinking or tool call opens automatically. Previous automatic rows fold when the step moves on.',
+          'feature.frame.title': 'Frame-paced reveal',
+          'feature.frame.body': 'Characters arrive by animation frame instead of chunk. Grapheme boundaries keep accents and emoji intact.',
+          'feature.mode.title': 'Mode-aware structure',
+          'feature.mode.body': 'Grouped window behavior in Compact and Standard; flat-row pacing in Detailed and Verbose.',
+          'feature.focus.title': 'Focus-safe',
+          'feature.focus.body': 'Automatic clicks never steal focus or leave a ring behind. Keyboard focus stays exactly where the user put it.',
+          'feature.native.title': 'Native by design',
+          'feature.native.body': 'No injected background, border, radius, or padding. The window uses the official process-group surface.',
+          'feature.zero.title': 'Zero settings',
+          'feature.zero.body': 'Enable the plugin and refresh. There is nothing to tune, no session data to write, and no network calls to make.',
+          'modes.label': 'Four modes, one plugin',
+          'modes.title': 'Behave like the mode you chose.',
+          'modes.lede': 'Compact and Standard keep the official process group. Detailed and Verbose keep their flat rows. The plugin adapts instead of forcing one shape everywhere.',
+          'modes.link': 'See them running →',
+          'mode.compact.body': 'The running group opens while needed, then folds back when the step changes. Minimal output, still in view.',
+          'mode.standard.body': 'The full treatment: capped height, bottom-following, live step detail, and a soft edge instead of a hard cut.',
+          'mode.detailed.body': 'Current-turn rows stay flat. The current row opens, and older automatic rows close as execution moves on.',
+          'mode.verbose.body': 'Every row stays visible. The current row still opens automatically; nothing is folded behind your back.',
+          'mode.compact.num': '01 / quiet',
+          'mode.compact.link': 'Watch Compact',
+          'mode.standard.num': '02 / window',
+          'mode.standard.link': 'Watch Standard',
+          'mode.detailed.num': '03 / flat',
+          'mode.detailed.link': 'Watch Detailed',
+          'mode.verbose.num': '04 / open',
+          'mode.verbose.link': 'Watch Verbose',
+          'demos.label': 'Recorded in DSH',
+          'demos.title': 'The four modes, actually running.',
+          'demos.lede': 'Each clip starts with extended reasoning and then runs three sequential Bash calls. 30fps, 720p, no audio.',
+          'demos.link': 'Read the docs →',
+          'demo.meta': '12s · 30fps',
+          'demo.compact.note': 'Running group opens; previous group folds on step change.',
+          'demo.standard.note': 'Capped window, eased bottom-following, and live step detail.',
+          'demo.detailed.note': 'Flat current-turn rows; older automatic rows close as the run advances.',
+          'demo.verbose.note': 'Everything stays open; the newest row still comes into view.',
+          'demo.compact.aria': 'Compact mode demo',
+          'demo.standard.aria': 'Standard mode demo',
+          'demo.detailed.aria': 'Detailed mode demo',
+          'demo.verbose.aria': 'Verbose mode demo',
+          'terminal.label': 'terminal',
+          'install.label': 'Get started',
+          'install.title': 'One command. Zero settings.',
+          'install.lede': 'Install from npm, refresh the DSH Web UI, and keep working. The plugin only touches the running Turn and restores the official view when it ends.',
+          'install.note': 'Then refresh the DSH Web UI. Works in all four Work details modes.',
+          'copy.command': 'Copy command',
+          'copy.copied': 'Copied',
+          'copy.failed': 'Copy failed',
+          'copy.status.ok': 'Install command copied to clipboard.',
+          'copy.status.fail': 'Could not copy the install command.',
+          'footer.brand': 'dsh-stream-focus · built for DSH',
+          'footer.aria': 'Project links',
+          'footer.inspired': 'Inspired by dsh-streamfold',
+          'theme.toLight': 'Switch to light theme',
+          'theme.toDark': 'Switch to dark theme',
+          'lang.switch': 'Switch to Chinese'
+        },
+        zh: {
+          'meta.title': 'dsh-stream-focus — 为 DSH 带来平滑、聚焦的流式输出',
+          'meta.description': '零配置 DSH 插件：让运行中的思考与工具调用始终可见，逐帧平滑揭示，并在四档工作步骤展示模式下保持原生外观。',
+          'a11y.skip': '跳到主要内容',
+          'brand.home': 'dsh-stream-focus 首页',
+          'nav.aria': '主导航',
+          'nav.features': '特性',
+          'nav.modes': '模式',
+          'nav.demos': '演示',
+          'nav.install': '安装',
+          'hero.kicker': 'DSH 客户端插件 · 零配置',
+          'hero.title': '让流式输出<br><em>始终在焦点。</em>',
+          'hero.lede': '更从容地观察 DSH 工作。当前思考自动展开，工具窗口持续跟随，每个字符都在该出现的帧抵达——四档工作步骤展示模式全部适用。',
+          'hero.install': '安装插件',
+          'hero.demos': '观看 30fps 演示',
+          'stats.aria': '项目概况',
+          'stats.modes': '模式',
+          'stats.demos': '演示',
+          'stats.settings': '设置',
+          'stats.tests': '测试',
+          'preview.title': 'dsh / 标准 / 运行中',
+          'preview.live': '实时',
+          'preview.aria': '标准模式预览',
+          'preview.capped': '限高窗口',
+          'preview.bottom': '底部跟随',
+          'preview.paced': '逐字节奏',
+          'preview.play': '播放',
+          'preview.pause': '暂停',
+          'preview.playAria': '播放标准模式预览',
+          'preview.pauseAria': '暂停标准模式预览',
+          'features.label': '改进了什么',
+          'features.title': '少追逐，多阅读。',
+          'features.lede': 'DSH 本身已经流式得不错。这个插件去掉最后的粗糙边缘：当前步骤始终可见，移动被缓动，原生外观保持原生。',
+          'feature.follow.title': '跟随当前运行',
+          'feature.follow.body': '最新的思考或工具调用会自动展开；步骤切换时，旧的自动行会折叠。',
+          'feature.frame.title': '逐帧揭示',
+          'feature.frame.body': '字符按动画帧抵达，而不是整块出现；组合音标和 emoji 不会被切断。',
+          'feature.mode.title': '感知模式结构',
+          'feature.mode.body': 'Compact 和 Standard 使用过程组窗口；Detailed 和 Verbose 使用平铺行。',
+          'feature.focus.title': '不抢焦点',
+          'feature.focus.body': '自动点击不会夺走焦点或留下焦点环，键盘焦点始终留在用户放置的位置。',
+          'feature.native.title': '原生外观',
+          'feature.native.body': '不注入背景、边框、圆角或内边距；窗口沿用官方过程组表面。',
+          'feature.zero.title': '零设置',
+          'feature.zero.body': '启用插件并刷新即可。没有参数要调，不写 Session，也不发网络请求。',
+          'modes.label': '四档模式，一个插件',
+          'modes.title': '尊重你选择的模式。',
+          'modes.lede': 'Compact 和 Standard 保留官方过程组；Detailed 和 Verbose 保留平铺行。插件适配结构，而不是强行统一。',
+          'modes.link': '看看实际运行 →',
+          'mode.compact.body': '运行中的过程组按需展开，步骤切换后再折叠。输出最少，但始终在视野内。',
+          'mode.standard.body': '完整体验：限高、持续贴底、实时步骤细节，以及柔和的边缘过渡。',
+          'mode.detailed.body': '当前轮次保持平铺；当前行自动展开，旧的自动行随执行推进而关闭。',
+          'mode.verbose.body': '所有行都保持可见。当前行仍会自动展开；不会在背后折叠任何内容。',
+          'mode.compact.num': '01 / 安静',
+          'mode.compact.link': '观看 Compact',
+          'mode.standard.num': '02 / 窗口',
+          'mode.standard.link': '观看 Standard',
+          'mode.detailed.num': '03 / 平铺',
+          'mode.detailed.link': '观看 Detailed',
+          'mode.verbose.num': '04 / 展开',
+          'mode.verbose.link': '观看 Verbose',
+          'demos.label': '在 DSH 中实录',
+          'demos.title': '四档模式，真实运行。',
+          'demos.lede': '每段从较长思考开始，然后依次执行三次 Bash 调用。30fps、720p、无音频。',
+          'demos.link': '阅读文档 →',
+          'demo.meta': '12 秒 · 30fps',
+          'demo.compact.note': '运行中的过程组打开；步骤切换时上一组折叠。',
+          'demo.standard.note': '限高窗口、缓动贴底和实时步骤细节。',
+          'demo.detailed.note': '当前轮次平铺；旧的自动行随运行推进关闭。',
+          'demo.verbose.note': '所有内容保持展开；最新行仍会进入视野。',
+          'demo.compact.aria': 'Compact 模式演示',
+          'demo.standard.aria': 'Standard 模式演示',
+          'demo.detailed.aria': 'Detailed 模式演示',
+          'demo.verbose.aria': 'Verbose 模式演示',
+          'terminal.label': '终端',
+          'install.label': '开始使用',
+          'install.title': '一条命令，零设置。',
+          'install.lede': '从 npm 安装，刷新 DSH Web UI，然后继续工作。插件只影响正在运行的轮次，结束后恢复官方视图。',
+          'install.note': '然后刷新 DSH Web UI。四档工作步骤展示模式均适用。',
+          'copy.command': '复制命令',
+          'copy.copied': '已复制',
+          'copy.failed': '复制失败',
+          'copy.status.ok': '安装命令已复制到剪贴板。',
+          'copy.status.fail': '无法复制安装命令。',
+          'footer.brand': 'dsh-stream-focus · 为 DSH 而建',
+          'footer.aria': '项目链接',
+          'footer.inspired': '受 dsh-streamfold 启发',
+          'theme.toLight': '切换到浅色主题',
+          'theme.toDark': '切换到深色主题',
+          'lang.switch': '切换到英文'
+        }
+      };
+
+      let currentLang = 'en';
+      try {
+        const savedLang = localStorage.getItem('dsh-stream-focus-lang');
+        if (savedLang === 'zh' || savedLang === 'en') currentLang = savedLang;
+      } catch {}
+      const t = (key) => messages[currentLang]?.[key] ?? messages.en[key] ?? key;
 
       const saveTheme = (theme) => {
         try { localStorage.setItem('dsh-stream-focus-theme', theme); } catch {}
@@ -764,7 +974,7 @@
       const applyTheme = (theme) => {
         root.dataset.theme = theme;
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0b0e12' : '#f5f6f4');
-        if (themeButton) themeButton.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
+        if (themeButton) themeButton.setAttribute('aria-label', t(theme === 'dark' ? 'theme.toLight' : 'theme.toDark'));
       };
       applyTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
       themeButton?.addEventListener('click', () => {
@@ -789,8 +999,8 @@
       const updatePreviewButton = () => {
         if (!video || !previewToggle) return;
         const paused = video.paused;
-        previewToggle.textContent = paused ? 'Play' : 'Pause';
-        previewToggle.setAttribute('aria-label', paused ? 'Play Standard mode preview' : 'Pause Standard mode preview');
+        previewToggle.textContent = t(paused ? 'preview.play' : 'preview.pause');
+        previewToggle.setAttribute('aria-label', t(paused ? 'preview.playAria' : 'preview.pauseAria'));
       };
       const startPreview = () => {
         if (!video || motionQuery.matches) return;
@@ -827,10 +1037,41 @@
           try { copied = document.execCommand('copy'); } catch {}
           area.remove();
         }
-        copyButton.textContent = copied ? 'Copied' : 'Copy failed';
-        if (status) status.textContent = copied ? 'Install command copied to clipboard.' : 'Could not copy the install command.';
-        window.setTimeout(() => { copyButton.textContent = 'Copy command'; }, 1800);
+        copyButton.textContent = t(copied ? 'copy.copied' : 'copy.failed');
+        if (status) status.textContent = t(copied ? 'copy.status.ok' : 'copy.status.fail');
+        window.setTimeout(() => { copyButton.textContent = t('copy.command'); }, 1800);
       });
+
+      const i18nText = [...document.querySelectorAll('[data-i18n]')];
+      const i18nHtml = [...document.querySelectorAll('[data-i18n-html]')];
+      const i18nAria = [...document.querySelectorAll('[data-i18n-aria]')];
+      const applyLanguage = (lang, persist = true) => {
+        currentLang = lang === 'zh' ? 'zh' : 'en';
+        root.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+        if (persist) {
+          try { localStorage.setItem('dsh-stream-focus-lang', currentLang); } catch {}
+        }
+        document.title = t('meta.title');
+        document.querySelector('meta[name="description"]')?.setAttribute('content', t('meta.description'));
+        document.querySelector('meta[property="og:title"]')?.setAttribute('content', t('meta.title'));
+        document.querySelector('meta[property="og:description"]')?.setAttribute('content', t('meta.description'));
+        document.querySelector('meta[property="og:locale"]')?.setAttribute('content', currentLang === 'zh' ? 'zh_CN' : 'en_US');
+        for (const element of i18nText) element.textContent = t(element.dataset.i18n);
+        for (const element of i18nHtml) element.innerHTML = t(element.dataset.i18nHtml);
+        for (const element of i18nAria) element.setAttribute('aria-label', t(element.dataset.i18nAria));
+        if (langButton) {
+          langButton.textContent = currentLang === 'zh' ? 'EN' : '中文';
+          langButton.setAttribute('aria-label', `${langButton.textContent} — ${t('lang.switch')}`);
+        }
+        applyTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
+        updatePreviewButton();
+        if (copyButton) copyButton.textContent = t('copy.command');
+        if (status) status.textContent = '';
+      };
+      langButton?.addEventListener('click', () => {
+        applyLanguage(currentLang === 'en' ? 'zh' : 'en');
+      });
+      applyLanguage(currentLang, false);
 
       const reveals = [...document.querySelectorAll('[data-reveal]')];
       if (motionQuery.matches || !('IntersectionObserver' in window)) {
