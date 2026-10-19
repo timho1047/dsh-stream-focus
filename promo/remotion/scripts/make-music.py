@@ -1,4 +1,5 @@
 import math, random, struct, wave
+from pathlib import Path
 
 SR = 48000
 DUR = 62.0
@@ -73,10 +74,12 @@ for i in range(N):
     fade = min(1.0, i / fade_in, (N - i) / fade_out)
     left[i] *= gain * fade; right[i] *= gain * fade
 
-with wave.open('project/public/audio/music-full.wav', 'wb') as w:
+out = Path(__file__).resolve().parent.parent / 'public' / 'audio' / 'music-full.wav'
+out.parent.mkdir(parents=True, exist_ok=True)
+with wave.open(str(out), 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR)
     data = bytearray()
     for l, r in zip(left, right):
         data += struct.pack('<hh', int(max(-1, min(1, l)) * 32767), int(max(-1, min(1, r)) * 32767))
     w.writeframes(data)
-print('written', len(data))
+print(f'written {out} ({len(data)} bytes)')

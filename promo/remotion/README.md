@@ -11,6 +11,13 @@ npm run dev           # Remotion Studio
 npm run render:full   # render the 58s film to out/
 ```
 
+Regenerate the soundtrack when needed:
+
+```bash
+python3 scripts/make-music.py
+ffmpeg -i public/audio/music-full.wav -codec:a libmp3lame -b:a 192k public/audio/music-full.mp3
+```
+
 The final upload package is in [`../final/`](../final/). The rendered film in `out/` is a work print; the delivered MP4 has an additional 3-second audio fade-out and loudness normalization applied with ffmpeg.
 
 ## Layout
