@@ -34,13 +34,13 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 
 ## Demos
 
-12fps compressed GIF previews of the four modes; character reveal and scrolling are smoother in the live UI.
+30fps MP4 previews of the four modes (720p, H.264). Use the player controls to enlarge or enter fullscreen.
 
 | Compact | Standard |
 |---|---|
-| ![Compact](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.gif) | ![Standard](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.gif) |
+| <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.jpg" controls width="480"></video> | <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.jpg" controls width="480"></video> |
 | **Detailed** | **Verbose** |
-| ![Detailed](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.gif) | ![Verbose](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.gif) |
+| <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.jpg" controls width="480"></video> | <video src="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.mp4" poster="https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.jpg" controls width="480"></video> |
 
 ## Scope
 
