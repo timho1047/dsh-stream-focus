@@ -315,6 +315,17 @@ describe('StreamWindowConductor', () => {
     expect(body.style.minHeight).toBe('')
   })
 
+  it('replaces the native thumb with a progress line while active', () => {
+    conductor.start()
+    const body = document.querySelector<HTMLElement>('[data-step-process-body]')
+    if (body === null) throw new Error('missing group body')
+    expect(body.hasAttribute('data-stream-native-scrollbar')).toBe(true)
+    expect(document.querySelector('[data-stream-progress]')).not.toBeNull()
+    conductor.stop()
+    expect(body.hasAttribute('data-stream-native-scrollbar')).toBe(false)
+    expect(document.querySelector('[data-stream-progress]')).toBeNull()
+  })
+
   it('contains horizontal overflow and suppresses edge fades while active', () => {
     conductor.start()
     const body = document.querySelector<HTMLElement>('[data-step-process-body]')

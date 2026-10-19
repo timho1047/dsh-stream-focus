@@ -25,6 +25,9 @@ export declare class StreamWindowConductor {
     private fadeElement;
     private fadeGroup;
     private fadeGroupPosition;
+    private progressTrack;
+    private progressThumb;
+    private progressFrame;
     private outerGuard;
     private openAnimation;
     private observer;
@@ -63,6 +66,11 @@ export declare class StreamWindowConductor {
     private attachFade;
     private removeFade;
     private readonly onReaderGesture;
+    private readonly onProgressScroll;
+    private attachProgress;
+    private removeProgress;
+    private scheduleProgress;
+    private updateProgress;
     private nearBottomElement;
     /**
      * Re-arm official follow after a row transition when the reader never touched

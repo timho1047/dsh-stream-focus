@@ -17,7 +17,7 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 - While reasoning streams, the current Think row opens automatically; the official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
 - Reasoning is revealed smoothly by animation frame, and window scrolling is eased by frame, avoiding chunked character pops and whole-block jumps.
 - A process group appears at its real height with a short ~180ms opacity fade instead of collapsing and expanding again.
-- The active window disables horizontal overflow and the official top/bottom edge masks, avoiding intermittent horizontal scrollbars and a partially faded vertical scrollbar.
+- The active window disables horizontal overflow and the official top/bottom edge masks, avoiding intermittent horizontal scrollbars and a partially faded vertical scrollbar. The native thumb is hidden in the active window and replaced with a 3px progress line whose height transitions smoothly, so it no longer flickers as content grows by line. 
 - The active window keeps the tallest height it has shown; switching from thinking to tools only scrolls its inner content, so the outer transcript never rolls back because the window became shorter.
 - A light 16px fade at the window bottom makes new lines enter softly rather than snapping in.
 - Streaming assistant prose gets a 20px line fade at the message root; it is removed as soon as streaming ends.
@@ -75,7 +75,7 @@ This plugin was inspired by [dsh-streamfold](https://github.com/rezon-aki/dsh-st
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 50 tests
+pnpm run verify   # typecheck + build + 51 tests
 ```
 
 - `src/client/decision.ts`: pure state machine deciding which rows the current window should own.
