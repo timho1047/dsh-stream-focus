@@ -14,7 +14,7 @@ English | [中文](README.md) | [Landing page](https://timho1047.github.io/dsh-s
 
 All modes share: character-paced reasoning, line-level fading for normal assistant prose, fade-in for new paragraphs/lists/code blocks, and focus-safe automatic actions.
 
-- While reasoning streams, the current Think row opens automatically; the official process group becomes a capped window that follows its own bottom.
+- While reasoning streams, the current Think row opens automatically; the official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
 - Reasoning is revealed smoothly by animation frame, and window scrolling is eased by frame, avoiding chunked character pops and whole-block jumps.
 - A process group appears at its real height with a short ~180ms opacity fade instead of collapsing and expanding again.
 - The active window disables horizontal overflow and the official top/bottom edge masks, avoiding intermittent horizontal scrollbars and a partially faded vertical scrollbar.
@@ -26,10 +26,10 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 - Tool rows auto-open independently of whether the outer transcript happens to be pinned to the bottom.
 - No custom background, border, radius, or padding: the window keeps the official process-group appearance.
 - Automatic opens temporarily suppress the title button’s `focus()`, and pointer clicks move focus away afterwards, so no focus ring is left behind. Keyboard focus keeps the official accessible behavior.
-- When thinking ends and tools begin, the previous Think row closes first, then the current tool row opens. The outer transcript is held in place during the transition, so content above neither drops nor gets pushed back. Rows use a ~180ms height + opacity transition. Parallel tools open together, including the standalone Bash row (`data-sample="bash"`).
+- When thinking ends and tools begin, the previous Think row closes first, then the current tool row opens. The window height is frozen before the switch, so the outer transcript does not change height and content above neither drops nor gets pushed back. Rows use a ~180ms height + opacity transition. Parallel tools open together, including the standalone Bash row (`data-sample="bash"`).
 - When the next thinking step starts, the previous batch of automatic thinking/tool windows closes, leaving only the new Think window.
 - Rows opened manually are never auto-closed; groups or rows closed manually are never forced open.
-- If the reader scrolls the outer transcript away from the bottom, the plugin does not scroll it for them. Scrolling up inside the window pauses bottom-following; returning to the window bottom resumes it.
+- If the reader scrolls the outer transcript away from the bottom, the plugin does not scroll it for them. Inner window scrolling and bottom-following remain owned by the official process scroll.
 - When a Turn ends or the plugin is removed, the official presentation is restored.
 
 ## Demos
@@ -48,7 +48,7 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 
 - Pure client-side presentation enhancement: writes no Session data, makes no network requests, touches no credentials, and registers no model tools.
 - Zero settings and zero persistence. The plugin panel enable/disable switch is the only control.
-- Process-group expansion/collapse is driven by the official Chat semantic DOM. Reasoning text wraps the official `conversation.chat.reasoning.body` Slot and `conversation.chat.reasoning.content` Factory without copying the Markdown renderer. Bottom-following inside the window is maintained by the plugin with a ResizeObserver and does not hijack outer transcript scrolling. Upstream changes to these attributes or Slot contracts require a matching plugin update.
+- Process-group expansion/collapse is driven by the official Chat semantic DOM. Reasoning text wraps the official `conversation.chat.reasoning.body` Slot and `conversation.chat.reasoning.content` Factory without copying the Markdown renderer. The plugin owns the window's height and styles; inner scrolling stays with the official process scroll and the plugin does not write a second `scrollTop`. Upstream changes to these attributes or Slot contracts require a matching plugin update.
 - Only the running Turn is affected; historical Turns keep each mode’s official folding behavior.
 
 ## Install
@@ -75,7 +75,7 @@ This plugin was inspired by [dsh-streamfold](https://github.com/rezon-aki/dsh-st
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 53 tests
+pnpm run verify   # typecheck + build + 50 tests
 ```
 
 - `src/client/decision.ts`: pure state machine deciding which rows the current window should own.

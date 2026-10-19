@@ -1,8 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { StreamWindowConductor } from '../src/client/conductor.ts'
 
-const FOLLOW_SETTLE_MS = 1200
-
 class TestAnimation {
   private readonly listeners = new Map<string, () => void>()
   addEventListener(type: string, listener: () => void): void { this.listeners.set(type, listener) }
@@ -160,18 +158,6 @@ function useFakeResizeObserver(): void {
   })
 }
 
-function setScrollMetrics(body: HTMLElement): { top: number; floor: number } {
-  const state = { top: 0, floor: 400 }
-  Object.defineProperty(body, 'scrollHeight', { configurable: true, get: () => state.floor + 100 })
-  Object.defineProperty(body, 'clientHeight', { configurable: true, get: () => 100 })
-  Object.defineProperty(body, 'scrollTop', {
-    configurable: true,
-    get: () => state.top,
-    set: (value: number) => { state.top = value },
-  })
-  return state
-}
-
 describe('StreamWindowConductor', () => {
   let conductor: StreamWindowConductor
 
@@ -222,6 +208,28 @@ describe('StreamWindowConductor', () => {
 
     expect(open('t1')).toBe(false)
     expect(open('r2')).toBe(true)
+  })
+
+  it('freezes the window height for a row switch and restores it', () => {
+    mount(group(reasoning('r1'), true))
+    conductor = new StreamWindowConductor(document, window)
+    conductor.start()
+    const body = document.querySelector<HTMLElement>('[data-step-process-body]')
+    if (body === null) throw new Error('missing body')
+    Object.defineProperty(body, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({ height: 320 } as DOMRect),
+    })
+    document.querySelector<HTMLElement>('[data-chat-flow-key="r1"] [data-variant="think"]')?.setAttribute('data-state', 'ok')
+    const content = document.querySelector('[data-step-process-content]')
+    if (content === null) throw new Error('missing content')
+    content.insertAdjacentHTML('beforeend', tool('t1'))
+    conductor.sync()
+    expect(body.style.height).toBe('320px')
+    expect(body.style.maxHeight).toBe('320px')
+    conductor.stop()
+    expect(body.style.height).toBe('')
+    expect(body.style.maxHeight).toBe('')
   })
 
   it('waits for the old row to finish collapsing before opening the new one', async () => {
@@ -355,66 +363,6 @@ describe('StreamWindowConductor', () => {
     composer.focus()
     conductor.start()
     expect(document.activeElement).toBe(composer)
-  })
-
-  it('re-arms the group bottom after its own layout change', async () => {
-    conductor.start()
-    const body = document.querySelector<HTMLElement>('[data-step-process-body]')
-    if (body === null) throw new Error('missing group body')
-    let top = 0
-    Object.defineProperty(body, 'scrollHeight', { configurable: true, get: () => 500 })
-    Object.defineProperty(body, 'clientHeight', { configurable: true, get: () => 100 })
-    Object.defineProperty(body, 'scrollTop', {
-      configurable: true,
-      get: () => top,
-      set: (value: number) => { top = value },
-    })
-    conductor.sync()
-    await new Promise<void>(resolve => { setTimeout(resolve, FOLLOW_SETTLE_MS) })
-    expect(top).toBeCloseTo(400, 1)
-  })
-
-  it('pins the window bottom when content grows', async () => {
-    useFakeResizeObserver()
-    conductor.start()
-    const body = document.querySelector<HTMLElement>('[data-step-process-body]')
-    if (body === null) throw new Error('missing group body')
-    const scroll = setScrollMetrics(body)
-
-    conductor.sync()
-    await new Promise<void>(resolve => { setTimeout(resolve, FOLLOW_SETTLE_MS) })
-    expect(scroll.top).toBeCloseTo(400, 1)
-
-    scroll.floor = 700
-    FakeResizeObserver.last?.trigger()
-    await new Promise<void>(resolve => { setTimeout(resolve, FOLLOW_SETTLE_MS) })
-    expect(scroll.top).toBeCloseTo(700, 1)
-  })
-
-  it('stops following after a reader scroll and resumes at the bottom', async () => {
-    useFakeResizeObserver()
-    conductor.start()
-    const body = document.querySelector<HTMLElement>('[data-step-process-body]')
-    if (body === null) throw new Error('missing group body')
-    const scroll = setScrollMetrics(body)
-    conductor.sync()
-    await new Promise<void>(resolve => { setTimeout(resolve, FOLLOW_SETTLE_MS) })
-    expect(scroll.top).toBeCloseTo(400, 1)
-
-    body.dispatchEvent(new Event('wheel'))
-    scroll.top = 100
-    body.dispatchEvent(new Event('scroll'))
-    scroll.floor = 600
-    FakeResizeObserver.last?.trigger()
-    await new Promise<void>(resolve => { setTimeout(resolve, 40) })
-    expect(scroll.top).toBe(100)
-
-    scroll.top = 600
-    body.dispatchEvent(new Event('scroll'))
-    scroll.floor = 700
-    FakeResizeObserver.last?.trigger()
-    await new Promise<void>(resolve => { setTimeout(resolve, FOLLOW_SETTLE_MS) })
-    expect(scroll.top).toBeCloseTo(700, 1)
   })
 
   it('blurs a mouse-opened group header but keeps keyboard focus', async () => {

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { closeDisclosure, findDisclosureBody, isOuterHeld, openDisclosure } from '../src/client/disclosure-motion.ts'
+import { closeDisclosure, findDisclosureBody, openDisclosure } from '../src/client/disclosure-motion.ts'
 
 class FakeAnimation {
   private readonly listeners = new Map<string, () => void>()
@@ -55,16 +55,6 @@ describe('disclosure motion', () => {
     animation.fire('finish')
     expect(body.style.height).toBe('')
     expect(body.style.opacity).toBe('')
-  })
-
-  it('holds the outer scroll while a disclosure animates', () => {
-    const { row, animation } = fixture()
-    const outer = document.querySelector<HTMLElement>('[data-conversation-scroll]')
-    if (outer === null) throw new Error('missing outer')
-    openDisclosure(row, window, () => { row.setAttribute('aria-expanded', 'true') })
-    expect(isOuterHeld(outer)).toBe(true)
-    animation.fire('finish')
-    expect(isOuterHeld(outer)).toBe(false)
   })
 
   it('delays close until the shrink animation finishes', () => {

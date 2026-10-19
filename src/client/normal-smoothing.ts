@@ -1,5 +1,3 @@
-import { isOuterHeld } from './disclosure-motion.ts'
-
 const BLOCK_SELECTOR = 'p,pre,ul,ol,li,table,blockquote,h1,h2,h3,h4,h5,h6,hr'
 
 /**
@@ -69,7 +67,7 @@ export class NormalOutputSmoother {
   private pinOuter(): void {
     if (this.doc.querySelector('[data-chat-following-tail]') === null) return
     const outer = this.doc.querySelector<HTMLElement>('[data-conversation-scroll]')
-    if (outer === null || isOuterHeld(outer)) return
+    if (outer === null) return
     const floor = Math.max(0, outer.scrollHeight - outer.clientHeight)
     if (Math.abs(floor - outer.scrollTop) > 0.5) outer.scrollTop = floor
   }

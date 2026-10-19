@@ -1,5 +1,4 @@
-import { nextFollowTop } from './pacing.ts'
-import { DISCLOSURE_MOTION_MS, closeDisclosure, isOuterHeld, openDisclosure } from './disclosure-motion.ts'
+import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -13,7 +12,6 @@ const GROUP_CONTENT_SELECTOR = '[data-step-process-content]'
 const RUNNING_SELECTOR = '[data-chat-running]'
 const DISCLOSURE_SELECTOR = '[data-disclosure-row][aria-expanded]'
 const OPEN_FADE_MS = 180
-const SCROLL_KEYS = new Set(['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '])
 const ATTRIBUTE_FILTER = [
   'aria-expanded',
   'data-chat-following-tail',
@@ -48,12 +46,14 @@ export class StreamWindowConductor {
   private root: HTMLElement | null = null
   private activeGroup: HTMLElement | null = null
   private frame: number | null = null
-  private followFrame: number | null = null
   private followObserver: ResizeObserver | null = null
   private followBody: HTMLElement | null = null
   private followBodyOverflowX = ''
   private followBodyMaskImage = ''
   private followBodyMinHeight = ''
+  private followBodyHeight = ''
+  private followBodyMaxHeight = ''
+  private heightFrozen = false
   private fadeElement: HTMLElement | null = null
   private fadeGroup: HTMLElement | null = null
   private fadeGroupPosition = ''
@@ -65,9 +65,6 @@ export class StreamWindowConductor {
     opacity: string
     transition: string
   } | null = null
-  private followAtBottom = true
-  private userScrolling = false
-  private userScrollTimer: number | null = null
   private observer: MutationObserver | null = null
   /** Rows this plugin opened and is therefore allowed to close later. */
   private readonly autoKeys = new Set<string>()
@@ -119,10 +116,6 @@ export class StreamWindowConductor {
       this.win.cancelAnimationFrame(this.frame)
       this.frame = null
     }
-    if (this.followFrame !== null) {
-      this.win.cancelAnimationFrame(this.followFrame)
-      this.followFrame = null
-    }
     this.resetWindow()
     this.root = null
   }
@@ -172,12 +165,15 @@ export class StreamWindowConductor {
       .map(key => snapshot.elements.get(key))
       .filter((candidate): candidate is NonNullable<typeof candidate> =>
         candidate !== undefined && !candidate.open && candidate.element.isConnected)
+    const closes = decision.close
+      .map(key => snapshot.elements.get(key))
+      .filter((candidate): candidate is NonNullable<typeof candidate> =>
+        candidate !== undefined && candidate.open && candidate.element.isConnected)
+    if (opens.length > 0 && closes.length > 0) this.freezeWindowHeight()
     let closeAnimated = false
-    for (const key of decision.close) {
-      const candidate = snapshot.elements.get(key)
-      if (candidate === undefined || !candidate.open || !candidate.element.isConnected) continue
+    for (const candidate of closes) {
       if (this.closeRow(candidate.element)) closeAnimated = true
-      this.autoKeys.delete(key)
+      this.autoKeys.delete(candidate.key)
     }
     if (closeAnimated && opens.length > 0) {
       this.deferSync()
@@ -186,10 +182,6 @@ export class StreamWindowConductor {
         this.openRow(candidate.element)
         this.autoKeys.add(candidate.key)
       }
-    }
-    if (opens.length > 0 || decision.close.length > 0) {
-      if (this.followAtBottom) this.pinFollowNow()
-      this.scheduleFollow()
     }
   }
 
@@ -202,22 +194,15 @@ export class StreamWindowConductor {
     this.followBodyOverflowX = body.style.overflowX
     this.followBodyMaskImage = body.style.maskImage
     this.followBodyMinHeight = body.style.minHeight
+    this.followBodyHeight = body.style.height
+    this.followBodyMaxHeight = body.style.maxHeight
     // Keep the active window horizontally contained. Official edge fades are
     // suppressed here because they also fade the scrollbar on every follow tick.
     body.style.overflowX = 'hidden'
     body.style.maskImage = 'none'
     this.attachFade(group)
-    this.followAtBottom = body.getAttribute('data-scroll-down') === null || this.nearBottomElement(body)
-    body.addEventListener('scroll', this.onBodyScroll, { passive: true })
-    body.addEventListener('wheel', this.onUserGesture, { passive: true })
-    body.addEventListener('touchstart', this.onUserGesture, { passive: true })
-    body.addEventListener('pointerdown', this.onBodyPointerDown, { passive: true })
-    body.addEventListener('keydown', this.onKeyDown)
     if (typeof this.win.ResizeObserver === 'function') {
-      this.followObserver = new this.win.ResizeObserver(() => {
-        this.rememberHeight()
-        this.scheduleFollow()
-      })
+      this.followObserver = new this.win.ResizeObserver(() => { this.rememberHeight() })
       this.followObserver.observe(body)
       if (content !== null) this.followObserver.observe(content)
     }
@@ -227,16 +212,11 @@ export class StreamWindowConductor {
   private detachFollow(): void {
     const body = this.followBody
     if (body !== null) {
-      body.removeEventListener('scroll', this.onBodyScroll)
-      body.removeEventListener('wheel', this.onUserGesture)
-      body.removeEventListener('touchstart', this.onUserGesture)
-      body.removeEventListener('pointerdown', this.onBodyPointerDown)
-      body.removeEventListener('keydown', this.onKeyDown)
-    }
-    if (body !== null) {
       body.style.overflowX = this.followBodyOverflowX
       body.style.maskImage = this.followBodyMaskImage
       body.style.minHeight = this.followBodyMinHeight
+      body.style.height = this.followBodyHeight
+      body.style.maxHeight = this.followBodyMaxHeight
     }
     this.followObserver?.disconnect()
     this.followObserver = null
@@ -244,17 +224,10 @@ export class StreamWindowConductor {
     this.followBodyOverflowX = ''
     this.followBodyMaskImage = ''
     this.followBodyMinHeight = ''
+    this.followBodyHeight = ''
+    this.followBodyMaxHeight = ''
+    this.heightFrozen = false
     this.removeFade()
-    this.followAtBottom = true
-    this.userScrolling = false
-    if (this.userScrollTimer !== null) {
-      this.win.clearTimeout(this.userScrollTimer)
-      this.userScrollTimer = null
-    }
-    if (this.followFrame !== null) {
-      this.win.cancelAnimationFrame(this.followFrame)
-      this.followFrame = null
-    }
   }
 
   /** Pin the outer transcript on each height step while the window reveals. */
@@ -277,7 +250,7 @@ export class StreamWindowConductor {
   /** Keep the outer transcript at its floor without waiting a frame for Chat's follow. */
   private pinOuterNow(group: HTMLElement): void {
     const outer = group.closest<HTMLElement>('[data-conversation-scroll]')
-    if (outer === null || isOuterHeld(outer) || this.doc.querySelector('[data-chat-following-tail]') === null) return
+    if (outer === null || this.doc.querySelector('[data-chat-following-tail]') === null) return
     const floor = Math.max(0, outer.scrollHeight - outer.clientHeight)
     if (Math.abs(floor - outer.scrollTop) > 0.5) outer.scrollTop = floor
   }
@@ -305,12 +278,17 @@ export class StreamWindowConductor {
     this.fadeGroupPosition = ''
   }
 
-  /** Settle a row switch on the floor without a transient half-scrolled frame. */
-  private pinFollowNow(): void {
+  /** Freeze the window height for a row-to-row transition so outer follow has no floor change. */
+  private freezeWindowHeight(): void {
     const body = this.followBody
-    if (body === null) return
-    const floor = Math.max(0, body.scrollHeight - body.clientHeight)
-    if (Math.abs(floor - body.scrollTop) > 0.5) body.scrollTop = floor
+    if (body === null || this.heightFrozen) return
+    const height = body.getBoundingClientRect().height
+    if (height <= 0) return
+    this.heightFrozen = true
+    const fixed = `${Math.ceil(height)}px`
+    body.style.height = fixed
+    body.style.maxHeight = fixed
+    body.style.minHeight = fixed
   }
 
   /** Keep the active window from shrinking below the height it has already shown. */
@@ -320,61 +298,6 @@ export class StreamWindowConductor {
     const height = body.getBoundingClientRect().height
     const held = Number.parseFloat(body.style.minHeight) || 0
     if (height > held) body.style.minHeight = `${height}px`
-  }
-
-  /** Coalesce content growth into one eased bottom step per frame. */
-  private scheduleFollow(): void {
-    if (this.followFrame !== null || this.followBody === null) return
-    this.followFrame = this.win.requestAnimationFrame(() => {
-      this.followFrame = null
-      this.followTick()
-    })
-  }
-
-  private followTick(): void {
-    if (!this.followAtBottom) return
-    const body = this.followBody
-    if (body === null || !body.isConnected) return
-    const floor = Math.max(0, body.scrollHeight - body.clientHeight)
-    const next = nextFollowTop(body.scrollTop, floor)
-    if (next !== body.scrollTop) body.scrollTop = next
-    if (floor - body.scrollTop > 0.25) this.scheduleFollow()
-  }
-
-  private readonly onBodyScroll = (): void => {
-    const body = this.followBody
-    if (body === null) return
-    if (!this.userScrolling && this.followAtBottom) return
-    this.followAtBottom = this.nearBottomElement(body)
-  }
-
-  private readonly onBodyPointerDown = (event: PointerEvent): void => {
-    if (event.target === this.followBody) this.onUserGesture()
-  }
-
-  private readonly onKeyDown = (event: KeyboardEvent): void => {
-    if (!event.defaultPrevented && SCROLL_KEYS.has(event.key)) this.onUserGesture()
-  }
-
-  private readonly onUserGesture = (): void => {
-    this.followAtBottom = false
-    this.userScrolling = true
-    if (this.userScrollTimer !== null) this.win.clearTimeout(this.userScrollTimer)
-    this.userScrollTimer = this.win.setTimeout(() => {
-      this.userScrollTimer = null
-      this.userScrolling = false
-      const body = this.followBody
-      if (body !== null && this.nearBottomElement(body)) this.followAtBottom = true
-    }, 240)
-  }
-
-  private nearBottom(group: HTMLElement): boolean {
-    const body = group.querySelector<HTMLElement>('[data-step-process-body]')
-    return body !== null && this.nearBottomElement(body)
-  }
-
-  private nearBottomElement(body: HTMLElement): boolean {
-    return body.scrollHeight - body.clientHeight - body.scrollTop <= 2
   }
 
   /** Whether this is the newest Turn, so a stale group cannot capture a new turn. */
@@ -605,7 +528,6 @@ export class StreamWindowConductor {
    * kept on the floor by its own guard while the group appears at its real size.
    */
   private autoOpen(header: HTMLButtonElement, group: HTMLElement, key: string): void {
-    this.followAtBottom = true
     const body = group.querySelector<HTMLElement>('[data-step-process-body]')
     const reduced = typeof this.win.matchMedia === 'function'
       && this.win.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -613,8 +535,7 @@ export class StreamWindowConductor {
       this.click(header)
       this.autoGroups.add(key)
       this.pinOuterNow(group)
-      this.scheduleFollow()
-      return
+        return
     }
 
     this.cancelOpenAnimation()
@@ -632,7 +553,6 @@ export class StreamWindowConductor {
     this.click(header)
     this.autoGroups.add(key)
     this.pinOuterNow(group)
-    this.scheduleFollow()
     animation.frame = this.win.requestAnimationFrame(() => {
       animation.frame = null
       body.style.opacity = '1'
@@ -648,7 +568,6 @@ export class StreamWindowConductor {
     animation.body.style.transition = animation.transition
     this.openAnimation = null
     this.stopOuterGuard()
-    this.scheduleFollow()
   }
 
   private cancelOpenAnimation(): void {

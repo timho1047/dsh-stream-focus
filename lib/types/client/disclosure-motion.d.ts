@@ -35,5 +35,3 @@ export declare function closeDisclosure(element: HTMLElement, win: Window & type
  * @returns the mounted body, if any.
  */
 export declare function findDisclosureBody(element: HTMLElement): HTMLElement | null;
-/** Whether a disclosure transition is currently holding an outer scroll container. */
-export declare function isOuterHeld(outer: HTMLElement): boolean;

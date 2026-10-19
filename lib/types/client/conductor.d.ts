@@ -12,20 +12,19 @@ export declare class StreamWindowConductor {
     private root;
     private activeGroup;
     private frame;
-    private followFrame;
     private followObserver;
     private followBody;
     private followBodyOverflowX;
     private followBodyMaskImage;
     private followBodyMinHeight;
+    private followBodyHeight;
+    private followBodyMaxHeight;
+    private heightFrozen;
     private fadeElement;
     private fadeGroup;
     private fadeGroupPosition;
     private outerGuard;
     private openAnimation;
-    private followAtBottom;
-    private userScrolling;
-    private userScrollTimer;
     private observer;
     /** Rows this plugin opened and is therefore allowed to close later. */
     private readonly autoKeys;
@@ -61,19 +60,10 @@ export declare class StreamWindowConductor {
     /** Fade the lowest content edge so new lines enter instead of popping. */
     private attachFade;
     private removeFade;
-    /** Settle a row switch on the floor without a transient half-scrolled frame. */
-    private pinFollowNow;
+    /** Freeze the window height for a row-to-row transition so outer follow has no floor change. */
+    private freezeWindowHeight;
     /** Keep the active window from shrinking below the height it has already shown. */
     private rememberHeight;
-    /** Coalesce content growth into one eased bottom step per frame. */
-    private scheduleFollow;
-    private followTick;
-    private readonly onBodyScroll;
-    private readonly onBodyPointerDown;
-    private readonly onKeyDown;
-    private readonly onUserGesture;
-    private nearBottom;
-    private nearBottomElement;
     /** Whether this is the newest Turn, so a stale group cannot capture a new turn. */
     private isLatestTurn;
     private schedule;
