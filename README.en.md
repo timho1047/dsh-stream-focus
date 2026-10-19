@@ -32,6 +32,16 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 - If the reader scrolls the outer transcript away from the bottom, the plugin does not scroll it for them. Scrolling up inside the window pauses bottom-following; returning to the window bottom resumes it.
 - When a Turn ends or the plugin is removed, the official presentation is restored.
 
+## Demos
+
+Compressed GIF previews of the four modes; character reveal and scrolling are smoother in the live UI.
+
+| Compact | Standard |
+|---|---|
+| ![Compact](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.gif) | ![Standard](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.gif) |
+| **Detailed** | **Verbose** |
+| ![Detailed](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.gif) | ![Verbose](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.gif) |
+
 ## Scope
 
 - Pure client-side presentation enhancement: writes no Session data, makes no network requests, touches no credentials, and registers no model tools.

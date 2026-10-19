@@ -32,6 +32,16 @@
 - 外层会话离开底部时不主动滚动；在窗口内上滚会暂停贴底，滚回窗口底部后恢复跟随。
 - 一轮结束或卸载插件后，恢复官方展示。
 
+## 演示
+
+以下为四档模式的压缩 GIF 预览，实际界面中的逐字渲染与滚动更平滑。
+
+| Compact | Standard |
+|---|---|
+| ![Compact](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.gif) | ![Standard](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.gif) |
+| **Detailed** | **Verbose** |
+| ![Detailed](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.gif) | ![Verbose](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.gif) |
+
 ## 边界
 
 - 纯客户端展示增强：不写 Session、不发网络请求、不接触凭据、不注册模型工具。
