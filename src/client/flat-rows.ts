@@ -1,5 +1,4 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
-import { JumpSmoother } from './jump-smoother.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -45,7 +44,6 @@ export class FlatRowConductor {
   private outerIntent = false
   private outerGestureAt = 0
   private outerCheckTimer: number | null = null
-  private jumpSmoother: JumpSmoother | null = null
 
   /**
    * @param mode - Detailed or Verbose.
@@ -162,9 +160,6 @@ export class FlatRowConductor {
     this.outer = outer
     this.outerIntent = this.doc.querySelector('[data-chat-following-tail]') !== null || this.nearBottom(outer)
     outer.addEventListener('scroll', this.onOuterScroll, { passive: true })
-    this.jumpSmoother = new JumpSmoother(this.win)
-    const content = outer.querySelector<HTMLElement>('[data-chat-flow]') ?? outer
-    this.jumpSmoother.observe(outer, content)
     outer.addEventListener('scrollend', this.onOuterScrollEnd)
     for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
       outer.addEventListener(type, this.onOuterGesture, { passive: true, capture: true })
@@ -180,8 +175,6 @@ export class FlatRowConductor {
         outer.removeEventListener(type, this.onOuterGesture, true)
       }
     }
-    this.jumpSmoother?.stop()
-    this.jumpSmoother = null
     this.outer = null
     this.outerIntent = false
     if (this.outerCheckTimer !== null) {

@@ -4,20 +4,6 @@
 
 All notable changes are documented here. Each release has Chinese first, English below. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### 中文
-
-#### 新增
-
-- 新增换行跳变的 transform 视觉补偿：单次 8–80px 上跳最多抵消 24px，再缓动归零，不写 `scrollTop`；用户手势立即归零。
-
-### English
-
-#### Added
-
-- Added visual transform compensation for line-height jumps: a single 8–80px upward jump is offset by up to 24px and eased back without writing `scrollTop`; reader gestures reset it immediately.
-
 ## [0.1.2] - 2026-10-19
 
 ### 中文
@@ -128,7 +114,6 @@ All notable changes are documented here. Each release has Chinese first, English
 - Zero settings, no Session writes, no network requests, and no model tools.
 - npm package, MIT license, and GitHub Pages project page.
 
-[Unreleased]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.2...HEAD
 [0.1.2]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/timho1047/dsh-stream-focus/releases/tag/v0.1.0

@@ -1,6 +1,5 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import { HighlightFade } from './highlight-fade.ts'
-import { JumpSmoother } from './jump-smoother.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -72,7 +71,6 @@ export class StreamWindowConductor {
   private followIntent = false
   private contentRepairTimer: number | null = null
   private textFade: HighlightFade | null = null
-  private jumpSmoother: JumpSmoother | null = null
   private outerGuard: { observer: ResizeObserver; group: HTMLElement } | null = null
   private openAnimation: {
     body: HTMLElement
@@ -222,8 +220,6 @@ export class StreamWindowConductor {
     this.attachProgress(group, body)
     this.textFade = new HighlightFade(this.doc, this.win, 'dsh-stream-process')
     this.textFade.observe(content ?? group)
-    this.jumpSmoother = new JumpSmoother(this.win)
-    if (content !== null) this.jumpSmoother.observe(body, content)
     body.addEventListener('scroll', this.onProgressScroll, { passive: true })
     body.addEventListener('scrollend', this.onFollowSettled)
     body.addEventListener('wheel', this.onReaderGesture, { passive: true })
@@ -269,8 +265,6 @@ export class StreamWindowConductor {
     this.followBodyMaxHeight = ''
     this.heightFrozen = false
     this.followIntent = false
-    this.jumpSmoother?.stop()
-    this.jumpSmoother = null
     if (this.contentRepairTimer !== null) {
       this.win.clearTimeout(this.contentRepairTimer)
       this.contentRepairTimer = null
