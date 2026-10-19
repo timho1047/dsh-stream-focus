@@ -2,7 +2,7 @@
 
 Enhances the running thinking/tool display across all four built-in Work details modes.
 
-English | [中文](README.md) | [Landing page](https://timho1047.github.io/dsh-stream-focus/)
+English | [中文](README.md) | [Landing page](https://timho1047.github.io/dsh-stream-focus/) | [Changelog](CHANGELOG.md)
 
 ## Behavior by mode
 

@@ -35,7 +35,8 @@
     "icon.svg",
     "README.md",
     "README.en.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build:host": "tsc -p tsconfig.json",
