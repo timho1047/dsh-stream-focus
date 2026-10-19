@@ -34,7 +34,7 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 
 ## Demos
 
-Compressed GIF previews of the four modes; character reveal and scrolling are smoother in the live UI.
+12fps compressed GIF previews of the four modes; character reveal and scrolling are smoother in the live UI.
 
 | Compact | Standard |
 |---|---|
