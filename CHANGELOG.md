@@ -4,6 +4,32 @@
 
 All notable changes are documented here. Each release has Chinese first, English below. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 中文
+
+#### 新增
+
+- 思考正文与普通正文新增 CSS Custom Highlight 字符级淡入，使用 Range 标记字素，不插入 span、不修改 Markdown DOM。
+- 思考揭示速度按实际帧时间归一化，60Hz 与 120Hz 下保持接近的追平时间。
+
+#### 变更
+
+- 活动窗口的自定义进度线改用 rAF 时间常数缓动，避免高频换行时反复重置 CSS transition。
+- 重新录制四档演示，完整保留居中输入框和开场思考，并在模型完成后停止。
+
+### English
+
+#### Added
+
+- Character-level fading for reasoning and normal prose through the CSS Custom Highlight API, using grapheme ranges without DOM spans or Markdown changes.
+- Reasoning reveal speed is normalized by elapsed frame time, keeping catch-up latency consistent at 60Hz and 120Hz.
+
+#### Changed
+
+- The active-window progress line now eases with an rAF time constant instead of repeatedly restarting a CSS transition on every line change.
+- Re-recorded all four demos with the centered composer and full opening reasoning, stopping when the model finishes.
+
 ## [0.1.1] - 2026-10-19
 
 ### 中文
@@ -78,5 +104,6 @@ All notable changes are documented here. Each release has Chinese first, English
 - Zero settings, no Session writes, no network requests, and no model tools.
 - npm package, MIT license, and GitHub Pages project page.
 
+[Unreleased]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.1...HEAD
 [0.1.1]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/timho1047/dsh-stream-focus/releases/tag/v0.1.0

@@ -92,3 +92,4 @@ pnpm run verify   # typecheck + build + 53 个测试
 - `src/client/highlight-fade.ts`：CSS Custom Highlight 字符级淡入。
 - `src/client/pacing.ts`：字符揭示与滚动缓动的纯数学。
 - `tests/`：模式策略、状态机、节奏计算、jsdom 交互测试。
+- `promo/`：宣传片 Remotion 源码、最终 MP4、B站封面与发布文案，见 [promo/README.md](promo/README.md)。
