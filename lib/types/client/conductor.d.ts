@@ -28,6 +28,10 @@ export declare class StreamWindowConductor {
     private progressTrack;
     private progressThumb;
     private progressFrame;
+    private progressHeight;
+    private progressTop;
+    private progressTime;
+    private progressInitialized;
     private textFade;
     private outerGuard;
     private openAnimation;
