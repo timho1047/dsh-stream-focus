@@ -68,6 +68,8 @@ export class StreamWindowConductor {
   private progressTime: number | null = null
   private progressInitialized = false
   private lastContentGrowth = 0
+  private followIntent = false
+  private contentRepairTimer: number | null = null
   private textFade: HighlightFade | null = null
   private outerGuard: { observer: ResizeObserver; group: HTMLElement } | null = null
   private openAnimation: {
@@ -229,6 +231,7 @@ export class StreamWindowConductor {
         this.lastContentGrowth = this.win.Date.now()
         this.rememberHeight()
         this.scheduleProgress()
+        this.scheduleContentRepair()
       })
       this.followObserver.observe(body)
       if (content !== null) this.followObserver.observe(content)
@@ -261,6 +264,11 @@ export class StreamWindowConductor {
     this.followBodyHeight = ''
     this.followBodyMaxHeight = ''
     this.heightFrozen = false
+    this.followIntent = false
+    if (this.contentRepairTimer !== null) {
+      this.win.clearTimeout(this.contentRepairTimer)
+      this.contentRepairTimer = null
+    }
     if (this.followRepairTimer !== null) {
       this.win.clearTimeout(this.followRepairTimer)
       this.followRepairTimer = null
@@ -318,7 +326,32 @@ export class StreamWindowConductor {
 
   private readonly onReaderGesture = (): void => { this.lastUserGesture = this.win.Date.now() }
 
-  private readonly onProgressScroll = (): void => { this.scheduleProgress() }
+  private readonly onProgressScroll = (): void => {
+    const body = this.followBody
+    if (body !== null) {
+      if (this.nearBottomElement(body)) this.followIntent = true
+      else if (this.win.Date.now() - this.lastUserGesture < 1200) this.followIntent = false
+    }
+    this.scheduleProgress()
+  }
+
+  /** A delayed, one-shot fallback for growth where no reliable scrollend arrives. */
+  private scheduleContentRepair(): void {
+    if (!this.followIntent || this.contentRepairTimer !== null) return
+    this.contentRepairTimer = this.win.setTimeout(() => {
+      this.contentRepairTimer = null
+      const body = this.followBody
+      if (body === null || !body.isConnected || !this.followIntent) return
+      if (this.win.Date.now() - this.lastUserGesture < 1000) return
+      const floor = Math.max(0, body.scrollHeight - body.clientHeight)
+      if (floor - body.scrollTop <= 1) return
+      body.scrollTop = floor
+      body.dispatchEvent(new Event('scroll'))
+      this.win.requestAnimationFrame(() => {
+        if (body.isConnected) body.dispatchEvent(new Event('scrollend'))
+      })
+    }, 350)
+  }
 
   /**
    * Official smooth follow targets the floor measured when growth starts. If content
@@ -408,6 +441,7 @@ export class StreamWindowConductor {
     const contentHeight = body.scrollHeight
     const clientHeight = body.clientHeight
     if (trackHeight <= 0) return
+    if (this.nearBottomElement(body)) this.followIntent = true
     if (contentHeight <= clientHeight + 1) {
       track.style.opacity = '0'
       this.progressTime = null

@@ -20,7 +20,7 @@ All notable changes are documented here. Each release has Chinese first, English
 
 #### 修复
 
-- 当内容在原生 smooth follow 结束前继续增长时，在 `scrollend` 后重新贴底并重新激活官方 follow，避免 follow intent 被误判为读者滚动。
+- 当内容在原生 smooth follow 结束前继续增长时，在 `scrollend` 后以及内容增长后的延迟窗口内做单次重挂，避免 follow intent 被误判为读者滚动，并覆盖浏览器不触发 `scrollend` 的情况。
 
 ### English
 
@@ -36,7 +36,7 @@ All notable changes are documented here. Each release has Chinese first, English
 
 #### Fixed
 
-- When content grows again before native smooth follow ends, re-anchor to the floor after `scrollend` and re-sample follow intent, so content growth is not mistaken for reader scrolling.
+- When content grows again before native smooth follow ends, re-anchor once after `scrollend` and after a short growth-settle window, covering browsers that do not emit a usable `scrollend`.
 
 ## [0.1.1] - 2026-10-19
 

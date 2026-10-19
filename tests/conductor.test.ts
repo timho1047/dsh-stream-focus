@@ -257,6 +257,31 @@ describe('StreamWindowConductor', () => {
     expect(scrollTop).toBe(380)
   })
 
+  it('re-anchors follow after delayed growth even without scrollend', async () => {
+    useFakeResizeObserver()
+    mount(group(reasoning('r1'), true))
+    conductor = new StreamWindowConductor(document, window)
+    conductor.start()
+    const body = document.querySelector<HTMLElement>('[data-step-process-body]')
+    if (body === null) throw new Error('missing body')
+
+    let scrollTop = 300
+    let scrollHeight = 600
+    Object.defineProperty(body, 'clientHeight', { configurable: true, value: 300 })
+    Object.defineProperty(body, 'scrollHeight', { configurable: true, get: () => scrollHeight })
+    Object.defineProperty(body, 'scrollTop', {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => { scrollTop = value },
+    })
+
+    body.dispatchEvent(new Event('scroll'))
+    scrollHeight = 680
+    FakeResizeObserver.last?.trigger()
+    await new Promise<void>(resolve => { setTimeout(resolve, 420) })
+    expect(scrollTop).toBe(380)
+  })
+
   it('waits for the old row to finish collapsing before opening the new one', async () => {
     mount(group(reasoning('r1'), true))
     conductor = new StreamWindowConductor(document, window)

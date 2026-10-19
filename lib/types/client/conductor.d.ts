@@ -33,6 +33,8 @@ export declare class StreamWindowConductor {
     private progressTime;
     private progressInitialized;
     private lastContentGrowth;
+    private followIntent;
+    private contentRepairTimer;
     private textFade;
     private outerGuard;
     private openAnimation;
@@ -73,6 +75,8 @@ export declare class StreamWindowConductor {
     private removeFade;
     private readonly onReaderGesture;
     private readonly onProgressScroll;
+    /** A delayed, one-shot fallback for growth where no reliable scrollend arrives. */
+    private scheduleContentRepair;
     /**
      * Official smooth follow targets the floor measured when growth starts. If content
      * grows again before scrollend, settle can release follow intent even though the
