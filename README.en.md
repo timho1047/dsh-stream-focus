@@ -29,7 +29,7 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 - When thinking ends and tools begin, the previous Think row closes first, then the current tool row opens. The window height is frozen before the switch, so the outer transcript does not change height and content above neither drops nor gets pushed back. Rows use a ~180ms height + opacity transition. Parallel tools open together, including the standalone Bash row (`data-sample="bash"`).
 - When the next thinking step starts, the previous batch of automatic thinking/tool windows closes, leaving only the new Think window.
 - Rows opened manually are never auto-closed; groups or rows closed manually are never forced open.
-- If the reader scrolls the outer transcript away from the bottom, the plugin does not scroll it for them. Inner window scrolling and bottom-following remain owned by the official process scroll.
+- If the reader scrolls the outer transcript away from the bottom, the plugin does not scroll it for them. Inner window scrolling and bottom-following remain owned by the official process scroll. When there is no reader gesture and official follow is lost after a transition, the plugin performs one repair pass: it returns the window to its floor and dispatches `scrollend` to re-arm follow.
 - When a Turn ends or the plugin is removed, the official presentation is restored.
 
 ## Demos

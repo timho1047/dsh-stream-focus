@@ -54,6 +54,8 @@ export class StreamWindowConductor {
   private followBodyHeight = ''
   private followBodyMaxHeight = ''
   private heightFrozen = false
+  private lastUserGesture = 0
+  private followRepairTimer: number | null = null
   private fadeElement: HTMLElement | null = null
   private fadeGroup: HTMLElement | null = null
   private fadeGroupPosition = ''
@@ -169,6 +171,7 @@ export class StreamWindowConductor {
       .map(key => snapshot.elements.get(key))
       .filter((candidate): candidate is NonNullable<typeof candidate> =>
         candidate !== undefined && candidate.open && candidate.element.isConnected)
+    const wasAtBottom = this.followBody !== null && this.nearBottomElement(this.followBody)
     if (opens.length > 0 && closes.length > 0) this.freezeWindowHeight()
     let closeAnimated = false
     for (const candidate of closes) {
@@ -183,6 +186,7 @@ export class StreamWindowConductor {
         this.autoKeys.add(candidate.key)
       }
     }
+    if (wasAtBottom && (opens.length > 0 || closes.length > 0)) this.scheduleFollowRepair()
   }
 
   /** Bind bottom following and its reader-override signals to the active window. */
@@ -201,6 +205,10 @@ export class StreamWindowConductor {
     body.style.overflowX = 'hidden'
     body.style.maskImage = 'none'
     this.attachFade(group)
+    body.addEventListener('wheel', this.onReaderGesture, { passive: true })
+    body.addEventListener('touchstart', this.onReaderGesture, { passive: true })
+    body.addEventListener('pointerdown', this.onReaderGesture, { passive: true })
+    body.addEventListener('keydown', this.onReaderGesture)
     if (typeof this.win.ResizeObserver === 'function') {
       this.followObserver = new this.win.ResizeObserver(() => { this.rememberHeight() })
       this.followObserver.observe(body)
@@ -212,6 +220,10 @@ export class StreamWindowConductor {
   private detachFollow(): void {
     const body = this.followBody
     if (body !== null) {
+      body.removeEventListener('wheel', this.onReaderGesture)
+      body.removeEventListener('touchstart', this.onReaderGesture)
+      body.removeEventListener('pointerdown', this.onReaderGesture)
+      body.removeEventListener('keydown', this.onReaderGesture)
       body.style.overflowX = this.followBodyOverflowX
       body.style.maskImage = this.followBodyMaskImage
       body.style.minHeight = this.followBodyMinHeight
@@ -227,6 +239,10 @@ export class StreamWindowConductor {
     this.followBodyHeight = ''
     this.followBodyMaxHeight = ''
     this.heightFrozen = false
+    if (this.followRepairTimer !== null) {
+      this.win.clearTimeout(this.followRepairTimer)
+      this.followRepairTimer = null
+    }
     this.removeFade()
   }
 
@@ -276,6 +292,32 @@ export class StreamWindowConductor {
     if (this.fadeGroup !== null) this.fadeGroup.style.position = this.fadeGroupPosition
     this.fadeGroup = null
     this.fadeGroupPosition = ''
+  }
+
+  private readonly onReaderGesture = (): void => { this.lastUserGesture = this.win.Date.now() }
+
+  private nearBottomElement(body: HTMLElement): boolean {
+    return body.scrollHeight - body.clientHeight - body.scrollTop <= 2
+  }
+
+  /**
+   * Re-arm official follow after a row transition when the reader never touched
+   * the window and it was following before the transition. This is a one-shot
+   * repair, not a second follow loop.
+   */
+  private scheduleFollowRepair(): void {
+    if (this.followRepairTimer !== null) this.win.clearTimeout(this.followRepairTimer)
+    this.followRepairTimer = this.win.setTimeout(() => {
+      this.followRepairTimer = null
+      const body = this.followBody
+      if (body === null || !body.isConnected) return
+      if (this.win.Date.now() - this.lastUserGesture < 1000) return
+      if (this.nearBottomElement(body)) return
+      body.scrollTop = Math.max(0, body.scrollHeight - body.clientHeight)
+      this.win.requestAnimationFrame(() => {
+        body.dispatchEvent(new Event('scrollend'))
+      })
+    }, DISCLOSURE_MOTION_MS + 420)
   }
 
   /** Freeze the window height for a row-to-row transition so outer follow has no floor change. */

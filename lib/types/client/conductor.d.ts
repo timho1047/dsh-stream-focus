@@ -20,6 +20,8 @@ export declare class StreamWindowConductor {
     private followBodyHeight;
     private followBodyMaxHeight;
     private heightFrozen;
+    private lastUserGesture;
+    private followRepairTimer;
     private fadeElement;
     private fadeGroup;
     private fadeGroupPosition;
@@ -60,6 +62,14 @@ export declare class StreamWindowConductor {
     /** Fade the lowest content edge so new lines enter instead of popping. */
     private attachFade;
     private removeFade;
+    private readonly onReaderGesture;
+    private nearBottomElement;
+    /**
+     * Re-arm official follow after a row transition when the reader never touched
+     * the window and it was following before the transition. This is a one-shot
+     * repair, not a second follow loop.
+     */
+    private scheduleFollowRepair;
     /** Freeze the window height for a row-to-row transition so outer follow has no floor change. */
     private freezeWindowHeight;
     /** Keep the active window from shrinking below the height it has already shown. */
