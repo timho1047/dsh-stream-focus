@@ -17,6 +17,7 @@ All modes share: character-paced reasoning, line-level fading plus character hig
 - While reasoning streams, the current Think row opens automatically, and new tail graphemes fade in through the CSS Custom Highlight API without DOM spans. Reveal speed is normalized by elapsed time for consistent 60Hz/120Hz behavior. The official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
 - Reasoning is revealed smoothly by animation frame, avoiding chunked character pops and whole-block jumps. Inner scrolling stays with the official process scroll.
 - A process group appears at its real height with a short ~180ms opacity fade instead of collapsing and expanding again.
+- A single 8–80px upward line jump is visually offset by up to 24px with `translate`, then eased back without writing `scrollTop` or moving the scrollbar.
 - The active window disables horizontal overflow and the official top/bottom edge masks, avoiding intermittent horizontal scrollbars and a partially faded vertical scrollbar. The native thumb is hidden in the active window and replaced with a 3px progress line whose height transitions smoothly, so it no longer flickers as content grows by line. 
 - The active window keeps the tallest height it has shown; switching from thinking to tools only scrolls its inner content, so the outer transcript never rolls back because the window became shorter.
 - A light 16px fade at the window bottom makes new lines enter softly rather than snapping in.
@@ -64,6 +65,7 @@ Refresh the browser page after installation. All four Work details modes are enh
 ## Known limitations
 
 - Character fading uses the CSS Custom Highlight API; browsers without it fall back to normal text rendering.
+- The line-jump compensation is visual only; at high TPS the newest text may trail by up to 24px while the actual scroll position remains official and discrete.
 - Depends on ui-chat semantic DOM (`data-chat-group-key`, `data-variant="think"`, `data-tool`, `data-sample="bash"`, `data-disclosure-row`, `data-chat-running`, `data-chat-following-tail`). If upstream renames them, the plugin silently stops applying until updated.
 - Only Compact / Standard have an official process group; their window height uses the official `min(400px, 50vh)`. Detailed / Verbose keep the official flat structure without an added group cap.
 - Automatic row switches use a ~180ms height + opacity transition; manual row clicks keep the official instant toggle. A process group’s first appearance uses a 180ms opacity fade.
@@ -80,7 +82,7 @@ Thanks also to [dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-str
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 56 tests
+pnpm run verify   # typecheck + build + 57 tests
 ```
 
 - `src/client/decision.ts`: pure state machine deciding which rows the current window should own.
@@ -90,5 +92,6 @@ pnpm run verify   # typecheck + build + 56 tests
 - `src/client/paced-body.tsx`: reasoning Body Slot replacement that paces text through the official Content Factory.
 - `src/client/normal-smoothing.ts`: normal-prose line fading, character highlight fading, and new-block fade-in.
 - `src/client/highlight-fade.ts`: CSS Custom Highlight character fade.
+- `src/client/jump-smoother.ts`: visual transform compensation for line-height jumps.
 - `src/client/pacing.ts`: pure math for character reveal and scroll easing.
 - `tests/`: mode policy, state machine, pacing math, and jsdom interaction tests.

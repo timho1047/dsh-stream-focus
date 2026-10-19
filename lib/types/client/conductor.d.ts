@@ -36,6 +36,7 @@ export declare class StreamWindowConductor {
     private followIntent;
     private contentRepairTimer;
     private textFade;
+    private jumpSmoother;
     private outerGuard;
     private openAnimation;
     private observer;

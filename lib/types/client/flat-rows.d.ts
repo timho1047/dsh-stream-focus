@@ -22,6 +22,7 @@ export declare class FlatRowConductor {
     private outerIntent;
     private outerGestureAt;
     private outerCheckTimer;
+    private jumpSmoother;
     /**
      * @param mode - Detailed or Verbose.
      * @param doc - document owning the transcript.
