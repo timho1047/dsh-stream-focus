@@ -57,36 +57,6 @@ dsh plugin --profile web add /path/to/dsh-stream-focus
 - 字符平滑会带来约 100ms 的视觉延迟；流式期间显示的是思考原文的可见前缀，结束后立即切回完整文本。复制正在流式输出的内容时会得到当前可见前缀。
 - 普通助手正文没有官方 Content Factory，因此采用行级底部渐隐，而不是逐字 pacing；真正的逐字平滑需要官方增加一个正文 Factory。
 
-## 发布
-
-发布流程使用 tag 触发 GitHub Actions：
-
-1. 本地验证并提交构建产物：
-   ```bash
-   pnpm run verify
-   git add -A
-   git commit -m "chore: release vX.Y.Z"
-   ```
-2. 首次发布需要手动执行一次：
-   ```bash
-   npm publish --access public
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
-   workflow 会检测到该版本已发布，跳过 npm publish，只创建 GitHub Release。随后在 npmjs.com 的包设置中添加 Trusted Publisher：
-   - Owner: `timho1047`
-   - Repository: `dsh-stream-focus`
-   - Workflow: `release.yml`
-   - Permission: `Publish`（不要只选 `Stage publish`）
-3. 后续发布：
-   ```bash
-   npm version patch   # 或 minor / major
-   git push --follow-tags
-   ```
-   推送 `v*` tag 后，`release.yml` 会用 OIDC 发布到 npm 并创建 GitHub Release，不需要 `NPM_TOKEN`。
-
-CI 不运行完整的 `pnpm install`/测试，因为本地 devDependencies 链接到 DSH 源码；发布前必须在本地跑 `pnpm run verify` 并提交最新的 `lib/`。
-
 ## 开发
 
 ```bash
