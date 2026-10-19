@@ -55,6 +55,10 @@ dsh plugin --profile web add dsh-stream-focus
 - 字符平滑会带来约 100ms 的视觉延迟；流式期间显示的是思考原文的可见前缀，结束后立即切回完整文本。复制正在流式输出的内容时会得到当前可见前缀。
 - 普通助手正文没有官方 Content Factory，因此采用行级底部渐隐，而不是逐字 pacing；真正的逐字平滑需要官方增加一个正文 Factory。
 
+## 致谢
+
+本插件的开发受到 [dsh-streamfold](https://github.com/rezon-aki/dsh-streamfold) 的启发。感谢 [@rezon-aki](https://github.com/rezon-aki) 的探索与实现。
+
 ## 开发
 
 ```bash

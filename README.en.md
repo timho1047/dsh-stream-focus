@@ -55,6 +55,10 @@ Refresh the browser page after installation. All four Work details modes are enh
 - Character pacing adds roughly 100ms of visual latency. While streaming, the visible prefix is shown; the complete text is rendered as soon as the block settles. Copying during streaming copies the currently visible prefix.
 - Normal assistant prose has no official Content Factory, so it uses line-level bottom fading rather than per-character pacing. True per-character pacing requires an official prose Factory.
 
+## Acknowledgements
+
+This plugin was inspired by [dsh-streamfold](https://github.com/rezon-aki/dsh-streamfold). Thanks to [@rezon-aki](https://github.com/rezon-aki) for the exploration and implementation.
+
 ## Development
 
 ```bash
