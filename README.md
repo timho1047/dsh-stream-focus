@@ -44,6 +44,8 @@
 
 [打开全部演示](https://timho1047.github.io/dsh-stream-focus/)
 
+录制和更新流程见 [演示视频制作流程](docs/demo-production.md)。
+
 ## 边界
 
 - 纯客户端展示增强：不写 Session、不发网络请求、不接触凭据、不注册模型工具。

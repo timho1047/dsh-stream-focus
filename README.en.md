@@ -44,6 +44,8 @@ All modes share: character-paced reasoning, line-level fading plus character hig
 
 [Open all demos](https://timho1047.github.io/dsh-stream-focus/)
 
+See the [demo production guide](docs/demo-production.md) for recording and updating the videos.
+
 ## Scope
 
 - Pure client-side presentation enhancement: writes no Session data, makes no network requests, touches no credentials, and registers no model tools.
