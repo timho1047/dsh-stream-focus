@@ -41,14 +41,8 @@ All modes share: character-paced reasoning, line-level fading for normal assista
 
 ## Install
 
-Install this directory from the plugin panel, or:
-
 ```bash
-# Local checkout
-dsh plugin --profile web add /path/to/dsh-stream-focus
-
-# GitHub
-dsh plugin --profile web add github:timho1047/dsh-stream-focus
+dsh plugin --profile web add dsh-stream-focus
 ```
 
 Refresh the browser page after installation. All four Work details modes are enhanced.

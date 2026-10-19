@@ -41,10 +41,8 @@
 
 ## 安装
 
-在插件面板中安装本目录，或：
-
 ```bash
-dsh plugin --profile web add /path/to/dsh-stream-focus
+dsh plugin --profile web add dsh-stream-focus
 ```
 
 安装后刷新浏览器页面，四档模式下都会生效。
