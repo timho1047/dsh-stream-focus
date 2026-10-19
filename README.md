@@ -34,7 +34,7 @@
 
 ## 演示
 
-30fps、1080p 的四档 MP4 演示（每段 12 秒）。GitHub README 不支持内嵌视频，点击封面会打开对应模式的 GitHub Pages 播放页。
+30fps、1080p 的四档 MP4 演示（每段 25–32 秒，从居中输入框开始，完整包含开场思考，并在模型输出结束后停止）。GitHub README 不支持内嵌视频，点击封面会打开对应模式的 GitHub Pages 播放页。
 
 | Compact | Standard |
 |---|---|

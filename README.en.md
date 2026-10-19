@@ -34,7 +34,7 @@ All modes share: character-paced reasoning, line-level fading plus character hig
 
 ## Demos
 
-30fps, 1080p MP4 demos for all four modes (12 seconds each). GitHub README does not embed video, so each poster opens that mode on the GitHub Pages player.
+30fps, 1080p MP4 demos for all four modes (25–32 seconds each, starting from the centered composer, including the full opening reasoning, and ending when the model finishes). GitHub README does not embed video, so each poster opens that mode on the GitHub Pages player.
 
 | Compact | Standard |
 |---|---|

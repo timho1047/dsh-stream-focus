@@ -330,7 +330,7 @@
       background: currentColor;
       box-shadow: 0 0 0 3px var(--accent-soft);
     }
-    .preview video { display: block; width: 100%; aspect-ratio: 1080 / 672; object-fit: cover; background: #000; }
+    .preview video { display: block; width: 100%; aspect-ratio: 1080 / 778; object-fit: cover; background: #000; }
     .preview-foot {
       display: flex;
       align-items: center;
@@ -449,7 +449,7 @@
     .demo-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 19px 20px 15px; }
     .demo-head h3 { margin: 0; font-size: 18px; letter-spacing: -0.025em; }
     .demo-head span { color: var(--faint); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
-    .demo-card video { display: block; width: 100%; aspect-ratio: 1080 / 672; object-fit: cover; background: #000; border-top: 1px solid var(--border); }
+    .demo-card video { display: block; width: 100%; aspect-ratio: 1080 / 778; object-fit: cover; background: #000; border-top: 1px solid var(--border); }
     .demo-note { padding: 12px 20px 16px; color: var(--muted); font-size: 12px; }
 
     /* Install */
@@ -687,34 +687,34 @@
         <div>
           <p class="section-label" data-i18n="demos.label">Recorded in DSH</p>
           <h2 id="demos-title" data-i18n="demos.title">The four modes, actually running.</h2>
-          <p data-i18n="demos.lede">Each clip starts with extended reasoning and then runs three sequential Bash calls. 30fps, 1080p, no audio.</p>
+          <p data-i18n="demos.lede">Each clip starts from the centered composer, keeps the full opening reasoning, and ends when the model finishes. 30fps, 1080p, no audio.</p>
         </div>
         <a class="section-link" href="https://github.com/timho1047/dsh-stream-focus#readme" data-i18n="demos.link">Read the docs →</a>
       </div>
       <div class="demo-grid">
         <article class="demo-card" id="compact" data-reveal>
-          <div class="demo-head"><h3>Compact</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <div class="demo-head"><h3>Compact</h3><span data-i18n="demo.meta">25–32s · 30fps</span></div>
           <video controls playsinline preload="none" poster="demo/compact.jpg" aria-label="Compact mode demo" data-i18n-aria="demo.compact.aria">
             <source src="demo/compact.mp4" type="video/mp4">
           </video>
           <p class="demo-note" data-i18n="demo.compact.note">Running group opens; previous group folds on step change.</p>
         </article>
         <article class="demo-card" id="standard" data-reveal>
-          <div class="demo-head"><h3>Standard</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <div class="demo-head"><h3>Standard</h3><span data-i18n="demo.meta">25–32s · 30fps</span></div>
           <video controls playsinline preload="none" poster="demo/standard.jpg" aria-label="Standard mode demo" data-i18n-aria="demo.standard.aria">
             <source src="demo/standard.mp4" type="video/mp4">
           </video>
           <p class="demo-note" data-i18n="demo.standard.note">Capped window, eased bottom-following, and live step detail.</p>
         </article>
         <article class="demo-card" id="detailed" data-reveal>
-          <div class="demo-head"><h3>Detailed</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <div class="demo-head"><h3>Detailed</h3><span data-i18n="demo.meta">25–32s · 30fps</span></div>
           <video controls playsinline preload="none" poster="demo/detailed.jpg" aria-label="Detailed mode demo" data-i18n-aria="demo.detailed.aria">
             <source src="demo/detailed.mp4" type="video/mp4">
           </video>
           <p class="demo-note" data-i18n="demo.detailed.note">Flat current-turn rows; older automatic rows close as the run advances.</p>
         </article>
         <article class="demo-card" id="verbose" data-reveal>
-          <div class="demo-head"><h3>Verbose</h3><span data-i18n="demo.meta">12s · 30fps</span></div>
+          <div class="demo-head"><h3>Verbose</h3><span data-i18n="demo.meta">25–32s · 30fps</span></div>
           <video controls playsinline preload="none" poster="demo/verbose.jpg" aria-label="Verbose mode demo" data-i18n-aria="demo.verbose.aria">
             <source src="demo/verbose.mp4" type="video/mp4">
           </video>
@@ -840,9 +840,9 @@
           'mode.verbose.link': 'Watch Verbose',
           'demos.label': 'Recorded in DSH',
           'demos.title': 'The four modes, actually running.',
-          'demos.lede': 'Each clip starts with extended reasoning and then runs three sequential Bash calls. 30fps, 1080p, no audio.',
+          'demos.lede': 'Each clip starts from the centered composer, keeps the full opening reasoning, and ends when the model finishes. 30fps, 1080p, no audio.',
           'demos.link': 'Read the docs →',
-          'demo.meta': '12s · 30fps',
+          'demo.meta': '25–32s · 30fps',
           'demo.compact.note': 'Running group opens; previous group folds on step change.',
           'demo.standard.note': 'Capped window, eased bottom-following, and live step detail.',
           'demo.detailed.note': 'Flat current-turn rows; older automatic rows close as the run advances.',
@@ -931,9 +931,9 @@
           'mode.verbose.link': '观看 Verbose',
           'demos.label': '在 DSH 中实录',
           'demos.title': '四档模式，真实运行。',
-          'demos.lede': '每段从较长思考开始，然后依次执行三次 Bash 调用。30fps、1080p、无音频。',
+          'demos.lede': '每段从居中输入框开始，完整保留开场思考，并在模型输出结束后停止。30fps、1080p、无音频。',
           'demos.link': '阅读文档 →',
-          'demo.meta': '12 秒 · 30fps',
+          'demo.meta': '25–32 秒 · 30fps',
           'demo.compact.note': '运行中的过程组打开；步骤切换时上一组折叠。',
           'demo.standard.note': '限高窗口、缓动贴底和实时步骤细节。',
           'demo.detailed.note': '当前轮次平铺；旧的自动行随运行推进关闭。',
