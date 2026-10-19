@@ -4,7 +4,7 @@
 
 All notable changes are documented here. Each release has Chinese first, English below. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.2] - 2026-10-19
 
 ### 中文
 
@@ -114,6 +114,6 @@ All notable changes are documented here. Each release has Chinese first, English
 - Zero settings, no Session writes, no network requests, and no model tools.
 - npm package, MIT license, and GitHub Pages project page.
 
-[Unreleased]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.1...HEAD
+[0.1.2]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/timho1047/dsh-stream-focus/releases/tag/v0.1.0
