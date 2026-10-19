@@ -80,7 +80,7 @@ dsh plugin --profile web add dsh-stream-focus
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 53 个测试
+pnpm run verify   # typecheck + build + 54 个测试
 ```
 
 - `src/client/decision.ts`：纯状态机，决定本轮窗口应该打开/关闭哪些行。

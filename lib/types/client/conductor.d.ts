@@ -32,6 +32,7 @@ export declare class StreamWindowConductor {
     private progressTop;
     private progressTime;
     private progressInitialized;
+    private lastContentGrowth;
     private textFade;
     private outerGuard;
     private openAnimation;
@@ -72,6 +73,13 @@ export declare class StreamWindowConductor {
     private removeFade;
     private readonly onReaderGesture;
     private readonly onProgressScroll;
+    /**
+     * Official smooth follow targets the floor measured when growth starts. If content
+     * grows again before scrollend, settle can release follow intent even though the
+     * reader never moved. Re-anchor once and let the official scrollend sampler adopt
+     * the new bottom position.
+     */
+    private readonly onFollowSettled;
     private attachProgress;
     private removeProgress;
     private scheduleProgress;

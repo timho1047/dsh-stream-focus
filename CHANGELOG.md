@@ -18,6 +18,10 @@ All notable changes are documented here. Each release has Chinese first, English
 - 活动窗口的自定义进度线改用 rAF 时间常数缓动，避免高频换行时反复重置 CSS transition。
 - 重新录制四档演示，完整保留居中输入框和开场思考，并在模型完成后停止。
 
+#### 修复
+
+- 当内容在原生 smooth follow 结束前继续增长时，在 `scrollend` 后重新贴底并重新激活官方 follow，避免 follow intent 被误判为读者滚动。
+
 ### English
 
 #### Added
@@ -29,6 +33,10 @@ All notable changes are documented here. Each release has Chinese first, English
 
 - The active-window progress line now eases with an rAF time constant instead of repeatedly restarting a CSS transition on every line change.
 - Re-recorded all four demos with the centered composer and full opening reasoning, stopping when the model finishes.
+
+#### Fixed
+
+- When content grows again before native smooth follow ends, re-anchor to the floor after `scrollend` and re-sample follow intent, so content growth is not mistaken for reader scrolling.
 
 ## [0.1.1] - 2026-10-19
 

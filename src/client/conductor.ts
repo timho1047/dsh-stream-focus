@@ -67,6 +67,7 @@ export class StreamWindowConductor {
   private progressTop = 0
   private progressTime: number | null = null
   private progressInitialized = false
+  private lastContentGrowth = 0
   private textFade: HighlightFade | null = null
   private outerGuard: { observer: ResizeObserver; group: HTMLElement } | null = null
   private openAnimation: {
@@ -218,12 +219,14 @@ export class StreamWindowConductor {
     this.textFade = new HighlightFade(this.doc, this.win, 'dsh-stream-process')
     this.textFade.observe(content ?? group)
     body.addEventListener('scroll', this.onProgressScroll, { passive: true })
+    body.addEventListener('scrollend', this.onFollowSettled)
     body.addEventListener('wheel', this.onReaderGesture, { passive: true })
     body.addEventListener('touchstart', this.onReaderGesture, { passive: true })
     body.addEventListener('pointerdown', this.onReaderGesture, { passive: true })
     body.addEventListener('keydown', this.onReaderGesture)
     if (typeof this.win.ResizeObserver === 'function') {
       this.followObserver = new this.win.ResizeObserver(() => {
+        this.lastContentGrowth = this.win.Date.now()
         this.rememberHeight()
         this.scheduleProgress()
       })
@@ -237,6 +240,7 @@ export class StreamWindowConductor {
     const body = this.followBody
     if (body !== null) {
       body.removeEventListener('scroll', this.onProgressScroll)
+      body.removeEventListener('scrollend', this.onFollowSettled)
       body.removeEventListener('wheel', this.onReaderGesture)
       body.removeEventListener('touchstart', this.onReaderGesture)
       body.removeEventListener('pointerdown', this.onReaderGesture)
@@ -315,6 +319,28 @@ export class StreamWindowConductor {
   private readonly onReaderGesture = (): void => { this.lastUserGesture = this.win.Date.now() }
 
   private readonly onProgressScroll = (): void => { this.scheduleProgress() }
+
+  /**
+   * Official smooth follow targets the floor measured when growth starts. If content
+   * grows again before scrollend, settle can release follow intent even though the
+   * reader never moved. Re-anchor once and let the official scrollend sampler adopt
+   * the new bottom position.
+   */
+  private readonly onFollowSettled = (): void => {
+    const body = this.followBody
+    if (body === null || !body.isConnected) return
+    const now = this.win.Date.now()
+    if (now - this.lastUserGesture < 1000) return
+    if (now - this.lastContentGrowth > 1500) return
+    const floor = Math.max(0, body.scrollHeight - body.clientHeight)
+    const delta = floor - body.scrollTop
+    if (delta <= 1 || delta > 120) return
+    body.scrollTop = floor
+    body.dispatchEvent(new Event('scroll'))
+    this.win.requestAnimationFrame(() => {
+      if (body.isConnected) body.dispatchEvent(new Event('scrollend'))
+    })
+  }
 
   private attachProgress(group: HTMLElement, body: HTMLElement): void {
     this.removeProgress()
