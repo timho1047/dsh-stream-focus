@@ -23,8 +23,7 @@
 - 窗口底部有一层 16px 的轻渐隐，滚动跟随也更柔和，新行从底部淡入而不是硬切。
 - 普通助手正文流式输出时，在消息根部加 20px 的底部行渐隐；输出结束后立即移除。
 - 思考与普通正文中新出现的段落、列表、代码块会做一次 600ms ease-in 的透明度淡入（无位移）；逐字揭示会避开组合音标和 ZWJ emoji 边界。
-- 普通正文增长期间会持续压住外层会话尾部；行切换通过冻结窗口高度避免外层位移，不再在动画期间反复改外层滚动。
-- 工具行自动展开不再以外层会话是否刚好贴底为前提；窗口展开期间会同步压住外层尾部，避免页面滞后一帧。
+- 普通正文增长或工具行展开时，插件只在外层仍处于跟随状态时维持尾部；行切换通过冻结窗口高度避免外层位移，不在动画期间反复改外层滚动。
 - 不添加自定义背景、边框、圆角或内边距，窗口外观完全沿用官方过程组。
 - 自动展开时临时屏蔽标题按钮的 `focus()`；鼠标点击标题后也会移走焦点，不留下焦点环。键盘聚焦保持官方的可访问焦点行为。
 - 思考结束、工具开始后，先收起刚才的思考窗，再展开当前工具行；切换前冻结窗口高度，外层总高度不变，上方内容不会下坠或被顶回。展开/收起带约 180ms 的高度和透明度过渡。并行工具会一起展开，包括独立的 Bash 行（`data-sample="bash"`）。
@@ -62,6 +61,15 @@ dsh plugin --profile web add dsh-stream-focus
 
 安装后刷新浏览器页面，四档模式下都会生效。
 
+## 已验证的 DSH 版本
+
+| DSH 版本 | 验证状态 |
+|---|---|
+| `0.2.1-rc.2` | 已实机验证四档模式、思考/工具展开、跟随与中途失效恢复 |
+| `0.2.1-rc.3` | 已实机验证；当前主要开发版本 |
+
+发布前检查当前 DSH 版本；如果遇到新版本，先在这里补充并完成四档实机验证，再发版。该表格记录的是实际验证过的版本，不代表只兼容这些版本。
+
 ## 已知限制
 
 - 字符淡入依赖 CSS Custom Highlight API；不支持的浏览器会自动回退为普通文本渲染。
@@ -84,16 +92,18 @@ pnpm install
 pnpm run verify   # typecheck + build + 57 个测试
 ```
 
+发布前：在当前 DSH 版本上跑 `pnpm run verify` 和四档实机检查；如果 DSH 版本变化，先把新版本补进上方“已验证的 DSH 版本”，再发布。
+
 - `src/client/decision.ts`：纯状态机，决定本轮窗口应该打开/关闭哪些行。
-- `src/client/conductor.ts`：Compact / Standard 的过程组窗口、高度冻结、样式与进度线。
+- `src/client/conductor.ts`：Compact / Standard 的过程组窗口、高度冻结、模式协调。
 - `src/client/flat-rows.ts`：Detailed / Verbose 的平铺行自动展开。
 - `src/client/mode-policy.ts`：四档模式解析与 conductor 选择。
 - `src/client/paced-body.tsx`：替换 reasoning Body Slot，通过官方 Content Factory 平滑揭示思考正文。
 - `src/client/normal-smoothing.ts`：普通正文行级渐隐、字符高亮淡入与新块淡入。
 - `src/client/highlight-fade.ts`：CSS Custom Highlight 字符级淡入。
-- `src/client/pacing.ts`：字符揭示与滚动缓动的纯数学。
+- `src/client/pacing.ts`：字符揭示的纯数学。
 - `src/client/live-transcript.ts`：集中 ui-chat 语义 DOM 契约。
-- `src/client/follow-steward.ts`：共享 follow intent、手势与单次修复。
+- `src/client/follow-steward.ts`：共享 follow intent、手势、scrollend 与增长恢复。
 - `src/client/process-progress.ts`：活动窗口进度线。
 - `src/client/row-disclosure.ts`：共享行 ownership、手动选择与点击策略。
 - `tests/`：模式策略、状态机、节奏计算、jsdom 交互测试。
