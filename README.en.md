@@ -92,4 +92,8 @@ pnpm run verify   # typecheck + build + 57 tests
 - `src/client/normal-smoothing.ts`: normal-prose line fading, character highlight fading, and new-block fade-in.
 - `src/client/highlight-fade.ts`: CSS Custom Highlight character fade.
 - `src/client/pacing.ts`: pure math for character reveal and scroll easing.
+- `src/client/live-transcript.ts`: one adapter for the ui-chat semantic DOM contract.
+- `src/client/follow-steward.ts`: shared follow intent, gestures and one-shot repair.
+- `src/client/process-progress.ts`: active-window progress line.
+- `src/client/row-disclosure.ts`: shared row ownership, manual choice and click policy.
 - `tests/`: mode policy, state machine, pacing math, and jsdom interaction tests.

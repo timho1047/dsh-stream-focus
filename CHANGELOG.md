@@ -10,12 +10,14 @@ All notable changes are documented here. Each release has Chinese first, English
 
 #### 变更
 
+- 架构整理：follow intent/修复集中到 `FollowSteward`，DOM 语义契约集中到 `LiveTranscript`，行 ownership/click 集中到 `RowDisclosureController`，进度线抽成 `ProcessProgress`。
 - 自动 disclosure 在支持 `interpolate-size` 的浏览器中改用 CSS `0 → auto` 尺寸过渡，减少 JS 每帧写 height；不支持时保留 WAAPI 回退。
 
 ### English
 
 #### Changed
 
+- Architecture cleanup: follow intent/repair now lives in `FollowSteward`, the semantic DOM contract in `LiveTranscript`, row ownership/click policy in `RowDisclosureController`, and the progress line in `ProcessProgress`.
 - Automatic disclosures now use a native CSS `0 → auto` size transition where `interpolate-size` is supported, reducing per-frame JS height writes; browsers without support keep the WAAPI fallback.
 
 ## [0.1.2] - 2026-10-19

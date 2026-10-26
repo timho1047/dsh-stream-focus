@@ -92,4 +92,8 @@ pnpm run verify   # typecheck + build + 57 个测试
 - `src/client/normal-smoothing.ts`：普通正文行级渐隐、字符高亮淡入与新块淡入。
 - `src/client/highlight-fade.ts`：CSS Custom Highlight 字符级淡入。
 - `src/client/pacing.ts`：字符揭示与滚动缓动的纯数学。
+- `src/client/live-transcript.ts`：集中 ui-chat 语义 DOM 契约。
+- `src/client/follow-steward.ts`：共享 follow intent、手势与单次修复。
+- `src/client/process-progress.ts`：活动窗口进度线。
+- `src/client/row-disclosure.ts`：共享行 ownership、手动选择与点击策略。
 - `tests/`：模式策略、状态机、节奏计算、jsdom 交互测试。
