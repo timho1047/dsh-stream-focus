@@ -1,6 +1,6 @@
 {
   "name": "dsh-stream-focus",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "DSH plugin: smooths running-turn thinking and tool output across all Work details modes, with a capped following window in Compact/Standard and row-level pacing in Detailed/Verbose.",
   "type": "module",
   "license": "MIT",
