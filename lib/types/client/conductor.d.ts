@@ -25,17 +25,11 @@ export declare class StreamWindowConductor {
     private fadeElement;
     private fadeGroup;
     private fadeGroupPosition;
-    private progressTrack;
-    private progressThumb;
-    private progressFrame;
-    private progressHeight;
-    private progressTop;
-    private progressTime;
-    private progressInitialized;
     private lastContentGrowth;
     private followIntent;
     private contentRepairTimer;
     private textFade;
+    private progress;
     private outerGuard;
     private openAnimation;
     private observer;
@@ -84,10 +78,6 @@ export declare class StreamWindowConductor {
      * the new bottom position.
      */
     private readonly onFollowSettled;
-    private attachProgress;
-    private removeProgress;
-    private scheduleProgress;
-    private updateProgress;
     private nearBottomElement;
     /**
      * Re-arm official follow after a row transition when the reader never touched

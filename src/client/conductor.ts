@@ -1,5 +1,6 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import { HighlightFade } from './highlight-fade.ts'
+import { ProcessProgress } from './process-progress.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -60,17 +61,11 @@ export class StreamWindowConductor {
   private fadeElement: HTMLElement | null = null
   private fadeGroup: HTMLElement | null = null
   private fadeGroupPosition = ''
-  private progressTrack: HTMLElement | null = null
-  private progressThumb: HTMLElement | null = null
-  private progressFrame: number | null = null
-  private progressHeight = 0
-  private progressTop = 0
-  private progressTime: number | null = null
-  private progressInitialized = false
   private lastContentGrowth = 0
   private followIntent = false
   private contentRepairTimer: number | null = null
   private textFade: HighlightFade | null = null
+  private progress: ProcessProgress | null = null
   private outerGuard: { observer: ResizeObserver; group: HTMLElement } | null = null
   private openAnimation: {
     body: HTMLElement
@@ -217,7 +212,8 @@ export class StreamWindowConductor {
     body.style.overflowX = 'hidden'
     body.style.maskImage = 'none'
     this.attachFade(group)
-    this.attachProgress(group, body)
+    this.progress = new ProcessProgress(this.doc, this.win, () => { this.followIntent = true })
+    this.progress.attach(group, body)
     this.textFade = new HighlightFade(this.doc, this.win, 'dsh-stream-process')
     this.textFade.observe(content ?? group)
     body.addEventListener('scroll', this.onProgressScroll, { passive: true })
@@ -230,7 +226,7 @@ export class StreamWindowConductor {
       this.followObserver = new this.win.ResizeObserver(() => {
         this.lastContentGrowth = this.win.Date.now()
         this.rememberHeight()
-        this.scheduleProgress()
+        this.progress?.schedule()
         this.scheduleContentRepair()
       })
       this.followObserver.observe(body)
@@ -254,7 +250,8 @@ export class StreamWindowConductor {
       body.style.height = this.followBodyHeight
       body.style.maxHeight = this.followBodyMaxHeight
     }
-    this.removeProgress()
+    this.progress?.stop()
+    this.progress = null
     this.followObserver?.disconnect()
     this.followObserver = null
     this.followBody = null
@@ -332,7 +329,7 @@ export class StreamWindowConductor {
       if (this.nearBottomElement(body)) this.followIntent = true
       else if (this.win.Date.now() - this.lastUserGesture < 1200) this.followIntent = false
     }
-    this.scheduleProgress()
+    this.progress?.schedule()
   }
 
   /** A delayed, one-shot fallback for growth where no reliable scrollend arrives. */
@@ -374,111 +371,6 @@ export class StreamWindowConductor {
       if (body.isConnected) body.dispatchEvent(new Event('scrollend'))
     })
   }
-
-  private attachProgress(group: HTMLElement, body: HTMLElement): void {
-    this.removeProgress()
-    const doc = this.doc
-    if (doc.getElementById('dsh-stream-focus-native-scrollbar') === null) {
-      const style = doc.createElement('style')
-      style.id = 'dsh-stream-focus-native-scrollbar'
-      style.textContent = [
-        '[data-stream-native-scrollbar]::-webkit-scrollbar-thumb{background:transparent!important}',
-        '[data-stream-native-scrollbar]{scrollbar-color:transparent transparent!important}',
-      ].join('\n')
-      doc.head.append(style)
-    }
-    body.setAttribute('data-stream-native-scrollbar', '')
-    const track = doc.createElement('div')
-    track.dataset.streamProgress = ''
-    track.setAttribute('aria-hidden', 'true')
-    track.style.cssText = 'position:absolute;right:2px;top:8px;bottom:8px;width:3px;pointer-events:none;'
-      + 'z-index:2;opacity:0;transition:opacity 160ms ease;'
-    const thumb = doc.createElement('div')
-    thumb.dataset.streamProgressThumb = ''
-    thumb.style.cssText = 'position:absolute;right:0;top:0;width:3px;min-height:18px;border-radius:999px;'
-      + 'background:color-mix(in srgb, currentColor 34%, transparent);'
-      + 'will-change:height,transform'
-    track.append(thumb)
-    group.append(track)
-    this.progressTrack = track
-    this.progressThumb = thumb
-    this.progressHeight = 0
-    this.progressTop = 0
-    this.progressTime = null
-    this.progressInitialized = false
-    this.scheduleProgress()
-  }
-
-  private removeProgress(): void {
-    if (this.progressFrame !== null) {
-      this.win.cancelAnimationFrame(this.progressFrame)
-      this.progressFrame = null
-    }
-    this.followBody?.removeAttribute('data-stream-native-scrollbar')
-    this.progressTrack?.remove()
-    this.progressTrack = null
-    this.progressThumb = null
-    this.progressHeight = 0
-    this.progressTop = 0
-    this.progressTime = null
-    this.progressInitialized = false
-  }
-
-  private scheduleProgress(): void {
-    if (this.progressFrame !== null) return
-    this.progressFrame = this.win.requestAnimationFrame(time => {
-      this.progressFrame = null
-      this.updateProgress(time)
-    })
-  }
-
-  private updateProgress(time: number): void {
-    const body = this.followBody
-    const track = this.progressTrack
-    const thumb = this.progressThumb
-    if (body === null || track === null || thumb === null) return
-    const trackHeight = track.clientHeight
-    const contentHeight = body.scrollHeight
-    const clientHeight = body.clientHeight
-    if (trackHeight <= 0) return
-    if (this.nearBottomElement(body)) this.followIntent = true
-    if (contentHeight <= clientHeight + 1) {
-      track.style.opacity = '0'
-      this.progressTime = null
-      this.progressInitialized = false
-      return
-    }
-    track.style.opacity = '1'
-    const targetHeight = Math.max(18, Math.round(trackHeight * (clientHeight / contentHeight)))
-    const travel = Math.max(0, trackHeight - targetHeight)
-    const maxScroll = Math.max(1, contentHeight - clientHeight)
-    const targetTop = Math.round((body.scrollTop / maxScroll) * travel)
-    if (!this.progressInitialized) {
-      this.progressInitialized = true
-      this.progressHeight = targetHeight
-      this.progressTop = targetTop
-      this.progressTime = time
-      thumb.style.height = `${targetHeight}px`
-      thumb.style.transform = `translateY(${targetTop}px)`
-      return
-    }
-    const elapsed = this.progressTime === null ? 1000 / 60 : Math.min(32, time - this.progressTime)
-    this.progressTime = time
-    // Ease the displayed geometry on a time constant so frequent line-height
-    // updates cannot restart a CSS transition and make the thumb flicker.
-    const factor = 1 - Math.exp(-elapsed / 90)
-    this.progressHeight += (targetHeight - this.progressHeight) * factor
-    this.progressTop += (targetTop - this.progressTop) * factor
-    const heightSettled = Math.abs(targetHeight - this.progressHeight) <= 0.25
-    const topSettled = Math.abs(targetTop - this.progressTop) <= 0.25
-    if (heightSettled) this.progressHeight = targetHeight
-    if (topSettled) this.progressTop = targetTop
-    thumb.style.height = `${this.progressHeight.toFixed(2)}px`
-    thumb.style.transform = `translateY(${this.progressTop.toFixed(2)}px)`
-    if (!heightSettled || !topSettled) this.scheduleProgress()
-    else this.progressTime = null
-  }
-
 
   private nearBottomElement(body: HTMLElement): boolean {
     return body.scrollHeight - body.clientHeight - body.scrollTop <= 2
