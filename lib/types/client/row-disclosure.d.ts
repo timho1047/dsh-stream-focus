@@ -6,7 +6,6 @@ export declare class RowDisclosureController {
     private readonly restoreFocus;
     private readonly autoKeys;
     private readonly manualRows;
-    private readonly pendingClose;
     private depth;
     constructor(doc?: Document, win?: Window & typeof globalThis, restoreFocus?: boolean);
     start(): void;
@@ -18,10 +17,6 @@ export declare class RowDisclosureController {
     forgetAuto(key: string): void;
     /** Run an official click without recording it as a manual choice. */
     runAutomatic(action: () => void): void;
-    /** Open a row and remember that the plugin owns it. */
-    open(element: HTMLElement, key: string): void;
-    /** Close a row; returns whether a shrink animation is pending. */
-    close(element: HTMLElement, key: string): boolean;
     private readonly onClick;
     private click;
 }

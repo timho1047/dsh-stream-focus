@@ -1,4 +1,3 @@
-import { closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import type { ManualChoice } from './decision.ts'
 
 const DISCLOSURE = '[data-disclosure-row][aria-expanded]'
@@ -8,7 +7,6 @@ const BASH = '[data-sample="bash"][aria-expanded]'
 export class RowDisclosureController {
   private readonly autoKeys = new Set<string>()
   private readonly manualRows = new Map<string, Exclude<ManualChoice, undefined>>()
-  private readonly pendingClose = new Set<HTMLElement>()
   private depth = 0
 
   constructor(
@@ -27,7 +25,6 @@ export class RowDisclosureController {
   reset(): void {
     this.autoKeys.clear()
     this.manualRows.clear()
-    this.pendingClose.clear()
   }
 
   isAuto(key: string): boolean { return this.autoKeys.has(key) }
@@ -39,18 +36,6 @@ export class RowDisclosureController {
   runAutomatic(action: () => void): void {
     this.depth += 1
     try { action() } finally { this.depth -= 1 }
-  }
-
-  /** Open a row and remember that the plugin owns it. */
-  open(element: HTMLElement, key: string): void {
-    openDisclosure(element, this.win, () => this.runAutomatic(() => this.click(element)))
-    this.markAuto(key)
-  }
-
-  /** Close a row; returns whether a shrink animation is pending. */
-  close(element: HTMLElement, key: string): boolean {
-    this.forgetAuto(key)
-    return closeDisclosure(element, this.win, () => this.runAutomatic(() => this.click(element)), this.pendingClose)
   }
 
   private readonly onClick = (event: MouseEvent): void => {
