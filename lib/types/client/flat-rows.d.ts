@@ -18,10 +18,7 @@ export declare class FlatRowConductor {
     private readonly manualRows;
     private readonly pendingClose;
     private transitionTimer;
-    private outer;
-    private outerIntent;
-    private outerGestureAt;
-    private outerCheckTimer;
+    private follow;
     /**
      * @param mode - Detailed or Verbose.
      * @param doc - document owning the transcript.
@@ -36,14 +33,6 @@ export declare class FlatRowConductor {
     sync(): void;
     private attachOuterFollow;
     private detachOuterFollow;
-    private nearBottom;
-    private readonly onOuterGesture;
-    private readonly onOuterScroll;
-    private readonly onOuterScrollEnd;
-    private scheduleOuterCheck;
-    /** Restart the check after an automatic row motion so it fires after that motion. */
-    private armOuterCheck;
-    private startOuterCheck;
     private deferSync;
     private candidate;
     private schedule;

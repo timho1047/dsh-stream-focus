@@ -2,6 +2,7 @@ import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclos
 import { HighlightFade } from './highlight-fade.ts'
 import { ProcessProgress } from './process-progress.ts'
 import { FollowSteward } from './follow-steward.ts'
+import { groupContent, groupHeader, groupsIn, latestGroup, latestTurn, processBody, runningFlow } from './live-transcript.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -11,8 +12,6 @@ import {
 } from './decision.ts'
 
 const GROUP_SELECTOR = '[data-chat-group-key]'
-const GROUP_CONTENT_SELECTOR = '[data-step-process-content]'
-const RUNNING_SELECTOR = '[data-chat-running]'
 const DISCLOSURE_SELECTOR = '[data-disclosure-row][aria-expanded]'
 const OPEN_FADE_MS = 180
 const ATTRIBUTE_FILTER = [
@@ -129,13 +128,7 @@ export class StreamWindowConductor {
   /** Reconcile the current DOM with the window decision. Public for tests. */
   sync(): void {
     if (!this.active || this.transitionTimer !== null) return
-    const running = this.doc.querySelector<HTMLElement>(RUNNING_SELECTOR)
-    if (running === null) {
-      this.resetWindow()
-      return
-    }
-    const root = running.closest<HTMLElement>('[data-chat-flow]:not([data-step-process-content])')
-      ?? running.closest<HTMLElement>('[data-chat-flow]')
+    const root = runningFlow(this.doc)
     if (root === null) {
       this.resetWindow()
       return
@@ -144,9 +137,8 @@ export class StreamWindowConductor {
       this.resetWindow()
       this.root = root
     }
-    const groups = [...root.querySelectorAll<HTMLElement>(GROUP_SELECTOR)]
-    const group = groups.at(-1)
-    if (group === undefined) return
+    const group = latestGroup(root)
+    if (group === null) return
     if (!this.isLatestTurn(root, group)) {
       this.resetWindow()
       return
@@ -194,9 +186,9 @@ export class StreamWindowConductor {
 
   /** Bind bottom following and its reader-override signals to the active window. */
   private attachFollow(group: HTMLElement): void {
-    const body = group.querySelector<HTMLElement>('[data-step-process-body]')
+    const body = processBody(group)
     if (body === null) return
-    const content = group.querySelector<HTMLElement>(GROUP_CONTENT_SELECTOR)
+    const content = groupContent(group)
     this.followBody = body
     this.followBodyOverflowX = body.style.overflowX
     this.followBodyMaskImage = body.style.maskImage
@@ -328,12 +320,7 @@ export class StreamWindowConductor {
   private isLatestTurn(root: HTMLElement, group: HTMLElement): boolean {
     const groupTurn = group.getAttribute('data-chat-turn')
     if (groupTurn === null) return false
-    let latest = Number.NEGATIVE_INFINITY
-    for (const element of root.querySelectorAll<HTMLElement>('[data-chat-turn]')) {
-      const turn = Number(element.getAttribute('data-chat-turn'))
-      if (Number.isFinite(turn) && turn > latest) latest = turn
-    }
-    return Number(groupTurn) === latest
+    return Number(groupTurn) === latestTurn(root)
   }
 
   private schedule(): void {
@@ -366,7 +353,7 @@ export class StreamWindowConductor {
       // Token and Markdown churn inside an already open body cannot change ownership.
       if (target.closest('[data-open]') !== null
         && target.closest('[data-variant="think"], [data-tool]') !== null) continue
-      if (target.closest(GROUP_CONTENT_SELECTOR) !== null
+      if (target.closest('[data-step-process-content]') !== null
         || containsRunningRoot(record.addedNodes)
         || containsRunningRoot(record.removedNodes)) {
         this.schedule()
@@ -441,7 +428,7 @@ export class StreamWindowConductor {
   private snapshot(group: HTMLElement): GroupSnapshot | null {
     const header = this.groupHeader(group)
     const key = group.getAttribute('data-chat-group-key')
-    const content = group.querySelector<HTMLElement>(GROUP_CONTENT_SELECTOR)
+    const content = groupContent(group)
     if (header === null || key === null || content === null) return null
 
     const elements = new Map<string, CandidateElement>()
@@ -497,7 +484,7 @@ export class StreamWindowConductor {
   }
 
   private groupHeader(group: HTMLElement): HTMLButtonElement | null {
-    return group.querySelector<HTMLButtonElement>(':scope > div > button[aria-expanded]')
+    return groupHeader(group)
       ?? group.querySelector<HTMLButtonElement>('button[aria-expanded]')
   }
 
@@ -646,8 +633,8 @@ function containsRunningRoot(nodes: NodeList): boolean {
   for (const node of nodes) {
     if (node.nodeType !== 1) continue
     const element = node as Element
-    if (element.matches(`${RUNNING_SELECTOR}, ${GROUP_SELECTOR}`)
-      || element.querySelector(`${RUNNING_SELECTOR}, ${GROUP_SELECTOR}`) !== null) return true
+    if (element.matches(`[data-chat-running], ${GROUP_SELECTOR}`)
+      || element.querySelector(`[data-chat-running], ${GROUP_SELECTOR}`) !== null) return true
   }
   return false
 }

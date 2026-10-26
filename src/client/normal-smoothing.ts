@@ -1,5 +1,6 @@
 import { HighlightFade } from './highlight-fade.ts'
 import { FollowSteward } from './follow-steward.ts'
+import { outerScroller, streamingAssistantRoots } from './live-transcript.ts'
 
 const BLOCK_SELECTOR = 'p,pre,ul,ol,li,table,blockquote,h1,h2,h3,h4,h5,h6,hr'
 
@@ -76,7 +77,7 @@ export class NormalOutputSmoother {
 
   private pinOuter(): void {
     if (this.doc.querySelector('[data-chat-following-tail]') === null) return
-    const outer = this.doc.querySelector<HTMLElement>('[data-conversation-scroll]')
+    const outer = outerScroller(this.doc)
     if (outer === null) return
     if (this.outerFollow?.scroll !== outer) {
       this.outerFollow?.steward.release()
@@ -121,9 +122,7 @@ export class NormalOutputSmoother {
   private reconcile(): void {
     if (!this.active) return
     const current = new Set<HTMLElement>()
-    for (const root of this.doc.querySelectorAll<HTMLElement>(
-      '[data-chat-flow-kind="assistant-step"][data-chat-group-part="response"] [data-streaming]',
-    )) current.add(root)
+    for (const root of streamingAssistantRoots(this.doc)) current.add(root)
     for (const root of this.roots) {
       if (!current.has(root) || !root.isConnected) this.clear(root)
     }

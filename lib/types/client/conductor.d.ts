@@ -20,16 +20,12 @@ export declare class StreamWindowConductor {
     private followBodyHeight;
     private followBodyMaxHeight;
     private heightFrozen;
-    private lastUserGesture;
-    private followRepairTimer;
     private fadeElement;
     private fadeGroup;
     private fadeGroupPosition;
-    private lastContentGrowth;
-    private followIntent;
-    private contentRepairTimer;
     private textFade;
     private progress;
+    private follow;
     private outerGuard;
     private openAnimation;
     private observer;
@@ -67,24 +63,7 @@ export declare class StreamWindowConductor {
     /** Fade the lowest content edge so new lines enter instead of popping. */
     private attachFade;
     private removeFade;
-    private readonly onReaderGesture;
     private readonly onProgressScroll;
-    /** A delayed, one-shot fallback for growth where no reliable scrollend arrives. */
-    private scheduleContentRepair;
-    /**
-     * Official smooth follow targets the floor measured when growth starts. If content
-     * grows again before scrollend, settle can release follow intent even though the
-     * reader never moved. Re-anchor once and let the official scrollend sampler adopt
-     * the new bottom position.
-     */
-    private readonly onFollowSettled;
-    private nearBottomElement;
-    /**
-     * Re-arm official follow after a row transition when the reader never touched
-     * the window and it was following before the transition. This is a one-shot
-     * repair, not a second follow loop.
-     */
-    private scheduleFollowRepair;
     /** Freeze the window height for a row-to-row transition so outer follow has no floor change. */
     private freezeWindowHeight;
     /** Keep the active window from shrinking below the height it has already shown. */

@@ -1,5 +1,6 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import { FollowSteward } from './follow-steward.ts'
+import { latestTurnRows, outerScroller, runningFlow } from './live-transcript.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -97,23 +98,10 @@ export class FlatRowConductor {
   /** Reconcile the newest Turn's flat rows. Public for tests. */
   sync(): void {
     if (!this.active || this.transitionTimer !== null) return
-    const running = this.doc.querySelector<HTMLElement>(RUNNING_SELECTOR)
-    if (running === null) return
-    const flow = running.closest<HTMLElement>(FLOW_SELECTOR)
+    const flow = runningFlow(this.doc)
     if (flow === null) return
-    const slot = flow.querySelector<HTMLElement>(FLOW_SLOT_SELECTOR) ?? flow
-    let latest = Number.NEGATIVE_INFINITY
-    for (const element of slot.querySelectorAll<HTMLElement>('[data-chat-turn]')) {
-      const turn = Number(element.getAttribute('data-chat-turn'))
-      if (Number.isFinite(turn) && turn > latest) latest = turn
-    }
-    if (!Number.isFinite(latest)) return
-
-    // Detailed keeps rows inside a group wrapper whose header is hidden and
-    // whose body is directly visible. Verbose may render them flat. Selecting
-    // every process row in the newest Turn covers both shapes.
-    const rows = [...slot.querySelectorAll<HTMLElement>('[data-chat-flow-kind]')]
-      .filter(row => Number(row.getAttribute('data-chat-turn')) === latest)
+    const rows = latestTurnRows(flow)
+    if (rows.length === 0) return
 
     const elements = new Map<string, FlatCandidate>()
     const candidates: WindowCandidate[] = []
@@ -151,7 +139,7 @@ export class FlatRowConductor {
   }
 
   private attachOuterFollow(): void {
-    const outer = this.doc.querySelector<HTMLElement>('[data-conversation-scroll]')
+    const outer = outerScroller(this.doc)
     if (outer === null) return
     this.follow?.release()
     this.follow = FollowSteward.acquire(outer, this.win)
