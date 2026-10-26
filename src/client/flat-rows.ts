@@ -1,4 +1,5 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
+import { FollowSteward } from './follow-steward.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -40,10 +41,7 @@ export class FlatRowConductor {
   private readonly manualRows = new Map<string, Exclude<ManualChoice, undefined>>()
   private readonly pendingClose = new Set<HTMLElement>()
   private transitionTimer: number | null = null
-  private outer: HTMLElement | null = null
-  private outerIntent = false
-  private outerGestureAt = 0
-  private outerCheckTimer: number | null = null
+  private follow: FollowSteward | null = null
 
   /**
    * @param mode - Detailed or Verbose.
@@ -101,7 +99,6 @@ export class FlatRowConductor {
     if (!this.active || this.transitionTimer !== null) return
     const running = this.doc.querySelector<HTMLElement>(RUNNING_SELECTOR)
     if (running === null) return
-    if (this.doc.querySelector('[data-chat-following-tail]') !== null) this.outerIntent = true
     const flow = running.closest<HTMLElement>(FLOW_SELECTOR)
     if (flow === null) return
     const slot = flow.querySelector<HTMLElement>(FLOW_SLOT_SELECTOR) ?? flow
@@ -150,83 +147,19 @@ export class FlatRowConductor {
       this.openRow(candidate.element)
       this.autoKeys.add(candidate.key)
     }
-    this.scheduleOuterCheck()
+    this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
   }
 
   private attachOuterFollow(): void {
     const outer = this.doc.querySelector<HTMLElement>('[data-conversation-scroll]')
-    if (outer === null || outer === this.outer) return
-    this.detachOuterFollow()
-    this.outer = outer
-    this.outerIntent = this.doc.querySelector('[data-chat-following-tail]') !== null || this.nearBottom(outer)
-    outer.addEventListener('scroll', this.onOuterScroll, { passive: true })
-    outer.addEventListener('scrollend', this.onOuterScrollEnd)
-    for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
-      outer.addEventListener(type, this.onOuterGesture, { passive: true, capture: true })
-    }
+    if (outer === null) return
+    this.follow?.release()
+    this.follow = FollowSteward.acquire(outer, this.win)
   }
 
   private detachOuterFollow(): void {
-    const outer = this.outer
-    if (outer !== null) {
-      outer.removeEventListener('scroll', this.onOuterScroll)
-      outer.removeEventListener('scrollend', this.onOuterScrollEnd)
-      for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
-        outer.removeEventListener(type, this.onOuterGesture, true)
-      }
-    }
-    this.outer = null
-    this.outerIntent = false
-    if (this.outerCheckTimer !== null) {
-      this.win.clearTimeout(this.outerCheckTimer)
-      this.outerCheckTimer = null
-    }
-  }
-
-  private nearBottom(element: HTMLElement): boolean {
-    return Math.max(0, element.scrollHeight - element.clientHeight) - element.scrollTop <= 2
-  }
-
-  private readonly onOuterGesture = (): void => { this.outerGestureAt = this.win.Date.now() }
-
-  private readonly onOuterScroll = (): void => {
-    const outer = this.outer
-    if (outer === null) return
-    if (this.nearBottom(outer)) this.outerIntent = true
-    else if (this.win.Date.now() - this.outerGestureAt < 1200) this.outerIntent = false
-  }
-
-  private readonly onOuterScrollEnd = (): void => { this.scheduleOuterCheck(0) }
-
-  private scheduleOuterCheck(delay = 350): void {
-    if (!this.outerIntent || this.outerCheckTimer !== null) return
-    this.startOuterCheck(delay)
-  }
-
-  /** Restart the check after an automatic row motion so it fires after that motion. */
-  private armOuterCheck(delay = 350): void {
-    if (!this.outerIntent) return
-    if (this.outerCheckTimer !== null) {
-      this.win.clearTimeout(this.outerCheckTimer)
-      this.outerCheckTimer = null
-    }
-    this.startOuterCheck(delay)
-  }
-
-  private startOuterCheck(delay: number): void {
-    this.outerCheckTimer = this.win.setTimeout(() => {
-      this.outerCheckTimer = null
-      const outer = this.outer
-      if (outer === null || !outer.isConnected || !this.outerIntent) return
-      if (this.win.Date.now() - this.outerGestureAt < 1000) return
-      const floor = Math.max(0, outer.scrollHeight - outer.clientHeight)
-      if (floor - outer.scrollTop <= 1) return
-      outer.scrollTop = floor
-      outer.dispatchEvent(new Event('scroll'))
-      this.win.requestAnimationFrame(() => {
-        if (outer.isConnected) outer.dispatchEvent(new Event('scrollend'))
-      })
-    }, delay)
+    this.follow?.release()
+    this.follow = null
   }
 
   private deferSync(): void {
@@ -293,7 +226,7 @@ export class FlatRowConductor {
       }
       if (record.type === 'childList' && target.closest('[data-chat-flow]') !== null) {
         if (target.closest('[data-open]') !== null) continue
-        this.scheduleOuterCheck()
+        this.follow?.noteGrowth()
         this.schedule()
         return
       }
@@ -315,14 +248,14 @@ export class FlatRowConductor {
 
   private openRow(element: HTMLElement): void {
     openDisclosure(element, this.win, () => this.click(element))
-    this.armOuterCheck(DISCLOSURE_MOTION_MS + 90)
+    this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
   }
 
   private closeRow(element: HTMLElement): boolean {
     const animated = closeDisclosure(element, this.win, () => {
       if (this.active) this.click(element)
     }, this.pendingClose)
-    this.armOuterCheck(DISCLOSURE_MOTION_MS + 90)
+    this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
     return animated
   }
 

@@ -1,6 +1,7 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import { HighlightFade } from './highlight-fade.ts'
 import { ProcessProgress } from './process-progress.ts'
+import { FollowSteward } from './follow-steward.ts'
 import {
   decideWindow,
   type CandidateKind,
@@ -56,16 +57,12 @@ export class StreamWindowConductor {
   private followBodyHeight = ''
   private followBodyMaxHeight = ''
   private heightFrozen = false
-  private lastUserGesture = 0
-  private followRepairTimer: number | null = null
   private fadeElement: HTMLElement | null = null
   private fadeGroup: HTMLElement | null = null
   private fadeGroupPosition = ''
-  private lastContentGrowth = 0
-  private followIntent = false
-  private contentRepairTimer: number | null = null
   private textFade: HighlightFade | null = null
   private progress: ProcessProgress | null = null
+  private follow: FollowSteward | null = null
   private outerGuard: { observer: ResizeObserver; group: HTMLElement } | null = null
   private openAnimation: {
     body: HTMLElement
@@ -178,7 +175,6 @@ export class StreamWindowConductor {
       .map(key => snapshot.elements.get(key))
       .filter((candidate): candidate is NonNullable<typeof candidate> =>
         candidate !== undefined && candidate.open && candidate.element.isConnected)
-    const wasAtBottom = this.followBody !== null && this.nearBottomElement(this.followBody)
     if (opens.length > 0 && closes.length > 0) this.freezeWindowHeight()
     let closeAnimated = false
     for (const candidate of closes) {
@@ -193,7 +189,7 @@ export class StreamWindowConductor {
         this.autoKeys.add(candidate.key)
       }
     }
-    if (wasAtBottom && (opens.length > 0 || closes.length > 0)) this.scheduleFollowRepair()
+    if (opens.length > 0 || closes.length > 0) this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 420)
   }
 
   /** Bind bottom following and its reader-override signals to the active window. */
@@ -212,22 +208,17 @@ export class StreamWindowConductor {
     body.style.overflowX = 'hidden'
     body.style.maskImage = 'none'
     this.attachFade(group)
-    this.progress = new ProcessProgress(this.doc, this.win, () => { this.followIntent = true })
+    this.progress = new ProcessProgress(this.doc, this.win)
     this.progress.attach(group, body)
+    this.follow = FollowSteward.acquire(body, this.win)
     this.textFade = new HighlightFade(this.doc, this.win, 'dsh-stream-process')
     this.textFade.observe(content ?? group)
     body.addEventListener('scroll', this.onProgressScroll, { passive: true })
-    body.addEventListener('scrollend', this.onFollowSettled)
-    body.addEventListener('wheel', this.onReaderGesture, { passive: true })
-    body.addEventListener('touchstart', this.onReaderGesture, { passive: true })
-    body.addEventListener('pointerdown', this.onReaderGesture, { passive: true })
-    body.addEventListener('keydown', this.onReaderGesture)
     if (typeof this.win.ResizeObserver === 'function') {
       this.followObserver = new this.win.ResizeObserver(() => {
-        this.lastContentGrowth = this.win.Date.now()
         this.rememberHeight()
         this.progress?.schedule()
-        this.scheduleContentRepair()
+        this.follow?.noteGrowth()
       })
       this.followObserver.observe(body)
       if (content !== null) this.followObserver.observe(content)
@@ -239,11 +230,6 @@ export class StreamWindowConductor {
     const body = this.followBody
     if (body !== null) {
       body.removeEventListener('scroll', this.onProgressScroll)
-      body.removeEventListener('scrollend', this.onFollowSettled)
-      body.removeEventListener('wheel', this.onReaderGesture)
-      body.removeEventListener('touchstart', this.onReaderGesture)
-      body.removeEventListener('pointerdown', this.onReaderGesture)
-      body.removeEventListener('keydown', this.onReaderGesture)
       body.style.overflowX = this.followBodyOverflowX
       body.style.maskImage = this.followBodyMaskImage
       body.style.minHeight = this.followBodyMinHeight
@@ -252,6 +238,8 @@ export class StreamWindowConductor {
     }
     this.progress?.stop()
     this.progress = null
+    this.follow?.release()
+    this.follow = null
     this.followObserver?.disconnect()
     this.followObserver = null
     this.followBody = null
@@ -261,15 +249,6 @@ export class StreamWindowConductor {
     this.followBodyHeight = ''
     this.followBodyMaxHeight = ''
     this.heightFrozen = false
-    this.followIntent = false
-    if (this.contentRepairTimer !== null) {
-      this.win.clearTimeout(this.contentRepairTimer)
-      this.contentRepairTimer = null
-    }
-    if (this.followRepairTimer !== null) {
-      this.win.clearTimeout(this.followRepairTimer)
-      this.followRepairTimer = null
-    }
     this.removeFade()
   }
 
@@ -321,80 +300,7 @@ export class StreamWindowConductor {
     this.fadeGroupPosition = ''
   }
 
-  private readonly onReaderGesture = (): void => { this.lastUserGesture = this.win.Date.now() }
-
-  private readonly onProgressScroll = (): void => {
-    const body = this.followBody
-    if (body !== null) {
-      if (this.nearBottomElement(body)) this.followIntent = true
-      else if (this.win.Date.now() - this.lastUserGesture < 1200) this.followIntent = false
-    }
-    this.progress?.schedule()
-  }
-
-  /** A delayed, one-shot fallback for growth where no reliable scrollend arrives. */
-  private scheduleContentRepair(): void {
-    if (!this.followIntent || this.contentRepairTimer !== null) return
-    this.contentRepairTimer = this.win.setTimeout(() => {
-      this.contentRepairTimer = null
-      const body = this.followBody
-      if (body === null || !body.isConnected || !this.followIntent) return
-      if (this.win.Date.now() - this.lastUserGesture < 1000) return
-      const floor = Math.max(0, body.scrollHeight - body.clientHeight)
-      if (floor - body.scrollTop <= 1) return
-      body.scrollTop = floor
-      body.dispatchEvent(new Event('scroll'))
-      this.win.requestAnimationFrame(() => {
-        if (body.isConnected) body.dispatchEvent(new Event('scrollend'))
-      })
-    }, 350)
-  }
-
-  /**
-   * Official smooth follow targets the floor measured when growth starts. If content
-   * grows again before scrollend, settle can release follow intent even though the
-   * reader never moved. Re-anchor once and let the official scrollend sampler adopt
-   * the new bottom position.
-   */
-  private readonly onFollowSettled = (): void => {
-    const body = this.followBody
-    if (body === null || !body.isConnected) return
-    const now = this.win.Date.now()
-    if (now - this.lastUserGesture < 1000) return
-    if (now - this.lastContentGrowth > 1500) return
-    const floor = Math.max(0, body.scrollHeight - body.clientHeight)
-    const delta = floor - body.scrollTop
-    if (delta <= 1 || delta > 120) return
-    body.scrollTop = floor
-    body.dispatchEvent(new Event('scroll'))
-    this.win.requestAnimationFrame(() => {
-      if (body.isConnected) body.dispatchEvent(new Event('scrollend'))
-    })
-  }
-
-  private nearBottomElement(body: HTMLElement): boolean {
-    return body.scrollHeight - body.clientHeight - body.scrollTop <= 2
-  }
-
-  /**
-   * Re-arm official follow after a row transition when the reader never touched
-   * the window and it was following before the transition. This is a one-shot
-   * repair, not a second follow loop.
-   */
-  private scheduleFollowRepair(): void {
-    if (this.followRepairTimer !== null) this.win.clearTimeout(this.followRepairTimer)
-    this.followRepairTimer = this.win.setTimeout(() => {
-      this.followRepairTimer = null
-      const body = this.followBody
-      if (body === null || !body.isConnected) return
-      if (this.win.Date.now() - this.lastUserGesture < 1000) return
-      if (this.nearBottomElement(body)) return
-      body.scrollTop = Math.max(0, body.scrollHeight - body.clientHeight)
-      this.win.requestAnimationFrame(() => {
-        body.dispatchEvent(new Event('scrollend'))
-      })
-    }, DISCLOSURE_MOTION_MS + 420)
-  }
+  private readonly onProgressScroll = (): void => { this.progress?.schedule() }
 
   /** Freeze the window height for a row-to-row transition so outer follow has no floor change. */
   private freezeWindowHeight(): void {
