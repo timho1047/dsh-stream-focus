@@ -13,11 +13,9 @@ export declare class FlatRowConductor {
     private active;
     private frame;
     private observer;
-    private autoClickDepth;
-    private readonly autoKeys;
-    private readonly manualRows;
-    private readonly pendingClose;
     private transitionTimer;
+    private readonly rows;
+    private readonly pendingClose;
     private follow;
     /**
      * @param mode - Detailed or Verbose.
@@ -33,12 +31,11 @@ export declare class FlatRowConductor {
     sync(): void;
     private attachOuterFollow;
     private detachOuterFollow;
+    private openRow;
+    private closeRow;
+    private click;
     private deferSync;
     private candidate;
     private schedule;
     private onMutations;
-    private onClick;
-    private openRow;
-    private closeRow;
-    private click;
 }

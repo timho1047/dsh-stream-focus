@@ -2,6 +2,7 @@ import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclos
 import { HighlightFade } from './highlight-fade.ts'
 import { ProcessProgress } from './process-progress.ts'
 import { FollowSteward } from './follow-steward.ts'
+import { RowDisclosureController } from './row-disclosure.ts'
 import { groupContent, groupHeader, groupsIn, latestGroup, latestTurn, processBody, runningFlow } from './live-transcript.ts'
 import {
   decideWindow,
@@ -71,17 +72,14 @@ export class StreamWindowConductor {
     transition: string
   } | null = null
   private observer: MutationObserver | null = null
-  /** Rows this plugin opened and is therefore allowed to close later. */
-  private readonly autoKeys = new Set<string>()
   /** Process groups this plugin opened. */
   private readonly autoGroups = new Set<string>()
   /** Group keys the reader deliberately closed. */
   private readonly suppressedGroups = new Set<string>()
-  /** Reader's explicit open/closed choice per row key. */
-  private readonly manualRows = new Map<string, Exclude<ManualChoice, undefined>>()
-  private readonly pendingClose = new Set<HTMLElement>()
   private transitionTimer: number | null = null
   private autoClickDepth = 0
+  private readonly rows: RowDisclosureController
+  private readonly pendingClose = new Set<HTMLElement>()
 
   /**
    * @param doc - document that owns the running Chat.
@@ -90,13 +88,16 @@ export class StreamWindowConductor {
   constructor(
     private readonly doc: Document = document,
     private readonly win: Window & typeof globalThis = window,
-  ) {}
+  ) {
+    this.rows = new RowDisclosureController(doc, win, true)
+  }
 
   /** Start observing the Chat. Idempotent. */
   start(): void {
     if (this.active) return
     this.active = true
     this.doc.addEventListener('click', this.onClick, true)
+    this.rows.start()
     const body = this.doc.body
     if (body !== null) {
       this.observer = new this.win.MutationObserver(records => { this.onMutations(records) })
@@ -115,6 +116,7 @@ export class StreamWindowConductor {
     if (!this.active) return
     this.active = false
     this.doc.removeEventListener('click', this.onClick, true)
+    this.rows.stop()
     this.observer?.disconnect()
     this.observer = null
     if (this.frame !== null) {
@@ -171,14 +173,13 @@ export class StreamWindowConductor {
     let closeAnimated = false
     for (const candidate of closes) {
       if (this.closeRow(candidate.element)) closeAnimated = true
-      this.autoKeys.delete(candidate.key)
     }
     if (closeAnimated && opens.length > 0) {
       this.deferSync()
     } else {
       for (const candidate of opens) {
         this.openRow(candidate.element)
-        this.autoKeys.add(candidate.key)
+        this.rows.markAuto(candidate.key)
       }
     }
     if (opens.length > 0 || closes.length > 0) this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 420)
@@ -366,17 +367,6 @@ export class StreamWindowConductor {
     if (this.autoClickDepth > 0) return
     const target = event.target
     if (!(target instanceof Element)) return
-    const disclosure = target.closest<HTMLElement>(DISCLOSURE_SELECTOR)
-      ?? target.closest<HTMLElement>('[data-sample="bash"][aria-expanded]')
-    if (disclosure !== null && this.root?.contains(disclosure) === true) {
-      const nestedControl = target.closest('a, button, input, textarea, select, [contenteditable="true"]')
-      if (nestedControl !== null && nestedControl !== disclosure) return
-      const key = disclosure.closest<HTMLElement>('[data-chat-flow-key]')?.getAttribute('data-chat-flow-key')
-      if (key === null || key === undefined) return
-      this.manualRows.set(key, disclosure.getAttribute('aria-expanded') === 'true' ? 'closed' : 'open')
-      this.autoKeys.delete(key)
-      return
-    }
     const group = target.closest<HTMLElement>(GROUP_SELECTOR)
     if (group === null || this.root?.contains(group) !== true) return
     this.cancelOpenAnimation()
@@ -408,12 +398,12 @@ export class StreamWindowConductor {
       const snapshot = this.snapshot(group)
       if (snapshot !== null) {
         for (const candidate of snapshot.elements.values()) {
-          if (candidate.open && this.autoKeys.has(candidate.key)
+          if (candidate.open && this.rows.isAuto(candidate.key)
             && candidate.manual !== 'open' && candidate.element.isConnected) {
             this.click(candidate.element)
           }
         }
-        for (const candidate of snapshot.elements.values()) this.autoKeys.delete(candidate.key)
+        for (const candidate of snapshot.elements.values()) this.rows.forgetAuto(candidate.key)
       }
       const key = group.getAttribute('data-chat-group-key')
       if (key !== null && this.autoGroups.has(key)
@@ -456,8 +446,8 @@ export class StreamWindowConductor {
         order: order++,
         open: disclosure.getAttribute('aria-expanded') === 'true',
         active: state === 'running' || state === 'preparing',
-        auto: this.autoKeys.has(flowKey),
-        manual: this.manualRows.get(flowKey),
+        auto: this.rows.isAuto(flowKey),
+        manual: this.rows.manual(flowKey),
         element: disclosure,
       }
       elements.set(flowKey, candidate)
@@ -514,12 +504,9 @@ export class StreamWindowConductor {
     const focus = element.focus
     element.focus = () => {}
     this.autoClickDepth += 1
-    try {
-      element.click()
-    } finally {
-      this.autoClickDepth -= 1
-      element.focus = focus
-    }
+    this.rows.runAutomatic(() => { element.click() })
+    this.autoClickDepth -= 1
+    element.focus = focus
     this.restoreFocus(element, previous)
     this.win.queueMicrotask(() => { this.restoreFocus(element, previous) })
   }
@@ -606,7 +593,7 @@ export class StreamWindowConductor {
         const snapshot = this.snapshot(group)
         if (snapshot !== null) {
           for (const candidate of snapshot.elements.values()) {
-            if (candidate.open && this.autoKeys.has(candidate.key)
+            if (candidate.open && this.rows.isAuto(candidate.key)
               && candidate.manual !== 'open' && candidate.element.isConnected) {
               this.click(candidate.element)
             }
@@ -619,11 +606,10 @@ export class StreamWindowConductor {
         }
       }
     }
+    this.rows.reset()
     this.pendingClose.clear()
-    this.autoKeys.clear()
     this.autoGroups.clear()
     this.suppressedGroups.clear()
-    this.manualRows.clear()
     this.activeGroup = null
   }
 }

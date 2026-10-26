@@ -1,5 +1,6 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import { FollowSteward } from './follow-steward.ts'
+import { RowDisclosureController } from './row-disclosure.ts'
 import { latestTurnRows, outerScroller, runningFlow } from './live-transcript.ts'
 import {
   decideWindow,
@@ -37,11 +38,9 @@ export class FlatRowConductor {
   private active = false
   private frame: number | null = null
   private observer: MutationObserver | null = null
-  private autoClickDepth = 0
-  private readonly autoKeys = new Set<string>()
-  private readonly manualRows = new Map<string, Exclude<ManualChoice, undefined>>()
-  private readonly pendingClose = new Set<HTMLElement>()
   private transitionTimer: number | null = null
+  private readonly rows: RowDisclosureController
+  private readonly pendingClose = new Set<HTMLElement>()
   private follow: FollowSteward | null = null
 
   /**
@@ -53,13 +52,15 @@ export class FlatRowConductor {
     private readonly mode: 'detailed' | 'verbose',
     private readonly doc: Document = document,
     private readonly win: Window & typeof globalThis = window,
-  ) {}
+  ) {
+    this.rows = new RowDisclosureController(doc, win, false)
+  }
 
   /** Start observing flat process rows. Idempotent. */
   start(): void {
     if (this.active) return
     this.active = true
-    this.doc.addEventListener('click', this.onClick, true)
+    this.rows.start()
     const body = this.doc.body
     if (body !== null) {
       this.observer = new this.win.MutationObserver(records => { this.onMutations(records) })
@@ -78,7 +79,7 @@ export class FlatRowConductor {
   stop(): void {
     if (!this.active) return
     this.active = false
-    this.doc.removeEventListener('click', this.onClick, true)
+    this.rows.stop()
     this.observer?.disconnect()
     this.observer = null
     if (this.frame !== null) {
@@ -90,9 +91,8 @@ export class FlatRowConductor {
       this.transitionTimer = null
     }
     this.detachOuterFollow()
+    this.rows.reset()
     this.pendingClose.clear()
-    this.autoKeys.clear()
-    this.manualRows.clear()
   }
 
   /** Reconcile the newest Turn's flat rows. Public for tests. */
@@ -124,7 +124,6 @@ export class FlatRowConductor {
         const candidate = elements.get(key)
         if (candidate === undefined || !candidate.open || !candidate.element.isConnected) continue
         if (this.closeRow(candidate.element)) closeAnimated = true
-        this.autoKeys.delete(key)
       }
     }
     if (closeAnimated && opens.length > 0) {
@@ -133,7 +132,7 @@ export class FlatRowConductor {
     }
     for (const candidate of opens) {
       this.openRow(candidate.element)
-      this.autoKeys.add(candidate.key)
+      this.rows.markAuto(candidate.key)
     }
     this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
   }
@@ -148,6 +147,23 @@ export class FlatRowConductor {
   private detachOuterFollow(): void {
     this.follow?.release()
     this.follow = null
+  }
+
+  private openRow(element: HTMLElement): void {
+    openDisclosure(element, this.win, () => this.click(element))
+    this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
+  }
+
+  private closeRow(element: HTMLElement): boolean {
+    const animated = closeDisclosure(element, this.win, () => {
+      if (this.active) this.click(element)
+    }, this.pendingClose)
+    this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
+    return animated
+  }
+
+  private click(element: HTMLElement): void {
+    this.rows.runAutomatic(() => { element.click() })
   }
 
   private deferSync(): void {
@@ -181,8 +197,8 @@ export class FlatRowConductor {
       order,
       open: disclosure.getAttribute('aria-expanded') === 'true',
       active: state === 'running' || state === 'preparing',
-      auto: this.autoKeys.has(key),
-      manual: this.manualRows.get(key),
+      auto: this.rows.isAuto(key),
+      manual: this.rows.manual(key),
       element: disclosure,
     }
   }
@@ -219,50 +235,6 @@ export class FlatRowConductor {
         return
       }
     }
-  }
-
-  private onClick = (event: MouseEvent): void => {
-    if (this.autoClickDepth > 0) return
-    const target = event.target
-    if (!(target instanceof Element)) return
-    const disclosure = target.closest<HTMLElement>(DISCLOSURE_SELECTOR)
-      ?? target.closest<HTMLElement>(BASH_SELECTOR)
-    if (disclosure === null) return
-    const key = disclosure.closest<HTMLElement>('[data-chat-flow-key]')?.getAttribute('data-chat-flow-key')
-    if (key === null || key === undefined) return
-    this.manualRows.set(key, disclosure.getAttribute('aria-expanded') === 'true' ? 'closed' : 'open')
-    this.autoKeys.delete(key)
-  }
-
-  private openRow(element: HTMLElement): void {
-    openDisclosure(element, this.win, () => this.click(element))
-    this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
-  }
-
-  private closeRow(element: HTMLElement): boolean {
-    const animated = closeDisclosure(element, this.win, () => {
-      if (this.active) this.click(element)
-    }, this.pendingClose)
-    this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
-    return animated
-  }
-
-  private click(element: HTMLElement): void {
-    const previous = this.doc.activeElement instanceof HTMLElement ? this.doc.activeElement : null
-    const focus = element.focus
-    element.focus = () => {}
-    this.autoClickDepth += 1
-    try {
-      element.click()
-    } finally {
-      this.autoClickDepth -= 1
-      element.focus = focus
-    }
-    if (this.doc.activeElement !== element || previous === element) return
-    if (previous !== null && previous !== this.doc.body && previous.isConnected) {
-      previous.focus({ preventScroll: true })
-    }
-    if (this.doc.activeElement === element) element.blur()
   }
 
 }

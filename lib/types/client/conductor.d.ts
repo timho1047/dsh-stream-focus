@@ -29,17 +29,14 @@ export declare class StreamWindowConductor {
     private outerGuard;
     private openAnimation;
     private observer;
-    /** Rows this plugin opened and is therefore allowed to close later. */
-    private readonly autoKeys;
     /** Process groups this plugin opened. */
     private readonly autoGroups;
     /** Group keys the reader deliberately closed. */
     private readonly suppressedGroups;
-    /** Reader's explicit open/closed choice per row key. */
-    private readonly manualRows;
-    private readonly pendingClose;
     private transitionTimer;
     private autoClickDepth;
+    private readonly rows;
+    private readonly pendingClose;
     /**
      * @param doc - document that owns the running Chat.
      * @param win - window supplying MutationObserver and rAF.
