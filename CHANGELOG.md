@@ -4,6 +4,20 @@
 
 All notable changes are documented here. Each release has Chinese first, English below. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 中文
+
+#### 变更
+
+- 自动 disclosure 在支持 `interpolate-size` 的浏览器中改用 CSS `0 → auto` 尺寸过渡，减少 JS 每帧写 height；不支持时保留 WAAPI 回退。
+
+### English
+
+#### Changed
+
+- Automatic disclosures now use a native CSS `0 → auto` size transition where `interpolate-size` is supported, reducing per-frame JS height writes; browsers without support keep the WAAPI fallback.
+
 ## [0.1.2] - 2026-10-19
 
 ### 中文
@@ -114,6 +128,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - Zero settings, no Session writes, no network requests, and no model tools.
 - npm package, MIT license, and GitHub Pages project page.
 
+[Unreleased]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.2...HEAD
 [0.1.2]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/timho1047/dsh-stream-focus/releases/tag/v0.1.0

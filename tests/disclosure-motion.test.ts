@@ -57,6 +57,27 @@ describe('disclosure motion', () => {
     expect(body.style.opacity).toBe('')
   })
 
+  it('uses native auto-size transition when interpolate-size is supported', () => {
+    const { row, body } = fixture()
+    const original = (window as unknown as { CSS?: unknown }).CSS
+    Object.defineProperty(window, 'CSS', { configurable: true, value: { supports: () => true } })
+    try {
+      openDisclosure(row, window, () => { row.setAttribute('aria-expanded', 'true') })
+      expect(body.animate).not.toHaveBeenCalled()
+      expect(body.style.height).toBe('auto')
+      expect(body.style.getPropertyValue('interpolate-size')).toBe('allow-keywords')
+      expect(body.style.transition).toContain('height')
+
+      const end = new Event('transitionend')
+      Object.defineProperty(end, 'propertyName', { value: 'height' })
+      body.dispatchEvent(end)
+      expect(body.style.height).toBe('')
+      expect(body.style.getPropertyValue('interpolate-size')).toBe('')
+    } finally {
+      Object.defineProperty(window, 'CSS', { configurable: true, value: original })
+    }
+  })
+
   it('delays close until the shrink animation finishes', () => {
     const { row, animation } = fixture()
     const pending = new Set<HTMLElement>()

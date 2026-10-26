@@ -3,6 +3,7 @@
 export const DISCLOSURE_MOTION_MS = 180
 const MOTION_MS = DISCLOSURE_MOTION_MS
 const EASING = 'cubic-bezier(0.2, 0.8, 0.2, 1)'
+const SIZE_TRANSITION = `height ${MOTION_MS}ms ${EASING}, opacity ${MOTION_MS}ms ${EASING}`
 
 /**
  * Animate a disclosure open after its official click.
@@ -23,6 +24,32 @@ export function openDisclosure(
   toggle()
   const body = findDisclosureBody(element)
   if (body === null || !canAnimate(body, win)) return
+  if (canUseCssSize(win)) {
+    body.style.setProperty('interpolate-size', 'allow-keywords')
+    body.style.overflow = 'hidden'
+    body.style.transition = 'none'
+    body.style.height = '0px'
+    body.style.opacity = '0'
+    void body.offsetHeight
+    body.style.transition = SIZE_TRANSITION
+    body.style.height = 'auto'
+    body.style.opacity = '1'
+    let settled = false
+    let timer: number | null = null
+    const finish = (): void => {
+      if (settled) return
+      settled = true
+      if (timer !== null) win.clearTimeout(timer)
+      body.removeEventListener('transitionend', onEnd)
+      clearBody(body)
+    }
+    const onEnd = (event: Event): void => {
+      if ((event as TransitionEvent).propertyName === 'height') finish()
+    }
+    body.addEventListener('transitionend', onEnd)
+    timer = win.setTimeout(finish, MOTION_MS + 60)
+    return
+  }
   const height = body.getBoundingClientRect().height
   if (height <= 0) return
   body.style.overflow = 'hidden'
@@ -32,13 +59,8 @@ export function openDisclosure(
     [{ height: '0px', opacity: 0 }, { height: `${height}px`, opacity: 1 }],
     { duration: MOTION_MS, easing: EASING },
   )
-  const clear = (): void => {
-    body.style.overflow = ''
-    body.style.height = ''
-    body.style.opacity = ''
-  }
-  animation.addEventListener('finish', clear, { once: true })
-  animation.addEventListener('cancel', clear, { once: true })
+  animation.addEventListener('finish', () => { clearBody(body) }, { once: true })
+  animation.addEventListener('cancel', () => { clearBody(body) }, { once: true })
 }
 
 /**
@@ -70,6 +92,34 @@ export function closeDisclosure(
     return false
   }
   pending.add(element)
+  if (canUseCssSize(win)) {
+    body.style.setProperty('interpolate-size', 'allow-keywords')
+    body.style.overflow = 'hidden'
+    body.style.transition = 'none'
+    body.style.height = `${height}px`
+    body.style.opacity = '1'
+    void body.offsetHeight
+    body.style.transition = SIZE_TRANSITION
+    body.style.height = '0px'
+    body.style.opacity = '0'
+    let settled = false
+    let timer: number | null = null
+    const finish = (): void => {
+      if (settled) return
+      settled = true
+      if (timer !== null) win.clearTimeout(timer)
+      body.removeEventListener('transitionend', onEnd)
+      clearBody(body)
+      pending.delete(element)
+      toggle()
+    }
+    const onEnd = (event: Event): void => {
+      if ((event as TransitionEvent).propertyName === 'height') finish()
+    }
+    body.addEventListener('transitionend', onEnd)
+    timer = win.setTimeout(finish, MOTION_MS + 60)
+    return true
+  }
   body.style.overflow = 'hidden'
   body.style.height = `${height}px`
   body.style.opacity = '1'
@@ -81,9 +131,7 @@ export function closeDisclosure(
   const finish = (): void => {
     if (settled) return
     settled = true
-    body.style.overflow = ''
-    body.style.height = ''
-    body.style.opacity = ''
+    clearBody(body)
     pending.delete(element)
     toggle()
   }
@@ -115,6 +163,19 @@ export function findDisclosureBody(element: HTMLElement): HTMLElement | null {
     node = parent
   }
   return null
+}
+
+function clearBody(body: HTMLElement): void {
+  body.style.removeProperty('transition')
+  body.style.removeProperty('height')
+  body.style.removeProperty('opacity')
+  body.style.removeProperty('overflow')
+  body.style.removeProperty('interpolate-size')
+}
+
+function canUseCssSize(win: Window & typeof globalThis): boolean {
+  const css = (win as Window & typeof globalThis & { CSS?: { supports?: (property: string, value: string) => boolean } }).CSS
+  return typeof css?.supports === 'function' && css.supports('interpolate-size', 'allow-keywords')
 }
 
 function canAnimate(body: HTMLElement, win: Window & typeof globalThis): boolean {
