@@ -392,7 +392,6 @@ export default class StreamFocusSummary extends TypertRemoteService {
       })],
       temperature: 0.2,
       maxTokens: settings.maxTokens,
-      stop: ['\n'],
       ...(signal === undefined ? {} : { signal }),
     }
 

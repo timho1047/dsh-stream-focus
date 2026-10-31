@@ -17,7 +17,6 @@ describe('summary generation', () => {
       model: 'test-model',
       temperature: 0.2,
       maxTokens: 512,
-      stop: ['\n'],
     })
     expect(options.purpose).toBeUndefined()
     expect(options.system).toContain('locale "en"')

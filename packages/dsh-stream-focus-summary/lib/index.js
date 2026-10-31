@@ -814,7 +814,6 @@ let StreamFocusSummary = (() => {
 				})],
 				temperature: .2,
 				maxTokens: settings.maxTokens,
-				stop: ["\n"],
 				...signal === void 0 ? {} : { signal }
 			};
 			let text = "";
