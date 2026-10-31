@@ -1,18 +1,27 @@
 name: release
 
-# Tag-driven release:
-#   1. Run `pnpm run verify` locally and commit the rebuilt lib/.
-#   2. `npm version patch|minor|major` (or edit package.json + commit).
-#   3. `git push --follow-tags`.
+# Tag-driven two-package release train.
 #
-# The first npm publish must be done manually (npm publish --access public),
-# then configure this workflow as a Trusted Publisher on npmjs.com:
-#   owner: timho1047
-#   repo: dsh-stream-focus
-#   workflow: release.yml
-#   permission: Publish (not only "Stage publish")
-# After that, v* tags publish through OIDC with provenance and create the
-# matching GitHub Release. No NPM_TOKEN secret is required.
+#   vX.Y.Z  ->  dsh-stream-focus@X.Y.Z  +  dsh-stream-focus-summary@<declared>
+#
+# The tag is the bundle version. The summary version is whatever
+# `packages/dsh-stream-focus-summary/package.json` declares; the bundle
+# depends on it through `workspace:^`, which `pnpm pack` rewrites to the
+# matching `^<summary version>` range. The summary is published first so an
+# install can never resolve the bundle before its dependency exists.
+#
+# Maintainer flow (not run by agents):
+#   1. `pnpm install && pnpm run verify` in the workspace root.
+#   2. Commit the rebuilt `lib/` trees and the release docs.
+#   3. Bump the bundle version, then `git tag vX.Y.Z && git push --follow-tags`.
+#
+# npm Trusted Publisher must be configured for BOTH packages on npmjs.com
+# (owner: timho1047, repo: dsh-stream-focus, workflow: release.yml,
+# permission: Publish). A brand-new package cannot use trusted publishing
+# before its first release: seed `dsh-stream-focus-summary@0.1.0` once with a
+# manual `pnpm publish --access public`, then add its trusted publisher.
+# After that this workflow needs no NPM_TOKEN secret; each publish exchanges
+# the GitHub Actions OIDC token for a short-lived npm credential.
 on:
   push:
     tags: ["v*"]
@@ -24,44 +33,175 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_DIR: ${{ runner.temp }}/dsh-stream-focus-release
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.15.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-      # OIDC trusted publishing needs npm >= 11.5.1. Pin the current release
-      # line so a future npm major cannot break the release job.
-      - run: npm install -g npm@12.2.0
-      - name: Check tag matches package version
+      # The release never installs dependencies: `pnpm pack` reads the committed
+      # manifests and lib/ trees, and the devDependency links point at a local
+      # harness checkout that does not exist on a runner.
+      - name: Check tag, manifests, composition, and committed bundles
         run: |
-          node -e "const p=require('./package.json'); const tag=process.env.GITHUB_REF_NAME.replace(/^v/,''); if(p.version!==tag){console.error('Tag '+tag+' does not match package version '+p.version); process.exit(1)}"
-      - name: Check committed build artifacts
+          node - <<'NODE'
+          const fs = require('node:fs')
+          const path = require('node:path')
+
+          const root = process.cwd()
+          const fail = (message) => {
+            console.error(`release check: ${message}`)
+            process.exit(1)
+          }
+          const readJson = (file) => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'))
+          const tag = (process.env.GITHUB_REF_NAME ?? '').replace(/^v/, '')
+          const bundleDir = 'packages/dsh-stream-focus'
+          const summaryDir = 'packages/dsh-stream-focus-summary'
+          const bundle = readJson(`${bundleDir}/package.json`)
+          const summary = readJson(`${summaryDir}/package.json`)
+
+          if (!/^\d+\.\d+\.\d+$/.test(tag)) fail(`tag ${JSON.stringify(tag)} is not vX.Y.Z`)
+          if (bundle.name !== 'dsh-stream-focus') fail(`unexpected bundle name ${bundle.name}`)
+          if (summary.name !== 'dsh-stream-focus-summary') fail(`unexpected summary name ${summary.name}`)
+          if (bundle.version !== tag) fail(`tag ${tag} does not match bundle version ${bundle.version}`)
+          if (!/^\d+\.\d+\.\d+$/.test(summary.version)) fail(`summary version ${summary.version} is not X.Y.Z`)
+          if (summary.dsh?.bundle !== undefined) fail('summary must not declare dsh.bundle')
+
+          for (const [label, pkg] of [['bundle', bundle], ['summary', summary]]) {
+            if (pkg.engines?.dsh !== '>=0.2.1-rc.3') fail(`${label} engines.dsh must be >=0.2.1-rc.3`)
+            if (pkg.dsh?.client?.platform !== 'web') fail(`${label} must declare dsh.client.platform "web"`)
+            if (pkg.dsh?.client?.inject === undefined) fail(`${label} must declare dsh.client.inject`)
+            if (pkg.exports?.['./client']?.default !== './lib/client.js') {
+              fail(`${label} exports["./client"] must point at ./lib/client.js`)
+            }
+          }
+          if (bundle.dependencies?.['dsh-stream-focus-summary'] !== 'workspace:^') {
+            fail('bundle must depend on dsh-stream-focus-summary through workspace:^')
+          }
+
+          const patch = fs.readFileSync(path.join(root, `${bundleDir}/cordis.patch.yml`), 'utf8')
+          const ids = [...patch.matchAll(/^\s*-\s+id:\s*(\S+)\s*$/gm)].map((match) => match[1])
+          if (ids.length !== 2 || ids[0] !== 'dsh-stream-focus' || ids[1] !== 'dsh-stream-focus-summary') {
+            fail(`bundle patch must insert exactly two rows (found ${ids.join(', ') || 'none'})`)
+          }
+          const names = [...patch.matchAll(/^\s*name:\s*(\S+)\s*$/gm)].map((match) => match[1])
+          if (names[0] !== 'dsh-stream-focus' || names[1] !== 'dsh-stream-focus-summary') {
+            fail(`bundle patch rows must use the bare package names (found ${names.join(', ')})`)
+          }
+          const summaryRow = patch.slice(patch.indexOf('- id: dsh-stream-focus-summary'))
+          if (/disabled:\s*true/.test(summaryRow)) fail('summary row must be enabled by default')
+
+          for (const [label, dir, packageName] of [
+            ['bundle', bundleDir, 'dsh-stream-focus'],
+            ['summary', summaryDir, 'dsh-stream-focus-summary'],
+          ]) {
+            for (const file of ['lib/index.js', 'lib/client.js']) {
+              if (!fs.existsSync(path.join(root, dir, file))) fail(`${label} is missing committed ${file}`)
+            }
+            const client = fs.readFileSync(path.join(root, dir, 'lib/client.js'), 'utf8')
+            if (!client.includes('window.__ModuleLoader__.load')) fail(`${label} client bundle has no ModuleLoader handoff`)
+            if (!client.includes(`id: "${packageName}"`)) fail(`${label} client bundle id does not match its package name`)
+          }
+          console.log(`release check: ${bundle.name}@${bundle.version} + ${summary.name}@${summary.version}`)
+          NODE
+      - name: Syntax-check committed bundles
         run: |
-          test -f lib/index.js
-          test -f lib/client.js
-          node --check lib/index.js
-          node --check lib/client.js
-          npm pack --dry-run
-      - name: Publish to npm
+          for pkg in packages/dsh-stream-focus packages/dsh-stream-focus-summary; do
+            node --check "$pkg/lib/index.js"
+            node --check "$pkg/lib/client.js"
+          done
+      - name: Pack summary and bundle
         run: |
-          NAME=$(node -p "require('./package.json').name")
-          VERSION=$(node -p "require('./package.json').version")
-          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
-            echo "${NAME}@${VERSION} is already published; skipping npm publish."
+          mkdir -p "$RELEASE_DIR"
+          pnpm --dir packages/dsh-stream-focus-summary pack --pack-destination "$RELEASE_DIR"
+          pnpm --dir packages/dsh-stream-focus pack --pack-destination "$RELEASE_DIR"
+      - name: Verify packed manifests and contents
+        run: |
+          SUMMARY_VERSION=$(node -p "require('./packages/dsh-stream-focus-summary/package.json').version")
+          BUNDLE_VERSION=$(node -p "require('./packages/dsh-stream-focus/package.json').version")
+          SUMMARY_TGZ="$RELEASE_DIR/dsh-stream-focus-summary-$SUMMARY_VERSION.tgz"
+          BUNDLE_TGZ="$RELEASE_DIR/dsh-stream-focus-$BUNDLE_VERSION.tgz"
+          test -f "$SUMMARY_TGZ"
+          test -f "$BUNDLE_TGZ"
+
+          tar -xOf "$SUMMARY_TGZ" package/package.json > "$RELEASE_DIR/summary-packed.json"
+          tar -xOf "$BUNDLE_TGZ" package/package.json > "$RELEASE_DIR/bundle-packed.json"
+          node - <<'NODE'
+          const fs = require('node:fs')
+          const path = require('node:path')
+
+          const dir = process.env.RELEASE_DIR
+          const fail = (message) => {
+            console.error(`packed check: ${message}`)
+            process.exit(1)
+          }
+          const readPacked = (file) => JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'))
+          const readSource = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
+          const summary = readPacked('summary-packed.json')
+          const bundle = readPacked('bundle-packed.json')
+          const expectedRange = `^${summary.version}`
+
+          if (bundle.version !== readSource('packages/dsh-stream-focus/package.json').version) {
+            fail('packed bundle version differs from the source manifest')
+          }
+          if (summary.version !== readSource('packages/dsh-stream-focus-summary/package.json').version) {
+            fail('packed summary version differs from the source manifest')
+          }
+          if (bundle.dependencies?.['dsh-stream-focus-summary'] !== expectedRange) {
+            fail(`packed bundle must depend on ^${summary.version}, found ${bundle.dependencies?.['dsh-stream-focus-summary']}`)
+          }
+          if (JSON.stringify(bundle).includes('workspace:')) fail('packed bundle still contains a workspace: range')
+          if (JSON.stringify(summary).includes('workspace:')) fail('packed summary still contains a workspace: range')
+          if (bundle.engines?.dsh !== '>=0.2.1-rc.3' || summary.engines?.dsh !== '>=0.2.1-rc.3') {
+            fail('packed engines.dsh is not >=0.2.1-rc.3 for both packages')
+          }
+          NODE
+
+          for entry in package/lib/index.js package/lib/client.js package/README.md package/CHANGELOG.md; do
+            tar -tzf "$SUMMARY_TGZ" | grep -qx "$entry" || { echo "summary tarball is missing $entry"; exit 1; }
+          done
+          for entry in package/lib/index.js package/lib/client.js package/cordis.patch.yml package/README.md package/CHANGELOG.md; do
+            tar -tzf "$BUNDLE_TGZ" | grep -qx "$entry" || { echo "bundle tarball is missing $entry"; exit 1; }
+          done
+          tar -tzf "$SUMMARY_TGZ" | grep -q '^package/locale/.*\.json$'
+      - name: Publish summary package first
+        run: |
+          SUMMARY_VERSION=$(node -p "require('./packages/dsh-stream-focus-summary/package.json').version")
+          SUMMARY_TGZ="$RELEASE_DIR/dsh-stream-focus-summary-$SUMMARY_VERSION.tgz"
+          if npm view "dsh-stream-focus-summary@$SUMMARY_VERSION" version >/dev/null 2>&1; then
+            echo "dsh-stream-focus-summary@$SUMMARY_VERSION is already published; skipping."
           else
-            npm publish --access public --provenance
+            pnpm publish "$SUMMARY_TGZ" --access public --provenance --no-git-checks
           fi
-      - name: Extract release notes from CHANGELOG
+      - name: Publish bundle package second
+        run: |
+          BUNDLE_VERSION=$(node -p "require('./packages/dsh-stream-focus/package.json').version")
+          BUNDLE_TGZ="$RELEASE_DIR/dsh-stream-focus-$BUNDLE_VERSION.tgz"
+          if npm view "dsh-stream-focus@$BUNDLE_VERSION" version >/dev/null 2>&1; then
+            echo "dsh-stream-focus@$BUNDLE_VERSION is already published; skipping."
+          else
+            pnpm publish "$BUNDLE_TGZ" --access public --provenance --no-git-checks
+          fi
+      - name: Extract release notes from the bundle CHANGELOG
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           awk -v heading="## [${VERSION}]" '
             index($0, heading) == 1 { capture = 1; next }
             capture && substr($0, 1, 3) == "## " { exit }
-            capture { print }
-          ' CHANGELOG.md > release-notes.md
+            capture && (printed || length($0) > 0) { printed = 1; print }
+          ' packages/dsh-stream-focus/CHANGELOG.md > release-notes.md
           test -s release-notes.md
-      - name: Create GitHub Release
-        run: gh release create "$GITHUB_REF_NAME" --notes-file release-notes.md --title "$GITHUB_REF_NAME"
+      - name: Create or update the GitHub Release
+        run: |
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release edit "$GITHUB_REF_NAME" --notes-file release-notes.md
+          else
+            gh release create "$GITHUB_REF_NAME" --notes-file release-notes.md --title "$GITHUB_REF_NAME"
+          fi
         env:
           GH_TOKEN: ${{ github.token }}

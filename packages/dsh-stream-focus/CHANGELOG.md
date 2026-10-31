@@ -4,6 +4,54 @@
 
 All notable changes are documented here. Each release has Chinese first, English below. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - Unreleased
+
+### 中文
+
+#### 新增
+
+- 安装入口新增第二个默认开启的插件行 `dsh-stream-focus-summary`：为运行中的思考行生成模型进度短语，并在思考结束后升级为整段总结。
+- 摘要配置页（插件管理器该 row 的详情页）：`maxChars`、`maxTokens`、跟随当前会话模型或从完整模型目录指定 `provider/model`，以及目录缺失、目录加载失败和运行期 fallback 警告。
+- 摘要短语按内容、实际生效模型、locale、mode 和稳定 row 身份缓存；Host 通过 `storageDomain` 持久化，浏览器不保留可复用短语缓存。
+- 跟随 DSH UI locale；已完成行在切换语言和刷新后保持生成时语言。
+- 旧独立 thinking-progress 插件的 `data-dtp` 冲突保护，包括晚到的旧标记。
+
+#### 变更
+
+- 仓库改为私有 pnpm workspace，两个包位于 `packages/`；npm 包名和安装命令不变。
+- `dsh-stream-focus` 升级到 0.2.0，依赖 `dsh-stream-focus-summary@^0.1.0`；两个包要求 DSH `>=0.2.1-rc.3`。
+- 产品边界变化：升级后默认产生模型调用和 Host 侧派生短语持久化。stream-focus row 的纯客户端、零网络、零持久化承诺仅限该 row，不再代表整个安装。
+- 摘要 row 可独立禁用，不影响 stream-focus 的平滑、展开和跟随。
+
+#### 迁移
+
+- 卸载旧的独立 `dsh-thinking-progress`；新旧插件不会同时装饰同一行，但不应同时保留。
+- 不迁移旧插件缓存；新插件不读取旧缓存。
+- 回滚：安装 `dsh-stream-focus@0.1.3` 并刷新，摘要 row 和模型调用随之消失。
+
+### English
+
+#### Added
+
+- A second plugin row, `dsh-stream-focus-summary`, enabled by default in the same install: model-generated progress phrases for running thinking rows, upgraded to a whole-stretch summary when the row settles.
+- Summary configuration page in the plugin manager row detail: `maxChars`, `maxTokens`, follow-current-Session or a complete `provider/model` from the full model catalogue, and warnings for missing catalogue routes, catalogue load failures, and runtime fallback.
+- Phrases are cached by content, effective model, locale, mode, and stable row identity; the Host persists them through `storageDomain`, and the browser keeps no reusable phrase cache.
+- Phrases follow the active DSH UI locale; settled rows keep their generated language after a locale switch and reload.
+- Legacy `data-dtp` guard for the old standalone thinking-progress plugin, including late markers.
+
+#### Changed
+
+- The repository is now a private pnpm workspace with both packages under `packages/`; npm package names and the install command are unchanged.
+- `dsh-stream-focus` advances to 0.2.0 and depends on `dsh-stream-focus-summary@^0.1.0`; both packages require DSH `>=0.2.1-rc.3`.
+- Product boundary change: upgrading now starts model calls and Host-side derived-phrase persistence by default. The client-only, zero-network, zero-persistence guarantee now applies to the stream-focus row only, not to the whole install.
+- The summary row is independently disableable and does not affect stream-focus smoothing, disclosure, or follow.
+
+#### Migration
+
+- Uninstall the old standalone `dsh-thinking-progress`; the two plugins do not double-decorate a row, but they should not both remain installed.
+- Old plugin caches are not migrated and are not read by the new plugin.
+- Rollback: install `dsh-stream-focus@0.1.3` and refresh; the summary row and its model calls disappear.
+
 ## [0.1.3] - 2026-10-26
 
 ### 中文
@@ -130,6 +178,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - Zero settings, no Session writes, no network requests, and no model tools.
 - npm package, MIT license, and GitHub Pages project page.
 
+[0.2.0]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/timho1047/dsh-stream-focus/compare/v0.1.0...v0.1.1

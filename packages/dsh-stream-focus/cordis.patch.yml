@@ -1,0 +1,9 @@
+- insert:
+    - id: dsh-stream-focus
+      name: dsh-stream-focus
+
+    - id: dsh-stream-focus-summary
+      name: dsh-stream-focus-summary
+      config:
+        maxChars: 30
+        maxTokens: 800

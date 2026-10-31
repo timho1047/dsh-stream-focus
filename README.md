@@ -1,109 +1,77 @@
-# dsh-stream-focus
+# dsh-stream-focus workspace
 
-[English](README.en.md) | 中文 | [Landing page](https://timho1047.github.io/dsh-stream-focus/) | [Changelog](CHANGELOG.md)
+Private pnpm workspace for the `dsh-stream-focus` bundle and the
+`dsh-stream-focus-summary` plugin. The workspace root is not published; both
+packages are published from `packages/`.
 
-在 DSH 内置的四档工作步骤展示模式上增强运行中的思考/工具展示。
-
-## 各模式行为
-
-| 模式 | 插件增强 |
-|---|---|
-| Compact / Standard | 自动展开当前过程组，形成限高、贴底、保持高度的运行窗口；切换行时自动收起旧窗口。 |
-| Detailed | 当前轮次在官方容器内平铺，不伪造组级窗口；自动展开当前思考/工具行，并收起旧的自动展开行。 |
-| Verbose | 平铺显示，自动展开当前思考/工具行，但不自动收起旧行，尊重“永远展开”的语义。 |
-
-四档共享：思考正文逐字平滑、普通正文行级渐隐与字符淡入、新段落/列表/代码块淡入、自动操作不抢焦点。
-
-- 思考流式输出时，自动展开当前思考行；官方过程组本身成为限高、内部自动贴底的窗口。
-- 思考正文用 CSS Custom Highlight API 对尾部新字素做透明度淡入，不插 span、不改 Markdown DOM；揭示速度按 elapsed time 归一化，60Hz/120Hz 手感一致。窗口内部滚动跟随使用官方 process scroll，插件不重复写 `scrollTop`，避免两套跟随互相抢滚动。
-- 过程组首次自动展开时用约 180ms 的透明度淡入，窗口直接以真实高度出现，不再先折叠再展开。
-- 自动展开/收起在支持 `interpolate-size` 的浏览器里使用 CSS `0 → auto` 尺寸过渡，不再由 JS 每帧写 height；不支持时回退到原有的 WAAPI。
-- 运行中的窗口禁止横向溢出，并关闭过程组自带的上下渐隐遮罩，避免横向滚动条间歇出现、纵向滚动条被遮罩成半虚化。原生滚动条 thumb 在活动窗口内隐藏，右侧改用一条高度平滑过渡的 3px 进度线，避免内容按行增长时 thumb 一跳一跳地缩小。
-- 活动窗口保持已经出现过的最大高度；思考切换到工具时只滚动内部内容，不再让外层会话因窗口变矮而回滚。
-- 窗口底部有一层 16px 的轻渐隐，滚动跟随也更柔和，新行从底部淡入而不是硬切。
-- 普通助手正文流式输出时，在消息根部加 20px 的底部行渐隐；输出结束后立即移除。
-- 思考与普通正文中新出现的段落、列表、代码块会做一次 600ms ease-in 的透明度淡入（无位移）；逐字揭示会避开组合音标和 ZWJ emoji 边界。
-- 普通正文增长或工具行展开时，插件只在外层仍处于跟随状态时维持尾部；行切换通过冻结窗口高度避免外层位移，不在动画期间反复改外层滚动。
-- 不添加自定义背景、边框、圆角或内边距，窗口外观完全沿用官方过程组。
-- 自动展开时临时屏蔽标题按钮的 `focus()`；鼠标点击标题后也会移走焦点，不留下焦点环。键盘聚焦保持官方的可访问焦点行为。
-- 思考结束、工具开始后，先收起刚才的思考窗，再展开当前工具行；切换前冻结窗口高度，外层总高度不变，上方内容不会下坠或被顶回。展开/收起带约 180ms 的高度和透明度过渡。并行工具会一起展开，包括独立的 Bash 行（`data-sample="bash"`）。
-- 下一次思考开始时，自动收起上一批自动展开的思考/工具窗口，只保留新的思考窗。
-- 手动打开的窗口不会被自动收起；手动关掉的组或行不会被强行重开。
-- 外层会话离开底部时不主动滚动；窗口内部的滚动与贴底由官方 process scroll 负责。若没有读者手势、过渡前窗口在底部而过渡后官方 follow 意外丢失，插件会做一次单次自愈：滚回窗口底部并派发 `scrollend` 重新激活 follow。
-- 一轮结束或卸载插件后，恢复官方展示。
-
-## 演示
-
-30fps、1080p 的四档 MP4 演示（每段 25–32 秒，从居中输入框开始，完整包含开场思考，并在模型输出结束后停止）。GitHub README 不支持内嵌视频，点击封面会打开对应模式的 GitHub Pages 播放页。
-
-| Compact | Standard |
-|---|---|
-| [![Compact](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/compact.jpg)](https://timho1047.github.io/dsh-stream-focus/#compact) | [![Standard](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/standard.jpg)](https://timho1047.github.io/dsh-stream-focus/#standard) |
-| **Detailed** | **Verbose** |
-| [![Detailed](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/detailed.jpg)](https://timho1047.github.io/dsh-stream-focus/#detailed) | [![Verbose](https://raw.githubusercontent.com/timho1047/dsh-stream-focus/main/docs/demo/verbose.jpg)](https://timho1047.github.io/dsh-stream-focus/#verbose) |
-
-[打开全部演示](https://timho1047.github.io/dsh-stream-focus/)
-
-录制和更新流程见 [演示视频制作流程](docs/demo-production.md)。
-
-## 边界
-
-- 纯客户端展示增强：不写 Session、不发网络请求、不接触凭据、不注册模型工具。
-- 零设置、零持久化。插件面板里启用/禁用就是总开关。
-- 过程组的展开/折叠读取官方 Chat 的语义 DOM 标记来驱动；思考正文通过官方 `conversation.chat.reasoning.body` Slot 和 `conversation.chat.reasoning.content` Factory 包装，不复制 Markdown 渲染器。窗口高度与样式由插件维护；内部滚动跟随使用官方 process scroll，插件不重复写 `scrollTop`。官方改这些属性或 Slot 契约时，这里需要同步更新。
-- 仅对正在运行的轮次生效；历史轮次保持各模式自己的官方折叠方式。
-
-## 安装
+The user-facing install entry is unchanged:
 
 ```bash
 dsh plugin --profile web add dsh-stream-focus
 ```
 
-安装后刷新浏览器页面，四档模式下都会生效。
+That installs two independently toggleable rows:
 
-## 已验证的 DSH 版本
+| Package | Row | Default | Role |
+|---|---|---|---|
+| `packages/dsh-stream-focus` | `dsh-stream-focus` | on | Bundle patch and the client-only smoothing behavior for all four Work details modes. |
+| `packages/dsh-stream-focus-summary` | `dsh-stream-focus-summary` | **on** | Model-written progress phrases, whole-stretch summaries, Host persistence, and the plugin-manager configuration page. |
 
-| DSH 版本 | 验证状态 |
-|---|---|
-| `0.2.1-rc.2` | 已实机验证四档模式、思考/工具展开、跟随与中途失效恢复 |
-| `0.2.1-rc.3` | 已实机验证；当前主要开发版本 |
+The summary row makes model calls and persists derived phrases by default; the
+stream-focus row does not. See the package READMEs for behavior, model
+fallback, privacy, disable, and rollback details:
 
-发布前检查当前 DSH 版本；如果遇到新版本，先在这里补充并完成四档实机验证，再发版。该表格记录的是实际验证过的版本，不代表只兼容这些版本。
+- [dsh-stream-focus README](packages/dsh-stream-focus/README.md) ([English](packages/dsh-stream-focus/README.en.md))
+- [dsh-stream-focus-summary README](packages/dsh-stream-focus-summary/README.md)
 
-## 已知限制
-
-- 字符淡入依赖 CSS Custom Highlight API；不支持的浏览器会自动回退为普通文本渲染。
-- 依赖 ui-chat 的语义 DOM（`data-chat-group-key`、`data-variant="think"`、`data-tool`、`data-sample="bash"`、`data-disclosure-row`、`data-chat-running`、`data-chat-following-tail`）。上游属性改名时插件会静默不生效，需要跟进。
-- 只有 Compact / Standard 有官方过程组，窗口高度沿用其 `min(400px, 50vh)`；Detailed / Verbose 保持官方平铺结构，不添加组级限高。
-- 插件自动切换行时，思考和工具行的展开/收起使用约 180ms 的高度 + 透明度过渡；手动点击行仍沿用官方即时切换。过程组首次出现使用 180ms 透明度淡入。
-- 字符平滑会带来约 100ms 的视觉延迟；流式期间显示的是思考原文的可见前缀，结束后立即切回完整文本。复制正在流式输出的内容时会得到当前可见前缀。
-- 普通助手正文没有官方 Content Factory，无法逐字 pacing；目前使用尾部字符 Highlight 淡入 + 行级底部渐隐。真正的逐字 pacing 需要官方增加一个正文 Factory。
-
-## 致谢
-
-本插件的开发受到 [dsh-streamfold](https://github.com/rezon-aki/dsh-streamfold) 的启发。感谢 [@rezon-aki](https://github.com/rezon-aki) 的探索与实现。
-
-也感谢 [dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-stream)：它的 CSS Custom Highlight 字符淡入、揭示与跟随分离、基于时间的物理积分，为本插件的后续改进提供了重要启发。感谢 [@Laplace-bit](https://github.com/Laplace-bit) 的探索与实现。
-
-## 开发
+## Development
 
 ```bash
 pnpm install
-pnpm run verify   # typecheck + build + 57 个测试
+pnpm -r run typecheck
+pnpm run verify   # build and test both packages
 ```
 
-发布前：在当前 DSH 版本上跑 `pnpm run verify` 和四档实机检查；如果 DSH 版本变化，先把新版本补进上方“已验证的 DSH 版本”，再发布。
+`pnpm-workspace.yaml` covers `packages/*`. Local devDependencies link into the
+DeepSeek Harness checkout at `../../../../deepseek-harness`, so a fresh clone
+without that checkout can still `pnpm pack` (the release path does not install
+dependencies) but cannot run the full build.
 
-- `src/client/decision.ts`：纯状态机，决定本轮窗口应该打开/关闭哪些行。
-- `src/client/conductor.ts`：Compact / Standard 的过程组窗口、高度冻结、模式协调。
-- `src/client/flat-rows.ts`：Detailed / Verbose 的平铺行自动展开。
-- `src/client/mode-policy.ts`：四档模式解析与 conductor 选择。
-- `src/client/paced-body.tsx`：替换 reasoning Body Slot，通过官方 Content Factory 平滑揭示思考正文。
-- `src/client/normal-smoothing.ts`：普通正文行级渐隐、字符高亮淡入与新块淡入。
-- `src/client/highlight-fade.ts`：CSS Custom Highlight 字符级淡入。
-- `src/client/pacing.ts`：字符揭示的纯数学。
-- `src/client/live-transcript.ts`：集中 ui-chat 语义 DOM 契约。
-- `src/client/follow-steward.ts`：共享 follow intent、手势、scrollend 与增长恢复。
-- `src/client/process-progress.ts`：活动窗口进度线。
-- `src/client/row-disclosure.ts`：共享行 ownership、手动选择与点击策略。
-- `tests/`：模式策略、状态机、节奏计算、jsdom 交互测试。
+## Release train
+
+One tag publishes both packages:
+
+```text
+v0.2.0  ->  dsh-stream-focus@0.2.0
+            dsh-stream-focus-summary@0.1.0  (as declared in its manifest)
+```
+
+- The tag always equals the bundle version and is checked against
+  `packages/dsh-stream-focus/package.json`.
+- The summary version comes from
+  `packages/dsh-stream-focus-summary/package.json`; the bundle depends on it
+  through `workspace:^`, which `pnpm pack` rewrites to `^<summary version>`.
+- `.github/workflows/release.yml` packs both packages, verifies the rewritten
+  dependency range and both manifests, publishes the summary first (skipping an
+  already-published matching version), then publishes the bundle.
+- Both packages publish with npm Trusted Publisher through GitHub OIDC and
+  provenance; no `NPM_TOKEN` secret is used. A brand-new package cannot use
+  trusted publishing before its first release, so
+  `dsh-stream-focus-summary@0.1.0` must be seeded once manually, then have its
+  trusted publisher configured.
+- The workflow also creates or updates the GitHub Release from the bundle
+  CHANGELOG. It never pushes commits or tags; maintainers tag and push.
+
+Maintainer flow:
+
+```bash
+pnpm install
+pnpm run verify
+# commit the rebuilt packages/*/lib trees and docs
+# bump packages/dsh-stream-focus/package.json
+git tag v0.2.0
+git push --follow-tags
+```
+
+Do not publish from an agent session; tag and release from an approved
+maintainer run.

@@ -1,0 +1,132 @@
+{
+  "name": "dsh-stream-focus-summary",
+  "version": "0.1.0",
+  "description": "DSH plugin: model-written progress phrases and whole-stretch summaries for running reasoning rows in dsh-stream-focus.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.19.0",
+    "dsh": ">=0.2.1-rc.3"
+  },
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/index.js.map",
+    "lib/client.js",
+    "lib/client.js.map",
+    "lib/types/**/*.d.ts",
+    "locale/*.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "build:host": "tsc -p tsconfig.json",
+    "build:client": "tsc -p tsconfig.client.json && tsdown",
+    "clean": "rm -rf lib",
+    "build": "npm run clean && npm run build:host && npm run build:client",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit",
+    "test": "vitest run",
+    "typecheck:tests": "tsc -p tsconfig.test.json --noEmit && tsc -p tsconfig.test.host.json --noEmit",
+    "verify": "npm run typecheck && npm run typecheck:tests && npm run build && npm run test"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-connection",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-renderer",
+        "@deepseek-ai/dsh-client-ui-plugin-manager",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-api-session-controller"
+      ]
+    }
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-typert-protocol": "*",
+    "@deepseek-ai/dsh-llm": "*",
+    "@deepseek-ai/dsh-agent": "*",
+    "@deepseek-ai/dsh-agent-default-model": "*",
+    "@deepseek-ai/dsh-session": "*",
+    "@deepseek-ai/dsh-session-projection": "*",
+    "@deepseek-ai/dsh-storage-domain": "*",
+    "@deepseek-ai/dsh-client-connection": "*",
+    "@deepseek-ai/dsh-client-locale": "*",
+    "@deepseek-ai/dsh-client-ui-renderer": "*",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "*",
+    "@deepseek-ai/dsh-client-ui-settings": "*",
+    "@deepseek-ai/dsh-api-remotes": "*",
+    "@deepseek-ai/dsh-api-session-controller": "*",
+    "@deepseek-ai/schemastery": "*"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "link:../../../../deepseek-harness/vendor/cordis",
+    "@deepseek-ai/schemastery": "link:../../../../deepseek-harness/vendor/schemastery",
+    "@deepseek-ai/dsh-typert-protocol": "link:../../../../deepseek-harness/packages/typert/protocol",
+    "@deepseek-ai/dsh-llm": "link:../../../../deepseek-harness/packages/llm/llm",
+    "@deepseek-ai/dsh-agent": "link:../../../../deepseek-harness/packages/core/agent",
+    "@deepseek-ai/dsh-agent-default-model": "link:../../../../deepseek-harness/packages/core/agent-default-model",
+    "@deepseek-ai/dsh-session": "link:../../../../deepseek-harness/packages/core/session",
+    "@deepseek-ai/dsh-session-projection": "link:../../../../deepseek-harness/packages/session/session-projection",
+    "@deepseek-ai/dsh-storage-domain": "link:../../../../deepseek-harness/packages/storage/storage-domain",
+    "@deepseek-ai/dsh-client-connection": "link:../../../../deepseek-harness/packages/client/connection",
+    "@deepseek-ai/dsh-client-locale": "link:../../../../deepseek-harness/packages/client/locale",
+    "@deepseek-ai/dsh-client-ui-renderer": "link:../../../../deepseek-harness/packages/client/ui-renderer",
+    "@deepseek-ai/dsh-client-ui-plugin-manager": "link:../../../../deepseek-harness/packages/client/ui-plugin-manager",
+    "@deepseek-ai/dsh-client-ui-session": "link:../../../../deepseek-harness/packages/client/ui-session",
+    "@deepseek-ai/dsh-client-ui-settings": "link:../../../../deepseek-harness/packages/client/ui-settings",
+    "@deepseek-ai/dsh-api-remotes": "link:../../../../deepseek-harness/packages/api/remotes",
+    "@deepseek-ai/dsh-api-session-controller": "link:../../../../deepseek-harness/packages/api/session-controller",
+    "@deepseek-ai/dsh-client-store": "link:../../../../deepseek-harness/packages/client/store",
+    "@testing-library/react": "link:../../../../deepseek-harness/node_modules/@testing-library/react",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.0",
+    "jsdom": "^29.0.0",
+    "lightningcss": "^1.29.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tsdown": "0.22.2",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "@types/react-dom": "link:../../../../deepseek-harness/node_modules/@types/react-dom"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/timho1047/dsh-stream-focus.git",
+    "directory": "packages/dsh-stream-focus-summary"
+  },
+  "bugs": {
+    "url": "https://github.com/timho1047/dsh-stream-focus/issues"
+  },
+  "homepage": "https://timho1047.github.io/dsh-stream-focus/",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "reasoning",
+    "progress",
+    "summary"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

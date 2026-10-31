@@ -1,4 +1,4 @@
-import { clientBundle, nodeBundle } from './tsdown.client.ts'
+import { clientBundle, nodeBundle } from '../../build/tsdown.client.ts'
 
 /**
  * Two build faces over the tsc-emitted `lib/types` tree:
