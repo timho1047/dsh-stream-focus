@@ -37,7 +37,7 @@ docs/demo/verbose.jpg
 ## 1. 备份旧视频
 
 ```bash
-cd /Users/timho/Development/dsh/dsh-plugins/dsh-stream-focus
+cd <path-to-dsh-stream-focus>
 mkdir -p .scratch/demo/old .scratch/demo/raw .scratch/demo/work
 cp docs/demo/*.mp4 docs/demo/*.jpg .scratch/demo/old/
 ```
