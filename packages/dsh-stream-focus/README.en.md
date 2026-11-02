@@ -202,7 +202,7 @@ Before release: run `pnpm run verify` and a two-row, four-mode live check on the
 - `packages/dsh-stream-focus-summary/src/shared/`: the RPC contract between browser and Host.
 - Both packages' `tests/`: mode policy, state machines, pacing math, jsdom interaction, Host service, and configuration-page tests.
 
-The one-tag, two-package release flow is documented in the workspace [README](https://github.com/timho1047/dsh-stream-focus#readme).
+The workspace development and one-tag release flow are documented in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Acknowledgements
 

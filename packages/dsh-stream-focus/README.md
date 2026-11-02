@@ -203,7 +203,7 @@ pnpm run verify   # 两个包的 typecheck + build + tests
 - `packages/dsh-stream-focus-summary/src/shared/`：浏览器与 Host 之间的 RPC 契约。
 - 两个包的 `tests/`：模式策略、状态机、节奏计算、jsdom 交互、Host 服务与配置页测试。
 
-发布流程（一个 tag 同时发布两个包）见仓库根 [README](https://github.com/timho1047/dsh-stream-focus#readme)。
+工作区开发与发布流程见 [CONTRIBUTING.md](../../CONTRIBUTING.md)。
 
 ## 致谢
 
