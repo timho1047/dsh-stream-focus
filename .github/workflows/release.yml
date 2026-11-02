@@ -34,7 +34,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     env:
-      RELEASE_DIR: ${{ runner.temp }}/dsh-stream-focus-release
+      RELEASE_DIR: ${{ github.workspace }}/.release
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
