@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-11-02
 
 ### Added
 
@@ -9,7 +9,6 @@
 - Exact content keys plus locale-neutral anchors with stable row identity; a Host memory LRU and `storageDomain` phrase persistence, with memory-only degradation.
 - Locale-aware generation that follows the active DSH UI locale; finished rows keep their language across locale switches and reloads.
 - Row configuration page at `dsh-stream-focus#dsh-stream-focus-summary` with `maxChars`, `maxTokens`, follow/override model modes, a full searchable model catalogue, active-source status, and fallback/catalogue warnings.
-- Legacy thinking-progress (`data-dtp`) guard for rows decorated before or after this plugin, with one diagnostic warning.
 - No browser phrase cache: reload, re-mount, and conversation switches hydrate through the Host only.
 
 ### Notes
