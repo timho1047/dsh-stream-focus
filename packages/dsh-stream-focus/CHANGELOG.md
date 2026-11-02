@@ -10,7 +10,7 @@ All notable changes are documented here. Each release has Chinese first, English
 
 #### 新增
 
-- 安装入口新增第二个默认开启的插件行 `dsh-stream-focus-summary`：为运行中的思考行生成模型进度短语，并在思考结束后升级为整段总结。
+- 安装入口新增第二个默认关闭、可手动启用的插件行 `dsh-stream-focus-summary`：为运行中的思考行生成模型进度短语，并在思考结束后升级为整段总结。
 - 摘要配置页（插件管理器该 row 的详情页）：`maxChars`、`maxTokens`、跟随当前会话模型或从完整模型目录指定 `provider/model`，以及目录缺失、目录加载失败和运行期 fallback 警告。
 - 摘要短语按内容、实际生效模型、locale、mode 和稳定 row 身份缓存；Host 通过 `storageDomain` 持久化，浏览器不保留可复用短语缓存。
 - 跟随 DSH UI locale；已完成行在切换语言和刷新后保持生成时语言。
@@ -33,7 +33,7 @@ All notable changes are documented here. Each release has Chinese first, English
 
 #### Added
 
-- A second plugin row, `dsh-stream-focus-summary`, enabled by default in the same install: model-generated progress phrases for running thinking rows, upgraded to a whole-stretch summary when the row settles.
+- A second plugin row, `dsh-stream-focus-summary`, disabled by default and manually enableable in the same install: model-generated progress phrases for running thinking rows, upgraded to a whole-stretch summary when the row settles.
 - Summary configuration page in the plugin manager row detail: `maxChars`, `maxTokens`, follow-current-Session or a complete `provider/model` from the full model catalogue, and warnings for missing catalogue routes, catalogue load failures, and runtime fallback.
 - Phrases are cached by content, effective model, locale, mode, and stable row identity; the Host persists them through `storageDomain`, and the browser keeps no reusable phrase cache.
 - Phrases follow the active DSH UI locale; settled rows keep their generated language after a locale switch and reload.

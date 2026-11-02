@@ -5,9 +5,9 @@ English | [中文](README.md) | [Landing page](https://timho1047.github.io/dsh-s
 One install entry, two independently toggleable plugin rows:
 
 - **`dsh-stream-focus`**: the original pure client-side smoothing enhancement for all four Work details modes.
-- **`dsh-stream-focus-summary`**: **enabled by default**; writes model-generated progress phrases onto running thinking rows and upgrades them to whole-stretch summaries when the row settles.
+- **`dsh-stream-focus-summary`**: **disabled by default**; enable it in the plugin manager to write model-generated progress phrases onto running thinking rows and upgrade them to whole-stretch summaries when the row settles.
 
-> **Upgrade notice**: from 0.2.0 on, installing or upgrading this package also loads the summary row by default. It makes network requests (the selected reasoning text is sent to the configured model provider) and the Host persists derived phrases. To avoid model calls entirely, disable the summary row in the plugin manager; stream-focus behavior is unaffected. See [Summary row](#summary-row).
+> **Upgrade notice**: from 0.2.0 on, installing or upgrading this package adds the summary row, but it is **disabled by default**. Only enabling it manually starts network requests (the selected reasoning text is sent to the configured model provider) and Host persistence of derived phrases. Enabling or disabling the summary row never affects stream-focus behavior. See [Summary row](#summary-row).
 
 ## Install
 
@@ -15,14 +15,14 @@ One install entry, two independently toggleable plugin rows:
 dsh plugin --profile web add dsh-stream-focus
 ```
 
-Refresh the browser page after installation. The plugin manager shows two rows from this package: `dsh-stream-focus` and `dsh-stream-focus-summary`; the summary row is enabled by default.
+Refresh the browser page after installation. The plugin manager shows two rows from this package: `dsh-stream-focus` and `dsh-stream-focus-summary`; the summary row is disabled by default and can be enabled when needed.
 
 ## The two rows
 
 | Row | Default | Behavior | Network and persistence |
 |---|---|---|---|
 | `dsh-stream-focus` | on | Four-mode window, follow, disclosure, and character smoothing. | No network requests, no persistence, no Session writes, no credentials, no model tools. |
-| `dsh-stream-focus-summary` | **on** | Model progress phrases, whole-stretch summaries, and a plugin-manager configuration page. | Model calls; Host persists derived phrases; the browser keeps no reusable phrase cache. |
+| `dsh-stream-focus-summary` | **off** | When enabled, model progress phrases, whole-stretch summaries, and a plugin-manager configuration page. | When enabled, model calls and Host persistence of derived phrases; the browser keeps no reusable phrase cache. |
 
 The rows share one install entry and the same official thinking-row DOM, but they are independent at runtime: if either client bundle fails to load or stops, the other row keeps working. Disabling the summary row leaves stream-focus fully functional.
 
@@ -75,14 +75,14 @@ The phrase is model-written, not extracted from reasoning; it is supplemental vi
 - Reloads and conversation switches restore settled rows from the Host cache first. A visible historical row without a cache entry may receive one whole-stretch summary call.
 - A failed, timed-out, or invalid generation leaves the product preview in place; the row never shows an empty label and stream-focus scrolling/disclosure is unaffected.
 
-### Default-on and cost
+### Default-off and enablement cost
 
-The summary row is enabled by default, so upgrading starts real model calls:
+The summary row is disabled by default. Enabling it starts real model calls:
 
 - Each new paragraph or whole-stretch summary may issue a request; an empty result gets at most one repair retry.
 - The default follows the current Session model, so usage counts against that provider's quota. `maxTokens` is the per-request generation budget (provider reasoning tokens consume it too), not a cost ceiling.
 - With no usable model (no override, no current Session model, no default model), no call is made and the row keeps the product preview.
-- To avoid model calls entirely, disable the summary row (see [Disable the summary row](#disable-the-summary-row)).
+- The summary row is off by default; to avoid model calls entirely, keep it disabled (see [Enable or disable the summary row](#enable-or-disable-the-summary-row)).
 
 ### Model choice: follow current Session / override / fallback
 
@@ -118,9 +118,11 @@ Phrases follow the active DSH UI locale instead of hardcoding Simplified Chinese
 
 When `llm` is unavailable, the model cannot be resolved, the catalogue fails to load, a network/rate-limit/timeout error occurs, the result is empty, or the output is invalid, the summary row simply shows no phrase or keeps the previous one. stream-focus smoothing, disclosure, and follow are unaffected. No summary client failure should take down the stream-focus client.
 
-### Disable the summary row
+### Enable or disable the summary row
 
-Turn off `dsh-stream-focus-summary` in the plugin manager, or add this to the profile patch:
+Turn on `dsh-stream-focus-summary` in the plugin manager to enable it; the summary behavior and configuration page appear together.
+
+To turn it off, use the same row switch, or add this to the profile patch:
 
 ```yaml
 - id: dsh-stream-focus-summary

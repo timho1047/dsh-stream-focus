@@ -19,11 +19,12 @@ That installs two independently toggleable rows:
 | Package | Row | Default | Role |
 |---|---|---|---|
 | `packages/dsh-stream-focus` | `dsh-stream-focus` | on | Bundle patch and the client-only smoothing behavior for all four Work details modes. |
-| `packages/dsh-stream-focus-summary` | `dsh-stream-focus-summary` | **on** | Model-written progress phrases, whole-stretch summaries, Host persistence, and the plugin-manager configuration page. |
+| `packages/dsh-stream-focus-summary` | `dsh-stream-focus-summary` | **off** | Model-written progress phrases, whole-stretch summaries, Host persistence, and the plugin-manager configuration page. |
 
-The summary row makes model calls and persists derived phrases by default; the
-stream-focus row does not. See the package READMEs for behavior, model
-fallback, privacy, disable, and rollback details:
+When enabled, the summary row makes model calls and persists derived phrases.
+By default it is off, and the stream-focus row makes no network calls. See the
+package READMEs for behavior, model fallback, privacy, enablement, and rollback
+details:
 
 - [dsh-stream-focus README](packages/dsh-stream-focus/README.md) ([English](packages/dsh-stream-focus/README.en.md))
 - [dsh-stream-focus-summary README](packages/dsh-stream-focus-summary/README.md)

@@ -4,6 +4,7 @@
 
     - id: dsh-stream-focus-summary
       name: dsh-stream-focus-summary
+      disabled: true
       config:
         maxChars: 30
         maxTokens: 800

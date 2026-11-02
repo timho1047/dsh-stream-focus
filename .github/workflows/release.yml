@@ -94,7 +94,7 @@ jobs:
             fail(`bundle patch rows must use the bare package names (found ${names.join(', ')})`)
           }
           const summaryRow = patch.slice(patch.indexOf('- id: dsh-stream-focus-summary'))
-          if (/disabled:\s*true/.test(summaryRow)) fail('summary row must be enabled by default')
+          if (!/disabled:\s*true/.test(summaryRow)) fail('summary row must be disabled by default')
 
           for (const [label, dir, packageName] of [
             ['bundle', bundleDir, 'dsh-stream-focus'],

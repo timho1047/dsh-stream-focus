@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Stream Focus",
-    "description": "Smooths thinking and tool output across all Work details modes, with a default-on second row of model-written progress phrases and whole-stretch summaries; the summary calls the configured model and the Host persists derived phrases."
+    "description": "Smooths thinking and tool output across all Work details modes, with an opt-in second row of model-written progress phrases and whole-stretch summaries; the summary calls the configured model and the Host persists derived phrases."
   }
 }
