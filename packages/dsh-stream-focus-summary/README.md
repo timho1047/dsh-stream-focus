@@ -87,13 +87,6 @@ therefore appear temporarily in a long conversation.
   through the Host `phrases` query.
 - Default logs omit raw reasoning previews.
 
-## Legacy guard
-
-A row already decorated by the old standalone thinking-progress plugin
-(`data-dtp`) is skipped with one diagnostic warning. If the old marker appears
-after this plugin decorated a row, this plugin removes its own attributes and
-pending request state. Uninstall the old plugin; do not run both.
-
 ## Disable and rollback
 
 Disable the `dsh-stream-focus-summary` row in the plugin manager, or in the
@@ -105,7 +98,6 @@ profile patch:
 ```
 
 Rolling back to `dsh-stream-focus@0.1.3` removes this dependency and the row.
-No cache is migrated from the old standalone plugin.
 
 ## Development
 
@@ -118,5 +110,10 @@ pnpm run verify
 Tests live next to the package: Host tests exercise the service through its
 public remote methods with a fake `llm.stream()` and fake storage; browser
 tests use jsdom fixtures of the product's think-row markup and a fake RPC
-connection. The composition and packaging checks live in the workspace
-[README](https://github.com/timho1047/dsh-stream-focus#readme).
+connection. The composition and packaging checks live in [CONTRIBUTING.md](https://github.com/timho1047/dsh-stream-focus/blob/main/CONTRIBUTING.md).
+
+## Acknowledgements
+
+The summary row was inspired by Bilibili user “想来颗甘梅嘛”'s `dsh-thinking-progress`.
+The standalone `dsh-thinking-progress` plugin is incompatible with this plugin;
+do not use them together.

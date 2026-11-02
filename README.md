@@ -140,11 +140,7 @@ dsh plugin --profile web add dsh-stream-focus
 dsh plugin --profile web add dsh-stream-focus@0.1.3
 ```
 
-0.1.3 的 bundle patch 只插入 stream-focus 一个 row，摘要依赖和模型调用随之消失。旧插件缓存不会迁移到新插件，本插件也不读取旧缓存。
-
-### 旧独立插件迁移
-
-旧的独立 `dsh-thinking-progress` 必须卸载，不要和新摘要 row 同时安装。新 client 检测到 row 上已有的 `data-dtp` 标记时会跳过该行并记录一次 warning；如果 `data-dtp` 在本插件装饰之后才出现，本插件会移除自己的属性和待请求状态，避免双重短语和双重占位。这是安全兜底，不是数据迁移。
+0.1.3 的 bundle patch 只插入 stream-focus 一个 row，摘要依赖和模型调用随之消失。
 
 ## 演示
 
@@ -212,3 +208,5 @@ pnpm run verify   # 两个包的 typecheck + build + tests
 本插件的开发受到 [dsh-streamfold](https://github.com/rezon-aki/dsh-streamfold) 的启发。感谢 [@rezon-aki](https://github.com/rezon-aki) 的探索与实现。
 
 也感谢 [dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-stream)：它的 CSS Custom Highlight 字符淡入、揭示与跟随分离、基于时间的物理积分，为本插件的后续改进提供了重要启发。感谢 [@Laplace-bit](https://github.com/Laplace-bit) 的探索与实现。
+
+也感谢 B 站用户“想来颗甘梅嘛”创作的 `dsh-thinking-progress`；本插件的摘要能力受其启发。旧的独立 `dsh-thinking-progress` 与本插件不兼容，不能同时使用。

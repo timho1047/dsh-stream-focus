@@ -139,11 +139,7 @@ To return to client-only behavior, install the previous bundle and refresh:
 dsh plugin --profile web add dsh-stream-focus@0.1.3
 ```
 
-The 0.1.3 bundle patch inserts only the stream-focus row, so the summary dependency and model calls disappear. Old plugin caches are not migrated to the summary plugin, and it does not read them.
-
-### Migrating from the old standalone plugin
-
-Uninstall the old standalone `dsh-thinking-progress`; do not run it alongside the new summary row. The new client skips a row already carrying the old `data-dtp` marker and logs one warning; if `data-dtp` appears after this plugin decorated the row, the plugin removes its own attributes and pending request state, avoiding double phrases and double placeholders. This is a safety guard, not a data migration.
+The 0.1.3 bundle patch inserts only the stream-focus row, so the summary dependency and model calls disappear.
 
 ## Demos
 
@@ -211,3 +207,5 @@ The workspace development and one-tag release flow are documented in [CONTRIBUTI
 This plugin was inspired by [dsh-streamfold](https://github.com/rezon-aki/dsh-streamfold). Thanks to [@rezon-aki](https://github.com/rezon-aki) for the exploration and implementation.
 
 Thanks also to [dsh-smooth-stream](https://github.com/Laplace-bit/dsh-smooth-stream): its CSS Custom Highlight character fade, reveal/follow separation, and time-based integration were important references for later improvements. Thanks to [@Laplace-bit](https://github.com/Laplace-bit) for the exploration and implementation.
+
+Thanks also to Bilibili user “想来颗甘梅嘛” for `dsh-thinking-progress`, which inspired the summary feature. The standalone `dsh-thinking-progress` plugin is incompatible with this plugin; do not use them together.
