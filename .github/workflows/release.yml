@@ -15,13 +15,12 @@ name: release
 #   2. Commit the rebuilt `lib/` trees and the release docs.
 #   3. Bump the bundle version, then `git tag vX.Y.Z && git push --follow-tags`.
 #
-# npm Trusted Publisher must be configured for BOTH packages on npmjs.com
+# Both current packages have Trusted Publisher configured on npmjs.com
 # (owner: timho1047, repo: dsh-stream-focus, workflow: release.yml,
-# permission: Publish). A brand-new package cannot use trusted publishing
-# before its first release: seed `dsh-stream-focus-summary@0.1.0` once with a
-# manual `pnpm publish --access public`, then add its trusted publisher.
-# After that this workflow needs no NPM_TOKEN secret; each publish exchanges
-# the GitHub Actions OIDC token for a short-lived npm credential.
+# permission: Publish). A brand-new package must be seeded once manually
+# before its trusted publisher can be configured. This workflow needs no
+# NPM_TOKEN secret; each publish exchanges the GitHub Actions OIDC token for
+# a short-lived npm credential.
 on:
   push:
     tags: ["v*"]
@@ -73,7 +72,7 @@ jobs:
           if (summary.dsh?.bundle !== undefined) fail('summary must not declare dsh.bundle')
 
           for (const [label, pkg] of [['bundle', bundle], ['summary', summary]]) {
-            if (pkg.engines?.dsh !== '>=0.2.1-rc.3') fail(`${label} engines.dsh must be >=0.2.1-rc.3`)
+            if (pkg.engines?.dsh !== '>=0.2.2-rc.1') fail(`${label} engines.dsh must be >=0.2.2-rc.1`)
             if (pkg.dsh?.client?.platform !== 'web') fail(`${label} must declare dsh.client.platform "web"`)
             if (pkg.dsh?.client?.inject === undefined) fail(`${label} must declare dsh.client.inject`)
             if (pkg.exports?.['./client']?.default !== './lib/client.js') {
@@ -157,8 +156,8 @@ jobs:
           }
           if (JSON.stringify(bundle).includes('workspace:')) fail('packed bundle still contains a workspace: range')
           if (JSON.stringify(summary).includes('workspace:')) fail('packed summary still contains a workspace: range')
-          if (bundle.engines?.dsh !== '>=0.2.1-rc.3' || summary.engines?.dsh !== '>=0.2.1-rc.3') {
-            fail('packed engines.dsh is not >=0.2.1-rc.3 for both packages')
+          if (bundle.engines?.dsh !== '>=0.2.2-rc.1' || summary.engines?.dsh !== '>=0.2.2-rc.1') {
+            fail('packed engines.dsh is not >=0.2.2-rc.1 for both packages')
           }
           NODE
 

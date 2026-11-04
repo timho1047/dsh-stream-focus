@@ -26,7 +26,6 @@ export declare class StreamWindowConductor {
     private textFade;
     private progress;
     private follow;
-    private outerGuard;
     private openAnimation;
     private observer;
     /** Process groups this plugin opened. */
@@ -52,11 +51,6 @@ export declare class StreamWindowConductor {
     private attachFollow;
     /** Release the active window's observer and reader signals. */
     private detachFollow;
-    /** Pin the outer transcript on each height step while the window reveals. */
-    private startOuterGuard;
-    private stopOuterGuard;
-    /** Keep the outer transcript at its floor without waiting a frame for Chat's follow. */
-    private pinOuterNow;
     /** Fade the lowest content edge so new lines enter instead of popping. */
     private attachFade;
     private removeFade;
@@ -84,8 +78,8 @@ export declare class StreamWindowConductor {
     /**
      * Open the process group at full height with a short opacity fade.
      *
-     * The window must not collapse to zero and re-expand; the outer transcript is
-     * kept on the floor by its own guard while the group appears at its real size.
+     * The window must not collapse to zero and re-expand; the group appears at its
+     * real size and Chat's own follow owns the outer transcript.
      */
     private autoOpen;
     private finishOpenAnimation;

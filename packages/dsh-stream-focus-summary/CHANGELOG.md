@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Require DSH `>=0.2.2-rc.1`; DSH 0.2.1 is no longer supported.
+
 ## [0.1.0] - 2026-11-02
 
 ### Added

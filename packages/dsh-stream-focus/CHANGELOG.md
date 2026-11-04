@@ -4,6 +4,22 @@
 
 All notable changes are documented here. Each release has Chinese first, English below. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### 中文
+
+#### 变更
+
+- 最低支持 DSH 版本提升到 `0.2.2-rc.1`；不再支持 0.2.1。
+- 移除 0.2.2-rc.1 上不再需要的外层 transcript pin 兜底；外层 follow 由 Chat 自身负责。
+
+### English
+
+#### Changed
+
+- Raise the minimum supported DSH version to `0.2.2-rc.1`; DSH 0.2.1 is no longer supported.
+- Remove the outer transcript pin fallback that is no longer needed on 0.2.2-rc.1; Chat owns outer follow.
+
 ## [0.2.0] - 2026-11-02
 
 ### 中文

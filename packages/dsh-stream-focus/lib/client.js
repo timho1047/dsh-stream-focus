@@ -839,7 +839,6 @@ window.__ModuleLoader__.load({
 			textFade = null;
 			progress = null;
 			follow = null;
-			outerGuard = null;
 			openAnimation = null;
 			observer = null;
 			/** Process groups this plugin opened. */
@@ -993,32 +992,6 @@ window.__ModuleLoader__.load({
 				this.followBodyMaxHeight = "";
 				this.heightFrozen = false;
 				this.removeFade();
-			}
-			/** Pin the outer transcript on each height step while the window reveals. */
-			startOuterGuard(group) {
-				this.stopOuterGuard();
-				if (group.closest("[data-conversation-scroll]") === null || this.doc.querySelector("[data-chat-following-tail]") === null) return;
-				if (typeof this.win.ResizeObserver !== "function") return;
-				const observer = new this.win.ResizeObserver(() => {
-					this.pinOuterNow(group);
-				});
-				observer.observe(group);
-				this.outerGuard = {
-					observer,
-					group
-				};
-				this.pinOuterNow(group);
-			}
-			stopOuterGuard() {
-				this.outerGuard?.observer.disconnect();
-				this.outerGuard = null;
-			}
-			/** Keep the outer transcript at its floor without waiting a frame for Chat's follow. */
-			pinOuterNow(group) {
-				const outer = group.closest("[data-conversation-scroll]");
-				if (outer === null || this.doc.querySelector("[data-chat-following-tail]") === null) return;
-				const floor = Math.max(0, outer.scrollHeight - outer.clientHeight);
-				if (Math.abs(floor - outer.scrollTop) > .5) outer.scrollTop = floor;
 			}
 			/** Fade the lowest content edge so new lines enter instead of popping. */
 			attachFade(group) {
@@ -1229,8 +1202,8 @@ window.__ModuleLoader__.load({
 			/**
 			* Open the process group at full height with a short opacity fade.
 			*
-			* The window must not collapse to zero and re-expand; the outer transcript is
-			* kept on the floor by its own guard while the group appears at its real size.
+			* The window must not collapse to zero and re-expand; the group appears at its
+			* real size and Chat's own follow owns the outer transcript.
 			*/
 			autoOpen(header, group, key) {
 				const body = group.querySelector("[data-step-process-body]");
@@ -1238,7 +1211,6 @@ window.__ModuleLoader__.load({
 				if (body === null || reduced) {
 					this.click(header);
 					this.autoGroups.add(key);
-					this.pinOuterNow(group);
 					return;
 				}
 				this.cancelOpenAnimation();
@@ -1250,12 +1222,10 @@ window.__ModuleLoader__.load({
 					transition: body.style.transition
 				};
 				this.openAnimation = animation;
-				this.startOuterGuard(group);
 				body.style.opacity = "0";
 				body.style.transition = `opacity ${OPEN_FADE_MS}ms ease-out`;
 				this.click(header);
 				this.autoGroups.add(key);
-				this.pinOuterNow(group);
 				animation.frame = this.win.requestAnimationFrame(() => {
 					animation.frame = null;
 					body.style.opacity = "1";
@@ -1269,13 +1239,11 @@ window.__ModuleLoader__.load({
 				animation.body.style.opacity = animation.opacity;
 				animation.body.style.transition = animation.transition;
 				this.openAnimation = null;
-				this.stopOuterGuard();
 			}
 			cancelOpenAnimation() {
 				const animation = this.openAnimation;
 				if (animation === null) return;
 				this.openAnimation = null;
-				this.stopOuterGuard();
 				if (animation.frame !== null) this.win.cancelAnimationFrame(animation.frame);
 				if (animation.timer !== null) this.win.clearTimeout(animation.timer);
 				animation.body.style.opacity = animation.opacity;
@@ -1288,7 +1256,6 @@ window.__ModuleLoader__.load({
 					this.transitionTimer = null;
 				}
 				this.cancelOpenAnimation();
-				this.stopOuterGuard();
 				this.detachFollow();
 				if (this.root !== null) for (const group of this.root.querySelectorAll(GROUP_SELECTOR)) {
 					const snapshot = this.snapshot(group);

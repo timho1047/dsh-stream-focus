@@ -47,8 +47,8 @@ dependencies) but cannot run the full build.
 One tag publishes both packages:
 
 ```text
-v0.2.0  ->  dsh-stream-focus@0.2.0
-            dsh-stream-focus-summary@0.1.0  (as declared in its manifest)
+vX.Y.Z  ->  dsh-stream-focus@X.Y.Z
+            dsh-stream-focus-summary@<declared>
 ```
 
 - The tag always equals the bundle version and is checked against
@@ -60,10 +60,9 @@ v0.2.0  ->  dsh-stream-focus@0.2.0
   dependency range and both manifests, publishes the summary first (skipping an
   already-published matching version), then publishes the bundle.
 - Both packages publish with npm Trusted Publisher through GitHub OIDC and
-  provenance; no `NPM_TOKEN` secret is used. A brand-new package cannot use
-  trusted publishing before its first release, so
-  `dsh-stream-focus-summary@0.1.0` must be seeded once manually, then have its
-  trusted publisher configured.
+  provenance; no `NPM_TOKEN` secret is used. Both current packages already have
+  their trusted publishers configured. A brand-new package must be seeded once
+  manually before trusted publishing can be configured.
 - The workflow also creates or updates the GitHub Release from the bundle
   CHANGELOG. It never pushes commits or tags; maintainers tag and push.
 
@@ -74,7 +73,7 @@ pnpm install
 pnpm run verify
 # commit the rebuilt packages/*/lib trees and docs
 # bump packages/dsh-stream-focus/package.json
-git tag v0.2.0
+git tag vX.Y.Z
 git push --follow-tags
 ```
 

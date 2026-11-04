@@ -7,7 +7,7 @@ whole-stretch summaries for settled ones.
 Do not install this package as a separate entry. `dsh-stream-focus` depends on
 it, and its bundle patch inserts it as `dsh-stream-focus-summary`, disabled by
 default. Enable that row from the plugin manager when you want model-written
-progress phrases. Both packages require DSH `>=0.2.1-rc.3` and the Web profile.
+progress phrases. Both packages require DSH `>=0.2.2-rc.1` and the Web profile.
 
 ## What it does
 

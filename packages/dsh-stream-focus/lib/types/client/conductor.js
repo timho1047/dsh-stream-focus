@@ -44,7 +44,6 @@ export class StreamWindowConductor {
     textFade = null;
     progress = null;
     follow = null;
-    outerGuard = null;
     openAnimation = null;
     observer = null;
     /** Process groups this plugin opened. */
@@ -218,32 +217,6 @@ export class StreamWindowConductor {
         this.followBodyMaxHeight = '';
         this.heightFrozen = false;
         this.removeFade();
-    }
-    /** Pin the outer transcript on each height step while the window reveals. */
-    startOuterGuard(group) {
-        this.stopOuterGuard();
-        const outer = group.closest('[data-conversation-scroll]');
-        if (outer === null || this.doc.querySelector('[data-chat-following-tail]') === null)
-            return;
-        if (typeof this.win.ResizeObserver !== 'function')
-            return;
-        const observer = new this.win.ResizeObserver(() => { this.pinOuterNow(group); });
-        observer.observe(group);
-        this.outerGuard = { observer, group };
-        this.pinOuterNow(group);
-    }
-    stopOuterGuard() {
-        this.outerGuard?.observer.disconnect();
-        this.outerGuard = null;
-    }
-    /** Keep the outer transcript at its floor without waiting a frame for Chat's follow. */
-    pinOuterNow(group) {
-        const outer = group.closest('[data-conversation-scroll]');
-        if (outer === null || this.doc.querySelector('[data-chat-following-tail]') === null)
-            return;
-        const floor = Math.max(0, outer.scrollHeight - outer.clientHeight);
-        if (Math.abs(floor - outer.scrollTop) > 0.5)
-            outer.scrollTop = floor;
     }
     /** Fade the lowest content edge so new lines enter instead of popping. */
     attachFade(group) {
@@ -512,8 +485,8 @@ export class StreamWindowConductor {
     /**
      * Open the process group at full height with a short opacity fade.
      *
-     * The window must not collapse to zero and re-expand; the outer transcript is
-     * kept on the floor by its own guard while the group appears at its real size.
+     * The window must not collapse to zero and re-expand; the group appears at its
+     * real size and Chat's own follow owns the outer transcript.
      */
     autoOpen(header, group, key) {
         const body = group.querySelector('[data-step-process-body]');
@@ -522,7 +495,6 @@ export class StreamWindowConductor {
         if (body === null || reduced) {
             this.click(header);
             this.autoGroups.add(key);
-            this.pinOuterNow(group);
             return;
         }
         this.cancelOpenAnimation();
@@ -534,12 +506,10 @@ export class StreamWindowConductor {
             transition: body.style.transition,
         };
         this.openAnimation = animation;
-        this.startOuterGuard(group);
         body.style.opacity = '0';
         body.style.transition = `opacity ${OPEN_FADE_MS}ms ease-out`;
         this.click(header);
         this.autoGroups.add(key);
-        this.pinOuterNow(group);
         animation.frame = this.win.requestAnimationFrame(() => {
             animation.frame = null;
             body.style.opacity = '1';
@@ -556,14 +526,12 @@ export class StreamWindowConductor {
         animation.body.style.opacity = animation.opacity;
         animation.body.style.transition = animation.transition;
         this.openAnimation = null;
-        this.stopOuterGuard();
     }
     cancelOpenAnimation() {
         const animation = this.openAnimation;
         if (animation === null)
             return;
         this.openAnimation = null;
-        this.stopOuterGuard();
         if (animation.frame !== null)
             this.win.cancelAnimationFrame(animation.frame);
         if (animation.timer !== null)
@@ -578,7 +546,6 @@ export class StreamWindowConductor {
             this.transitionTimer = null;
         }
         this.cancelOpenAnimation();
-        this.stopOuterGuard();
         this.detachFollow();
         if (this.root !== null) {
             for (const group of this.root.querySelectorAll(GROUP_SELECTOR)) {
