@@ -170,8 +170,11 @@ Guarantees are now scoped per row; the whole install is no longer described as z
 |---|---|
 | `0.2.1-rc.3` | Minimum supported version for both packages (`engines.dsh`). |
 | `0.2.2-alpha.2` | Verified two-row composition, configuration-page save/validation, and independent disable; that environment had no provider credentials, so real model phrase generation and four-mode streaming were not exercised. |
+| `0.2.2-rc.1` | Typecheck, build, and unit tests pass on this version, and both rows load in the real profile with the summary row off by default. The four-mode live streaming regression is still pending. |
 
 Before a release, check the current DSH version. If it is new, add it here and verify both rows on it first. This table records the tested range; it is not a hard compatibility limit.
+
+From `0.2.2-rc.1` on, DSH strips `<signature>` before display and hides thinking rows that contain only a signature; the plugin reads the rendered display text, so this metadata never enters summary input.
 
 ## Known limitations
 

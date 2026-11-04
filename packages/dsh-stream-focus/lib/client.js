@@ -1370,9 +1370,10 @@ window.__ModuleLoader__.load({
 		/**
 		* Pace the live reasoning text into the official Content Factory.
 		*
-		* The source text remains the complete accumulated reasoning. Only the text
-		* handed to the Markdown renderer is progressively revealed; when the block
-		* settles, the full source is rendered immediately. This keeps the official
+		* The display text is the complete accumulated reasoning after DSH has
+		* prepared it for display (including signature removal). Only the text handed
+		* to the Markdown renderer is progressively revealed; when the block settles,
+		* the full display text is rendered immediately. This keeps the official
 		* Markdown pipeline, labels, and any replacement Content Factory intact.
 		*/
 		const PacedReasoningBody = (0, react.memo)(function PacedReasoningBody({ text, running, renderFactorySlot, usePacing }) {
