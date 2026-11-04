@@ -6,6 +6,9 @@ import type {
 import type {} from '@deepseek-ai/dsh-client-ui-chat/client'
 import { nextRevealLength } from './pacing.ts'
 
+/** Cap Markdown re-renders at 60fps even on 120Hz displays. */
+const PAINT_INTERVAL_MS = 1000 / 60
+
 /** The plugin's per-frame pacing preference supplied through the slot inject face. */
 interface PacingInjected {
   hooks: {
@@ -80,10 +83,14 @@ function usePacedText(text: string, enabled: boolean): string {
     let previousTime: number | null = null
     const tick = (time: number): void => {
       frameRef.current = null
+      if (previousTime !== null && time - previousTime < PAINT_INTERVAL_MS - 1) {
+        frameRef.current = requestAnimationFrame(tick)
+        return
+      }
       const target = targetRef.current
       const current = visibleRef.current
       if (current >= target.length) return
-      const elapsed = previousTime === null ? 1000 / 60 : time - previousTime
+      const elapsed = previousTime === null ? PAINT_INTERVAL_MS : time - previousTime
       previousTime = time
       const next = nextRevealLength(current, target, elapsed)
       visibleRef.current = next

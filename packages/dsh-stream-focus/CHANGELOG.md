@@ -15,6 +15,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - 修复 Markdown 重渲染导致旧段落整段淡入、消失或看似乱序的问题；字符淡入只作用于真正新增的后缀。
 - 移除整段透明度动画，思考与正文统一只对新文本做尾部字符淡入。
 - 思考切换到工具时改为交叉展开：新行先展开，旧行同时收起，不再出现两行都不展开的空白帧。
+- 将思考逐字渲染限制在每秒 60 次，减少高刷新率屏幕上的重复 Markdown 渲染和卡顿。
 
 ### English
 
@@ -25,6 +26,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - Fix Markdown re-renders fading, hiding, or visually reordering old paragraphs; character fades now apply only to genuinely appended suffixes.
 - Remove whole-block opacity animation; reasoning and prose now share suffix-only character fading.
 - Cross-fade thinking-to-tool switches: the new row opens while the old row closes, so no frame leaves both rows closed.
+- Cap thinking repaints at 60fps to reduce repeated Markdown renders and stutter on high-refresh displays.
 
 ## [0.2.0] - 2026-11-02
 

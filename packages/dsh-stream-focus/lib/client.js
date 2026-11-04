@@ -1332,6 +1332,8 @@ window.__ModuleLoader__.load({
 		}
 		//#endregion
 		//#region lib/types/client/paced-body.js
+		/** Cap Markdown re-renders at 60fps even on 120Hz displays. */
+		const PAINT_INTERVAL_MS = 1e3 / 60;
 		/**
 		* Pace the live reasoning text into the official Content Factory.
 		*
@@ -1392,10 +1394,14 @@ window.__ModuleLoader__.load({
 				let previousTime = null;
 				const tick = (time) => {
 					frameRef.current = null;
+					if (previousTime !== null && time - previousTime < PAINT_INTERVAL_MS - 1) {
+						frameRef.current = requestAnimationFrame(tick);
+						return;
+					}
 					const target = targetRef.current;
 					const current = visibleRef.current;
 					if (current >= target.length) return;
-					const elapsed = previousTime === null ? 1e3 / 60 : time - previousTime;
+					const elapsed = previousTime === null ? PAINT_INTERVAL_MS : time - previousTime;
 					previousTime = time;
 					const next = nextRevealLength(current, target, elapsed);
 					visibleRef.current = next;

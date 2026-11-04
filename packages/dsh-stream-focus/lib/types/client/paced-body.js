@@ -1,5 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { nextRevealLength } from "./pacing.js";
+/** Cap Markdown re-renders at 60fps even on 120Hz displays. */
+const PAINT_INTERVAL_MS = 1000 / 60;
 /**
  * Pace the live reasoning text into the official Content Factory.
  *
@@ -60,11 +62,15 @@ function usePacedText(text, enabled) {
         let previousTime = null;
         const tick = (time) => {
             frameRef.current = null;
+            if (previousTime !== null && time - previousTime < PAINT_INTERVAL_MS - 1) {
+                frameRef.current = requestAnimationFrame(tick);
+                return;
+            }
             const target = targetRef.current;
             const current = visibleRef.current;
             if (current >= target.length)
                 return;
-            const elapsed = previousTime === null ? 1000 / 60 : time - previousTime;
+            const elapsed = previousTime === null ? PAINT_INTERVAL_MS : time - previousTime;
             previousTime = time;
             const next = nextRevealLength(current, target, elapsed);
             visibleRef.current = next;
