@@ -12,8 +12,6 @@ export declare class NormalOutputSmoother {
     private observer;
     private readonly roots;
     private readonly previous;
-    private readonly animated;
-    private readonly animations;
     private readonly fade;
     private outerFollow;
     /**
@@ -28,9 +26,6 @@ export declare class NormalOutputSmoother {
     /** Reconcile masks against the currently streaming Assistant roots. Public for tests. */
     sync(): void;
     private pinOuter;
-    private animateNewBlocks;
-    private isStreamingBlock;
-    private animateBlock;
     private reconcile;
     private clear;
 }

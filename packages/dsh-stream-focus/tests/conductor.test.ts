@@ -282,7 +282,7 @@ describe('StreamWindowConductor', () => {
     expect(scrollTop).toBe(380)
   })
 
-  it('waits for the old row to finish collapsing before opening the new one', async () => {
+  it('opens the new row while the old row collapses', async () => {
     mount(group(reasoning('r1'), true))
     conductor = new StreamWindowConductor(document, window)
     conductor.start()
@@ -296,7 +296,7 @@ describe('StreamWindowConductor', () => {
     conductor.sync()
 
     expect(open('r1')).toBe(true)
-    expect(open('t1')).toBe(false)
+    expect(open('t1')).toBe(true)
 
     collapse.fire('finish')
     await new Promise<void>(resolve => { setTimeout(resolve, 230) })

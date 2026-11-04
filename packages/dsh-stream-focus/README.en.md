@@ -34,7 +34,7 @@ The rows share one install entry and the same official thinking-row DOM, but the
 | Detailed | Keeps the current Turn flat inside the official container without faking a group cap; auto-opens the current thinking/tool row and closes older automatic rows. |
 | Verbose | Keeps the flat presentation; auto-opens the current thinking/tool row but never closes older rows, preserving “always expanded” semantics. |
 
-All modes share: character-paced reasoning, line-level fading plus character highlight fading for normal assistant prose, fade-in for new paragraphs/lists/code blocks, and focus-safe automatic actions.
+All modes share: character-paced reasoning, line-level fading plus suffix-only character highlighting for streamed prose, and focus-safe automatic actions.
 
 - While reasoning streams, the current Think row opens automatically, and new tail graphemes fade in through the CSS Custom Highlight API without DOM spans. Reveal speed is normalized by elapsed time for consistent 60Hz/120Hz behavior. The official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
 - A process group appears at its real height with a short ~180ms opacity fade instead of collapsing and expanding again.
@@ -43,11 +43,11 @@ All modes share: character-paced reasoning, line-level fading plus character hig
 - The active window keeps the tallest height it has shown; switching from thinking to tools only scrolls its inner content, so the outer transcript never rolls back because the window became shorter.
 - A light 16px fade at the window bottom makes new lines enter softly rather than snapping in.
 - Streaming assistant prose gets a 20px line fade at the message root; it is removed as soon as streaming ends.
-- New paragraphs, lists, and code blocks in reasoning and normal prose fade in with a 600ms ease-in opacity transition and no movement; character reveal avoids splitting combining marks and ZWJ emoji.
+- Both reasoning and normal prose highlight only genuinely appended text. A paragraph rebuilt by Markdown keeps its old text fully opaque instead of fading as a whole. Reasoning additionally uses character reveal, which avoids splitting combining marks and ZWJ emoji.
 - While normal prose grows or a tool row expands, the plugin keeps the outer transcript on its floor only while it is still following; row switches freeze the window height instead of moving the outer scroller during the animation.
 - No custom background, border, radius, or padding: the window keeps the official process-group appearance.
 - Automatic opens temporarily suppress the title button’s `focus()`, and pointer clicks move focus away afterwards, so no focus ring is left behind. Keyboard focus keeps the official accessible behavior.
-- When thinking ends and tools begin, the previous Think row closes first, then the current tool row opens. The window height is frozen before the switch, so the outer transcript does not change height and content above neither drops nor gets pushed back. Rows use a ~180ms height + opacity transition. Parallel tools open together, including the standalone Bash row (`data-sample="bash"`).
+- When thinking ends and tools begin, the current tool row opens while the previous Think row closes concurrently. The window height is frozen before the switch, so the outer transcript does not change height, content above neither drops nor gets pushed back, and there is no blank frame with neither row open. Rows use a ~180ms height + opacity transition. Parallel tools open together, including the standalone Bash row (`data-sample="bash"`).
 - When the next thinking step starts, the previous batch of automatic thinking/tool windows closes, leaving only the new Think window.
 - Rows opened manually are never auto-closed; groups or rows closed manually are never forced open.
 - If the reader scrolls the outer transcript away from the bottom, the plugin does not scroll it for them. Inner window scrolling and bottom-following remain owned by the official process scroll. When there is no reader gesture and official follow is lost after a transition, the plugin performs one repair pass: it returns the window to its floor and dispatches `scrollend` to re-arm follow.

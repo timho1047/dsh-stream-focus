@@ -1,7 +1,6 @@
 import { HighlightFade } from "./highlight-fade.js";
 import { FollowSteward } from "./follow-steward.js";
 import { outerScroller, streamingAssistantRoots } from "./live-transcript.js";
-const BLOCK_SELECTOR = 'p,pre,ul,ol,li,table,blockquote,h1,h2,h3,h4,h5,h6,hr';
 /**
  * Line-edge fade for streaming Assistant prose.
  *
@@ -16,8 +15,6 @@ export class NormalOutputSmoother {
     observer = null;
     roots = new Set();
     previous = new WeakMap();
-    animated = new WeakSet();
-    animations = new Set();
     fade;
     outerFollow = null;
     /**
@@ -40,7 +37,6 @@ export class NormalOutputSmoother {
                 if (records.some(record => record.target instanceof Element && record.target.closest('[data-streaming]') !== null)) {
                     this.pinOuter();
                 }
-                this.animateNewBlocks(records);
                 this.reconcile();
             });
             this.observer.observe(body, {
@@ -62,9 +58,6 @@ export class NormalOutputSmoother {
         for (const root of this.roots)
             this.clear(root);
         this.roots.clear();
-        for (const animation of this.animations)
-            animation.cancel();
-        this.animations.clear();
         this.fade.stop();
         this.outerFollow?.steward.release();
         this.outerFollow = null;
@@ -84,38 +77,6 @@ export class NormalOutputSmoother {
             this.outerFollow = { scroll: outer, steward: FollowSteward.acquire(outer, this.win) };
         }
         this.outerFollow.steward.pinIfFollowing();
-    }
-    animateNewBlocks(records) {
-        for (const record of records) {
-            if (record.type !== 'childList' || record.addedNodes.length === 0)
-                continue;
-            for (const node of record.addedNodes) {
-                if (node.nodeType !== 1)
-                    continue;
-                const element = node;
-                const blocks = element.matches(BLOCK_SELECTOR)
-                    ? [element]
-                    : [...element.querySelectorAll(BLOCK_SELECTOR)];
-                for (const block of blocks)
-                    if (this.isStreamingBlock(block))
-                        this.animateBlock(block);
-            }
-        }
-    }
-    isStreamingBlock(element) {
-        return element.closest('[data-variant="think"][data-state="running"]') !== null
-            || element.closest('[data-chat-flow-kind="assistant-step"][data-chat-group-part="response"] [data-streaming]') !== null;
-    }
-    animateBlock(element) {
-        if (this.animated.has(element) || typeof element.animate !== 'function')
-            return;
-        this.animated.add(element);
-        // Qwen-style stream-in: opacity only, 600ms ease-in. DSH has no token
-        // spans, so this is applied to the smallest renderable block instead.
-        const animation = element.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600, easing: 'ease-in' });
-        this.animations.add(animation);
-        animation.addEventListener('finish', () => { this.animations.delete(animation); }, { once: true });
-        animation.addEventListener('cancel', () => { this.animations.delete(animation); }, { once: true });
     }
     reconcile() {
         if (!this.active)

@@ -13,7 +13,6 @@ export declare class FlatRowConductor {
     private active;
     private frame;
     private observer;
-    private transitionTimer;
     private readonly rows;
     private readonly pendingClose;
     private follow;
@@ -34,7 +33,6 @@ export declare class FlatRowConductor {
     private openRow;
     private closeRow;
     private click;
-    private deferSync;
     private candidate;
     private schedule;
     private onMutations;

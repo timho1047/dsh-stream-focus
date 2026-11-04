@@ -50,7 +50,6 @@ export class StreamWindowConductor {
     autoGroups = new Set();
     /** Group keys the reader deliberately closed. */
     suppressedGroups = new Set();
-    transitionTimer = null;
     autoClickDepth = 0;
     rows;
     pendingClose = new Set();
@@ -100,7 +99,7 @@ export class StreamWindowConductor {
     }
     /** Reconcile the current DOM with the window decision. Public for tests. */
     sync() {
-        if (!this.active || this.transitionTimer !== null)
+        if (!this.active)
             return;
         const root = runningFlow(this.doc);
         if (root === null) {
@@ -141,20 +140,15 @@ export class StreamWindowConductor {
             .filter((candidate) => candidate !== undefined && candidate.open && candidate.element.isConnected);
         if (opens.length > 0 && closes.length > 0)
             this.freezeWindowHeight();
-        let closeAnimated = false;
-        for (const candidate of closes) {
-            if (this.closeRow(candidate.element))
-                closeAnimated = true;
+        // Open the new target first, then start the old row's collapse. Waiting for
+        // the collapse leaves a blank frame between thinking and Tools and makes
+        // the switch read as a jump.
+        for (const candidate of opens) {
+            this.openRow(candidate.element);
+            this.rows.markAuto(candidate.key);
         }
-        if (closeAnimated && opens.length > 0) {
-            this.deferSync();
-        }
-        else {
-            for (const candidate of opens) {
-                this.openRow(candidate.element);
-                this.rows.markAuto(candidate.key);
-            }
-        }
+        for (const candidate of closes)
+            this.closeRow(candidate.element);
         if (opens.length > 0 || closes.length > 0)
             this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 420);
     }
@@ -451,14 +445,6 @@ export class StreamWindowConductor {
                 this.click(element);
         }, this.pendingClose);
     }
-    deferSync() {
-        if (this.transitionTimer !== null)
-            return;
-        this.transitionTimer = this.win.setTimeout(() => {
-            this.transitionTimer = null;
-            this.sync();
-        }, DISCLOSURE_MOTION_MS + 30);
-    }
     click(element) {
         const previous = this.doc.activeElement instanceof HTMLElement ? this.doc.activeElement : null;
         // The official process-group header calls focus() inside its click handler.
@@ -541,10 +527,6 @@ export class StreamWindowConductor {
     }
     /** Close and forget every automatic open state. */
     resetWindow() {
-        if (this.transitionTimer !== null) {
-            this.win.clearTimeout(this.transitionTimer);
-            this.transitionTimer = null;
-        }
         this.cancelOpenAnimation();
         this.detachFollow();
         if (this.root !== null) {

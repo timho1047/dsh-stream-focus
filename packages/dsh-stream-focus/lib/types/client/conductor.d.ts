@@ -32,7 +32,6 @@ export declare class StreamWindowConductor {
     private readonly autoGroups;
     /** Group keys the reader deliberately closed. */
     private readonly suppressedGroups;
-    private transitionTimer;
     private autoClickDepth;
     private readonly rows;
     private readonly pendingClose;
@@ -72,7 +71,6 @@ export declare class StreamWindowConductor {
     private groupHeader;
     private openRow;
     private closeRow;
-    private deferSync;
     private click;
     private restoreFocus;
     /**

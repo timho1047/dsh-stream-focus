@@ -30,7 +30,6 @@ export class FlatRowConductor {
     active = false;
     frame = null;
     observer = null;
-    transitionTimer = null;
     rows;
     pendingClose = new Set();
     follow = null;
@@ -76,17 +75,13 @@ export class FlatRowConductor {
             this.win.cancelAnimationFrame(this.frame);
             this.frame = null;
         }
-        if (this.transitionTimer !== null) {
-            this.win.clearTimeout(this.transitionTimer);
-            this.transitionTimer = null;
-        }
         this.detachOuterFollow();
         this.rows.reset();
         this.pendingClose.clear();
     }
     /** Reconcile the newest Turn's flat rows. Public for tests. */
     sync() {
-        if (!this.active || this.transitionTimer !== null)
+        if (!this.active)
             return;
         const flow = runningFlow(this.doc);
         if (flow === null)
@@ -109,23 +104,19 @@ export class FlatRowConductor {
         const opens = decision.open
             .map(key => elements.get(key))
             .filter((candidate) => candidate !== undefined && !candidate.open && candidate.element.isConnected);
-        let closeAnimated = false;
+        // Cross-fade: the new row opens while the old one collapses, so there is no
+        // frame with neither the thinking nor the Tool body mounted.
+        for (const candidate of opens) {
+            this.openRow(candidate.element);
+            this.rows.markAuto(candidate.key);
+        }
         if (this.mode === 'detailed') {
             for (const key of decision.close) {
                 const candidate = elements.get(key);
                 if (candidate === undefined || !candidate.open || !candidate.element.isConnected)
                     continue;
-                if (this.closeRow(candidate.element))
-                    closeAnimated = true;
+                this.closeRow(candidate.element);
             }
-        }
-        if (closeAnimated && opens.length > 0) {
-            this.deferSync();
-            return;
-        }
-        for (const candidate of opens) {
-            this.openRow(candidate.element);
-            this.rows.markAuto(candidate.key);
         }
         this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90);
     }
@@ -154,14 +145,6 @@ export class FlatRowConductor {
     }
     click(element) {
         this.rows.runAutomatic(() => { element.click(); });
-    }
-    deferSync() {
-        if (this.transitionTimer !== null)
-            return;
-        this.transitionTimer = this.win.setTimeout(() => {
-            this.transitionTimer = null;
-            this.sync();
-        }, DISCLOSURE_MOTION_MS + 30);
     }
     candidate(row, order) {
         const key = row.getAttribute('data-chat-flow-key');

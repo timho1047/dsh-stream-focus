@@ -12,6 +12,9 @@ All notable changes are documented here. Each release has Chinese first, English
 
 - 最低支持 DSH 版本提升到 `0.2.2-rc.1`；不再支持 0.2.1。
 - 移除 0.2.2-rc.1 上不再需要的外层 transcript pin 兜底；外层 follow 由 Chat 自身负责。
+- 修复 Markdown 重渲染导致旧段落整段淡入、消失或看似乱序的问题；字符淡入只作用于真正新增的后缀。
+- 移除整段透明度动画，思考与正文统一只对新文本做尾部字符淡入。
+- 思考切换到工具时改为交叉展开：新行先展开，旧行同时收起，不再出现两行都不展开的空白帧。
 
 ### English
 
@@ -19,6 +22,9 @@ All notable changes are documented here. Each release has Chinese first, English
 
 - Raise the minimum supported DSH version to `0.2.2-rc.1`; DSH 0.2.1 is no longer supported.
 - Remove the outer transcript pin fallback that is no longer needed on 0.2.2-rc.1; Chat owns outer follow.
+- Fix Markdown re-renders fading, hiding, or visually reordering old paragraphs; character fades now apply only to genuinely appended suffixes.
+- Remove whole-block opacity animation; reasoning and prose now share suffix-only character fading.
+- Cross-fade thinking-to-tool switches: the new row opens while the old row closes, so no frame leaves both rows closed.
 
 ## [0.2.0] - 2026-11-02
 

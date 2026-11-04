@@ -17,7 +17,6 @@ export declare class HighlightFade {
     private readonly texts;
     private readonly glyphs;
     private frame;
-    private observerActive;
     /**
      * @param doc - document owning the text.
      * @param win - window exposing CSS.highlights.
@@ -32,8 +31,12 @@ export declare class HighlightFade {
     stop(): void;
     private installStyle;
     private scan;
-    private record;
-    private recordText;
+    /** Diff one root's visible text and fade only a genuinely appended suffix. */
+    private scanRoot;
+    /** Collect visible text nodes and their offsets in one pass. */
+    private textNodes;
+    private textOf;
+    private pushOffset;
     private pushGlyph;
     private schedule;
     private update;

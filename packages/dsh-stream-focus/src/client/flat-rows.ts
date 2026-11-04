@@ -38,7 +38,6 @@ export class FlatRowConductor {
   private active = false
   private frame: number | null = null
   private observer: MutationObserver | null = null
-  private transitionTimer: number | null = null
   private readonly rows: RowDisclosureController
   private readonly pendingClose = new Set<HTMLElement>()
   private follow: FollowSteward | null = null
@@ -86,10 +85,6 @@ export class FlatRowConductor {
       this.win.cancelAnimationFrame(this.frame)
       this.frame = null
     }
-    if (this.transitionTimer !== null) {
-      this.win.clearTimeout(this.transitionTimer)
-      this.transitionTimer = null
-    }
     this.detachOuterFollow()
     this.rows.reset()
     this.pendingClose.clear()
@@ -97,7 +92,7 @@ export class FlatRowConductor {
 
   /** Reconcile the newest Turn's flat rows. Public for tests. */
   sync(): void {
-    if (!this.active || this.transitionTimer !== null) return
+    if (!this.active) return
     const flow = runningFlow(this.doc)
     if (flow === null) return
     const rows = latestTurnRows(flow)
@@ -118,21 +113,18 @@ export class FlatRowConductor {
       .map(key => elements.get(key))
       .filter((candidate): candidate is NonNullable<typeof candidate> =>
         candidate !== undefined && !candidate.open && candidate.element.isConnected)
-    let closeAnimated = false
+    // Cross-fade: the new row opens while the old one collapses, so there is no
+    // frame with neither the thinking nor the Tool body mounted.
+    for (const candidate of opens) {
+      this.openRow(candidate.element)
+      this.rows.markAuto(candidate.key)
+    }
     if (this.mode === 'detailed') {
       for (const key of decision.close) {
         const candidate = elements.get(key)
         if (candidate === undefined || !candidate.open || !candidate.element.isConnected) continue
-        if (this.closeRow(candidate.element)) closeAnimated = true
+        this.closeRow(candidate.element)
       }
-    }
-    if (closeAnimated && opens.length > 0) {
-      this.deferSync()
-      return
-    }
-    for (const candidate of opens) {
-      this.openRow(candidate.element)
-      this.rows.markAuto(candidate.key)
     }
     this.follow?.rearmAfterMotion(DISCLOSURE_MOTION_MS + 90)
   }
@@ -164,14 +156,6 @@ export class FlatRowConductor {
 
   private click(element: HTMLElement): void {
     this.rows.runAutomatic(() => { element.click() })
-  }
-
-  private deferSync(): void {
-    if (this.transitionTimer !== null) return
-    this.transitionTimer = this.win.setTimeout(() => {
-      this.transitionTimer = null
-      this.sync()
-    }, DISCLOSURE_MOTION_MS + 30)
   }
 
   private candidate(row: HTMLElement, order: number): FlatCandidate | undefined {
