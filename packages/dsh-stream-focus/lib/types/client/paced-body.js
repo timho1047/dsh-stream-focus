@@ -2,9 +2,9 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { nextRevealLength } from "./pacing.js";
 /** Cap Markdown re-renders at 60fps even on 120Hz displays. */
 const PAINT_INTERVAL_MS = 1000 / 60;
-/** Large histories make per-frame Markdown work visible; native streaming is smoother there. */
-const MAX_FLOW_ROWS = 150;
-const MAX_PACED_CHARS = 4_000;
+/** Three missed frames mean per-frame Markdown work is not paying for itself. */
+const DEGRADE_AFTER_SLOW_FRAMES = 3;
+const SLOW_FRAME_MS = 34;
 /**
  * Pace the live reasoning text into the official Content Factory.
  *
@@ -16,11 +16,7 @@ const MAX_PACED_CHARS = 4_000;
  */
 export const PacedReasoningBody = memo(function PacedReasoningBody({ text, running, renderFactorySlot, usePacing, }) {
     const pacing = usePacing(value => value);
-    const crowded = useRef(null);
-    if (crowded.current === null) {
-        crowded.current = document.querySelectorAll('[data-chat-flow-kind]').length > MAX_FLOW_ROWS;
-    }
-    const visible = usePacedText(text, running && pacing && !crowded.current && text.length <= MAX_PACED_CHARS);
+    const visible = usePacedText(text, running && pacing);
     return renderFactorySlot('conversation.chat.reasoning.content', { text: visible, running });
 });
 /**
@@ -37,6 +33,7 @@ export const PacedReasoningBody = memo(function PacedReasoningBody({ text, runni
  */
 function usePacedText(text, enabled) {
     const [visible, setVisible] = useState(text.length);
+    const [degraded, setDegraded] = useState(false);
     const visibleRef = useRef(text.length);
     const targetRef = useRef(text);
     const previousRef = useRef(text);
@@ -50,7 +47,7 @@ function usePacedText(text, enabled) {
             return;
         }
         previousRef.current = text;
-        if (!enabled) {
+        if (!enabled || degraded) {
             if (visibleRef.current !== text.length) {
                 visibleRef.current = text.length;
                 setVisible(text.length);
@@ -67,8 +64,19 @@ function usePacedText(text, enabled) {
         if (frameRef.current !== null)
             cancelAnimationFrame(frameRef.current);
         let previousTime = null;
+        let slowFrames = 0;
         const tick = (time) => {
             frameRef.current = null;
+            if (previousTime !== null && time - previousTime > SLOW_FRAME_MS)
+                slowFrames += 1;
+            else
+                slowFrames = 0;
+            if (slowFrames >= DEGRADE_AFTER_SLOW_FRAMES) {
+                setDegraded(true);
+                visibleRef.current = targetRef.current.length;
+                setVisible(targetRef.current.length);
+                return;
+            }
             if (previousTime !== null && time - previousTime < PAINT_INTERVAL_MS - 1) {
                 frameRef.current = requestAnimationFrame(tick);
                 return;
@@ -92,7 +100,7 @@ function usePacedText(text, enabled) {
                 frameRef.current = null;
             }
         };
-    }, [text, enabled]);
+    }, [text, enabled, degraded]);
     return text.slice(0, Math.min(visible, text.length));
 }
 //# sourceMappingURL=paced-body.js.map

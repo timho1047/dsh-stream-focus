@@ -18,7 +18,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - 将思考逐字渲染限制在每秒 60 次，减少高刷新率屏幕上的重复 Markdown 渲染和卡顿。
 - 修复 PTC `run_code` 工具外层 Code 行不收起的问题：优先控制外层工具 disclosure，直接收起不在当前目标中的工具行，并在轮次结束时复位自动展开状态。
 - 移除思考正文的 CSS 字符淡入，改为只依赖逐字揭示；这消除了 Markdown 重建时旧字符延迟补出和跳字。普通正文继续使用尾部字符淡入。
-- 优化长会话性能：普通正文观察器只在流式根变化时重算，移除 FlatRowConductor 的 500ms 全量 reconcile；超过 150 个过程行或 4000 字符时停止逐帧 pacing，避免 spinner 和文本掉帧。
+- 优化长会话性能：普通正文观察器只在流式根变化时重算，移除 FlatRowConductor 的 500ms 全量 reconcile；逐帧 pacing 连续错过 3 帧时自动退回原生流式，不再按历史行数降级。
 - 恢复 Detailed / Verbose 模式下思考正文的尾部字符淡入；逐字揭示继续负责正文进度。
 
 ### English
@@ -33,7 +33,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - Cap thinking repaints at 60fps to reduce repeated Markdown renders and stutter on high-refresh displays.
 - Fix PTC `run_code` rows leaving the outer Code disclosure open: target the outer tool control, close open non-target tool rows directly, and reset automatic expansion at Turn end.
 - Remove CSS character fading from reasoning and rely on character reveal alone, eliminating late-appearing old characters and skipped characters after Markdown rebuilds. Normal prose keeps suffix character fading.
-- Improve long-session performance: the prose observer reconciles only when a streaming root changes, remove the FlatRowConductor 500ms full reconcile, and stop per-frame pacing above 150 process rows or 4000 characters so spinners and text stay smooth.
+- Improve long-session performance: the prose observer reconciles only when a streaming root changes, remove the FlatRowConductor 500ms full reconcile, and fall back to native streaming only when per-frame pacing misses three consecutive frames; do not degrade by history row count.
 - Restore suffix character fading for thinking text in Detailed and Verbose; character reveal still drives progress.
 
 ## [0.2.0] - 2026-11-02

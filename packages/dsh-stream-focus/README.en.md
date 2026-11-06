@@ -181,6 +181,7 @@ From `0.2.2-rc.1` on, DSH strips `<signature>` before display and hides thinking
 - Only Compact / Standard have an official process group; their window height uses the official `min(400px, 50vh)`. Detailed / Verbose keep the official flat structure without an added group cap.
 - Automatic row switches use a ~180ms height + opacity transition; manual row clicks keep the official instant toggle. A process group's first appearance uses a 180ms opacity fade.
 - Character pacing adds roughly 100ms of visual latency. While streaming, the visible prefix is shown; the complete text is rendered as soon as the block settles. Copying during streaming copies the currently visible prefix.
+- If per-frame pacing misses three consecutive frames, that reasoning body falls back to native DSH streaming; it does not degrade early based on history row count.
 - Normal assistant prose has no official Content Factory, so it cannot be paced per character. It currently uses a tail character highlight fade plus line-level bottom fading. True per-character pacing requires an official prose Factory.
 - The summary supports Web profiles only; its configuration page needs the plugin manager from the Web composition. The Host summary still runs in a composition without the plugin manager, but no page appears.
 - The summary `modelOverride` is a row-level global preference; “follow current Session model” observes the current Session but there is no per-conversation override.
