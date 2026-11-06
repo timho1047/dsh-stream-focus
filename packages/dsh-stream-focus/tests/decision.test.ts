@@ -40,15 +40,37 @@ describe('decideWindow', () => {
     expect(decision.targets).toEqual(['think'])
   })
 
-  it('opens every tool after the newest reasoning, including a fast settled tool', () => {
+  it('keeps every active tool after the newest reasoning open', () => {
     const decision = decideWindow(group([
       candidate({ key: 'think', order: 0, open: true, auto: true }),
-      candidate({ key: 'tool-a', kind: 'tool', order: 1, open: false }),
-      candidate({ key: 'tool-b', kind: 'tool', order: 2, open: false }),
+      candidate({ key: 'tool-a', kind: 'tool', order: 1, open: false, active: true }),
+      candidate({ key: 'tool-b', kind: 'tool', order: 2, open: false, active: true }),
     ]))
     expect(decision.open).toEqual(['tool-a', 'tool-b'])
     expect(decision.close).toEqual(['think'])
     expect(decision.targets).toEqual(['tool-a', 'tool-b'])
+  })
+
+  it('keeps only the newest tool when a newer tool is active', () => {
+    const decision = decideWindow(group([
+      candidate({ key: 'think', order: 0, open: false }),
+      candidate({ key: 'tool-a', kind: 'tool', order: 1, open: true, auto: true }),
+      candidate({ key: 'tool-b', kind: 'tool', order: 2, open: false, active: true }),
+    ]))
+    expect(decision.open).toEqual(['tool-b'])
+    expect(decision.close).toEqual(['tool-a'])
+    expect(decision.targets).toEqual(['tool-b'])
+  })
+
+  it('keeps only the newest settled tool when no tool is active', () => {
+    const decision = decideWindow(group([
+      candidate({ key: 'think', order: 0, open: false }),
+      candidate({ key: 'tool-a', kind: 'tool', order: 1, open: true, auto: true }),
+      candidate({ key: 'tool-b', kind: 'tool', order: 2, open: true, auto: true }),
+    ]))
+    expect(decision.open).toEqual([])
+    expect(decision.close).toEqual(['tool-a'])
+    expect(decision.targets).toEqual(['tool-b'])
   })
 
   it('folds the previous tool batch when the next reasoning starts', () => {

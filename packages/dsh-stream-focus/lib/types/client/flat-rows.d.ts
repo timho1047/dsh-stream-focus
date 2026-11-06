@@ -17,6 +17,7 @@ export declare class FlatRowConductor {
     private readonly pendingClose;
     private readonly textFade;
     private fadeRoot;
+    private syncTimer;
     private follow;
     /**
      * @param mode - Detailed or Verbose.
@@ -30,6 +31,17 @@ export declare class FlatRowConductor {
     stop(): void;
     /** Reconcile the newest Turn's flat rows. Public for tests. */
     sync(): void;
+    /** Restore official collapsed rows when the running Turn ends. */
+    private resetAutoRows;
+    /**
+     * Directly reconcile open Tool disclosures against the current targets.
+     * PTC nests Bash controls inside a Code row, so the candidate walk can pick a
+     * different disclosure than the visible open one; this sweep uses the open
+     * control itself.
+     */
+    private closeOpenTools;
+    /** Close automatic rows left open outside the current decision, including older Turns. */
+    private closeStaleRows;
     /** Fade only the running thinking body; flat rows have no process content root. */
     private reconcileTextFade;
     private attachOuterFollow;

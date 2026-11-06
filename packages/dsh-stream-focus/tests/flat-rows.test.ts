@@ -117,6 +117,68 @@ describe('FlatRowConductor', () => {
     expect(open('t1')).toBe(true)
   })
 
+  it('closes an automatic row from an older turn', () => {
+    wireDocument()
+    mount(tool('t1'))
+    conductor = new FlatRowConductor('detailed', document, window)
+    conductor.start()
+    expect(open('t1')).toBe(true)
+    document.querySelector('[data-chat-flow-key="t1"] [data-tool]')?.setAttribute('data-state', 'ok')
+
+    const slot = document.querySelector('[data-slot="conversation.chat.flow"]')
+    if (slot === null) throw new Error('missing slot')
+    slot.insertAdjacentHTML('beforeend', `
+      <div data-chat-turn="2" data-chat-flow-kind="assistant-step" data-chat-flow-key="r2">
+        <div data-variant="think" data-state="running">
+          <div data-disclosure-row="true" role="button" aria-expanded="false"></div>
+        </div>
+      </div>`)
+    conductor.sync()
+
+    expect(open('t1')).toBe(false)
+    expect(open('r2')).toBe(true)
+  })
+
+  it('closes the outer PTC Code row instead of its nested Bash control', () => {
+    wireDocument()
+    mount(`
+      <div data-chat-turn="1" data-chat-flow-kind="tool-call" data-chat-flow-key="ptc">
+        <div data-tool="run_code" data-state="running">
+          <div data-disclosure-row="true" role="button" aria-expanded="false"></div>
+          <div data-sample="bash" data-state="ok" role="button" aria-expanded="true"></div>
+        </div>
+      </div>`)
+    conductor = new FlatRowConductor('detailed', document, window)
+    conductor.start()
+    const outer = document.querySelector<HTMLElement>('[data-chat-flow-key="ptc"] [data-disclosure-row]')
+    if (outer === null) throw new Error('missing outer disclosure')
+    expect(outer.getAttribute('aria-expanded')).toBe('true')
+    document.querySelector('[data-chat-flow-key="ptc"] [data-tool]')?.setAttribute('data-state', 'ok')
+
+    const slot = document.querySelector('[data-slot="conversation.chat.flow"]')
+    if (slot === null) throw new Error('missing slot')
+    slot.insertAdjacentHTML('beforeend', `
+      <div data-chat-turn="2" data-chat-flow-kind="assistant-step" data-chat-flow-key="r2">
+        <div data-variant="think" data-state="running">
+          <div data-disclosure-row="true" role="button" aria-expanded="false"></div>
+        </div>
+      </div>`)
+    conductor.sync()
+
+    expect(outer.getAttribute('aria-expanded')).toBe('false')
+  })
+
+  it('closes automatic rows when the running turn ends', () => {
+    wireDocument()
+    mount(reasoning('r1'))
+    conductor = new FlatRowConductor('detailed', document, window)
+    conductor.start()
+    expect(open('r1')).toBe(true)
+    document.querySelector('[data-chat-running]')?.remove()
+    conductor.sync()
+    expect(open('r1')).toBe(false)
+  })
+
   it('keeps older rows open in Verbose', () => {
     wireDocument()
     mount(reasoning('r1'))

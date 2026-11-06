@@ -801,7 +801,8 @@ window.__ModuleLoader__.load({
 			const newestReasoning = reasoning.at(-1);
 			const streamingReasoning = reasoning.filter((candidate) => candidate.active).at(-1);
 			const toolsAfterReasoning = candidates.filter((candidate) => candidate.kind === "tool" && (newestReasoning === void 0 || candidate.order > newestReasoning.order));
-			const targets = streamingReasoning !== void 0 ? [streamingReasoning] : toolsAfterReasoning.length > 0 ? toolsAfterReasoning : newestReasoning === void 0 ? [] : [newestReasoning];
+			const activeTools = toolsAfterReasoning.filter((candidate) => candidate.active);
+			const targets = streamingReasoning !== void 0 ? [streamingReasoning] : activeTools.length > 0 ? activeTools : toolsAfterReasoning.length > 0 ? [toolsAfterReasoning[toolsAfterReasoning.length - 1]] : newestReasoning === void 0 ? [] : [newestReasoning];
 			const targetKeys = new Set(targets.map((candidate) => candidate.key));
 			return {
 				openGroup: !group.open && !group.suppressed,
@@ -1526,6 +1527,7 @@ window.__ModuleLoader__.load({
 		//#endregion
 		//#region lib/types/client/flat-rows.js
 		const DISCLOSURE_SELECTOR = "[data-disclosure-row][aria-expanded]";
+		const FLOW_ROW = "[data-chat-flow-key]";
 		const ATTRIBUTE_FILTER = [
 			"aria-expanded",
 			"data-chat-following-tail",
@@ -1533,6 +1535,14 @@ window.__ModuleLoader__.load({
 			"data-expanded",
 			"data-state"
 		];
+		function containsFlowRow(nodes) {
+			for (const node of nodes) {
+				if (node.nodeType !== 1) continue;
+				const element = node;
+				if (element.matches(FLOW_ROW) || element.querySelector(FLOW_ROW) !== null) return true;
+			}
+			return false;
+		}
 		/**
 		* Row-level enhancement for Detailed and Verbose Turns.
 		*
@@ -1552,6 +1562,7 @@ window.__ModuleLoader__.load({
 			pendingClose = /* @__PURE__ */ new Set();
 			textFade;
 			fadeRoot = null;
+			syncTimer = null;
 			follow = null;
 			/**
 			* @param mode - Detailed or Verbose.
@@ -1584,6 +1595,9 @@ window.__ModuleLoader__.load({
 				}
 				this.attachOuterFollow();
 				this.sync();
+				this.syncTimer = this.win.setInterval(() => {
+					this.sync();
+				}, 500);
 			}
 			/** Stop observing. Verbose rows that were opened stay open by design. */
 			stop() {
@@ -1596,6 +1610,10 @@ window.__ModuleLoader__.load({
 					this.win.cancelAnimationFrame(this.frame);
 					this.frame = null;
 				}
+				if (this.syncTimer !== null) {
+					this.win.clearInterval(this.syncTimer);
+					this.syncTimer = null;
+				}
 				this.detachOuterFollow();
 				this.textFade.stop();
 				this.fadeRoot = null;
@@ -1606,7 +1624,10 @@ window.__ModuleLoader__.load({
 			sync() {
 				if (!this.active) return;
 				const flow = runningFlow(this.doc);
-				if (flow === null) return;
+				if (flow === null) {
+					if (this.mode === "detailed") this.resetAutoRows();
+					return;
+				}
 				const rows = latestTurnRows(flow);
 				if (rows.length === 0) return;
 				const elements = /* @__PURE__ */ new Map();
@@ -1630,12 +1651,50 @@ window.__ModuleLoader__.load({
 					this.rows.markAuto(candidate.key);
 				}
 				this.reconcileTextFade(elements);
-				if (this.mode === "detailed") for (const key of decision.close) {
-					const candidate = elements.get(key);
-					if (candidate === void 0 || !candidate.open || !candidate.element.isConnected) continue;
-					this.closeRow(candidate.element);
+				if (this.mode === "detailed") {
+					const targets = new Set(decision.targets);
+					for (const key of decision.close) {
+						const candidate = elements.get(key);
+						if (candidate === void 0 || !candidate.open || !candidate.element.isConnected) continue;
+						this.closeRow(candidate.element, candidate.kind === "tool");
+					}
+					this.closeStaleRows(flow, targets);
+					this.closeOpenTools(targets);
 				}
 				this.follow?.rearmAfterMotion(270);
+			}
+			/** Restore official collapsed rows when the running Turn ends. */
+			resetAutoRows() {
+				for (const row of this.doc.querySelectorAll("[data-chat-flow-kind]")) {
+					const candidate = this.candidate(row, 0);
+					if (candidate === void 0 || !candidate.open || candidate.manual === "open") continue;
+					this.closeRow(candidate.element, true);
+				}
+				this.rows.reset();
+				this.pendingClose.clear();
+				if (this.fadeRoot !== null) this.textFade.unobserve(this.fadeRoot);
+				this.fadeRoot = null;
+			}
+			/**
+			* Directly reconcile open Tool disclosures against the current targets.
+			* PTC nests Bash controls inside a Code row, so the candidate walk can pick a
+			* different disclosure than the visible open one; this sweep uses the open
+			* control itself.
+			*/
+			closeOpenTools(targets) {
+				for (const disclosure of this.doc.querySelectorAll("[data-tool] [data-disclosure-row][aria-expanded=\"true\"]")) {
+					const key = disclosure.closest("[data-chat-flow-key]")?.getAttribute("data-chat-flow-key");
+					if (key === null || key === void 0 || targets.has(key) || this.rows.manual(key) === "open") continue;
+					this.click(disclosure);
+				}
+			}
+			/** Close automatic rows left open outside the current decision, including older Turns. */
+			closeStaleRows(flow, targets) {
+				for (const row of flow.querySelectorAll("[data-chat-flow-kind]")) {
+					const candidate = this.candidate(row, 0);
+					if (candidate === void 0 || targets.has(candidate.key) || !candidate.open || candidate.active || candidate.manual === "open") continue;
+					this.closeRow(candidate.element, true);
+				}
 			}
 			/** Fade only the running thinking body; flat rows have no process content root. */
 			reconcileTextFade(elements) {
@@ -1664,7 +1723,12 @@ window.__ModuleLoader__.load({
 				openDisclosure(element, this.win, () => this.click(element));
 				this.follow?.rearmAfterMotion(270);
 			}
-			closeRow(element) {
+			closeRow(element, immediate = false) {
+				if (immediate) {
+					this.click(element);
+					this.follow?.rearmAfterMotion(270);
+					return false;
+				}
 				const animated = closeDisclosure(element, this.win, () => {
 					if (this.active) this.click(element);
 				}, this.pendingClose);
@@ -1684,9 +1748,9 @@ window.__ModuleLoader__.load({
 				const tool = row.querySelector("[data-tool]");
 				const kind = thinking !== null ? "reasoning" : bash !== null || tool !== null ? "tool" : void 0;
 				if (kind === void 0) return void 0;
-				const disclosure = kind === "reasoning" ? thinking?.querySelector(DISCLOSURE_SELECTOR) : bash ?? tool?.querySelector(DISCLOSURE_SELECTOR);
+				const disclosure = kind === "reasoning" ? thinking?.querySelector(DISCLOSURE_SELECTOR) : tool?.querySelector(DISCLOSURE_SELECTOR) ?? bash;
 				if (disclosure === null || disclosure === void 0) return void 0;
-				const state = kind === "reasoning" ? thinking?.getAttribute("data-state") : bash?.getAttribute("data-state") ?? tool?.getAttribute("data-state");
+				const state = kind === "reasoning" ? thinking?.getAttribute("data-state") : tool?.getAttribute("data-state") ?? bash?.getAttribute("data-state");
 				return {
 					key,
 					kind,
@@ -1715,14 +1779,16 @@ window.__ModuleLoader__.load({
 							this.schedule();
 							return;
 						}
-						if (name !== null && ATTRIBUTE_FILTER.includes(name) && target.closest("[data-chat-flow]") !== null) {
+						if (name !== null && ATTRIBUTE_FILTER.includes(name) && target.closest("[data-chat-turn], [data-chat-flow]") !== null) {
 							this.schedule();
 							return;
 						}
 						continue;
 					}
-					if (record.type === "childList" && target.closest("[data-chat-flow]") !== null) {
-						if (target.closest("[data-open]") !== null) continue;
+					if (record.type === "childList") {
+						const flowChanged = containsFlowRow(record.addedNodes) || containsFlowRow(record.removedNodes);
+						if (!flowChanged && target.closest("[data-chat-flow]") === null) continue;
+						if (!flowChanged && target.closest("[data-open]") !== null) continue;
 						this.follow?.noteGrowth();
 						this.schedule();
 						return;

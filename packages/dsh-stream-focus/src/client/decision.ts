@@ -63,13 +63,16 @@ export function decideWindow(group: WindowGroup): WindowDecision {
   const toolsAfterReasoning = candidates.filter(candidate => candidate.kind === 'tool'
     && (newestReasoning === undefined || candidate.order > newestReasoning.order))
 
+  const activeTools = toolsAfterReasoning.filter(candidate => candidate.active)
   const targets = streamingReasoning !== undefined
     ? [streamingReasoning]
-    : toolsAfterReasoning.length > 0
-      ? toolsAfterReasoning
-      : newestReasoning === undefined
-        ? []
-        : [newestReasoning]
+    : activeTools.length > 0
+      ? activeTools
+      : toolsAfterReasoning.length > 0
+        ? [toolsAfterReasoning[toolsAfterReasoning.length - 1]!]
+        : newestReasoning === undefined
+          ? []
+          : [newestReasoning]
   const targetKeys = new Set(targets.map(candidate => candidate.key))
 
   return {
