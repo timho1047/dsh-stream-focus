@@ -23,7 +23,6 @@ export declare class StreamWindowConductor {
     private fadeElement;
     private fadeGroup;
     private fadeGroupPosition;
-    private textFade;
     private progress;
     private follow;
     private openAnimation;

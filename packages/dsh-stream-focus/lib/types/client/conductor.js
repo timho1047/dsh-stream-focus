@@ -1,5 +1,4 @@
 import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from "./disclosure-motion.js";
-import { HighlightFade } from "./highlight-fade.js";
 import { ProcessProgress } from "./process-progress.js";
 import { FollowSteward } from "./follow-steward.js";
 import { RowDisclosureController } from "./row-disclosure.js";
@@ -41,7 +40,6 @@ export class StreamWindowConductor {
     fadeElement = null;
     fadeGroup = null;
     fadeGroupPosition = '';
-    textFade = null;
     progress = null;
     follow = null;
     openAnimation = null;
@@ -172,8 +170,6 @@ export class StreamWindowConductor {
         this.progress = new ProcessProgress(this.doc, this.win);
         this.progress.attach(group, body);
         this.follow = FollowSteward.acquire(body, this.win);
-        this.textFade = new HighlightFade(this.doc, this.win, 'dsh-stream-process');
-        this.textFade.observe(content ?? group);
         body.addEventListener('scroll', this.onProgressScroll, { passive: true });
         if (typeof this.win.ResizeObserver === 'function') {
             this.followObserver = new this.win.ResizeObserver(() => {

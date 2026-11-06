@@ -1,5 +1,4 @@
-import { DISCLOSURE_MOTION_MS, closeDisclosure, findDisclosureBody, openDisclosure } from "./disclosure-motion.js";
-import { HighlightFade } from "./highlight-fade.js";
+import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from "./disclosure-motion.js";
 import { FollowSteward } from "./follow-steward.js";
 import { RowDisclosureController } from "./row-disclosure.js";
 import { latestTurnRows, outerScroller, runningFlow } from "./live-transcript.js";
@@ -44,8 +43,6 @@ export class FlatRowConductor {
     observer = null;
     rows;
     pendingClose = new Set();
-    textFade;
-    fadeRoot = null;
     syncTimer = null;
     follow = null;
     /**
@@ -58,7 +55,6 @@ export class FlatRowConductor {
         this.doc = doc;
         this.win = win;
         this.rows = new RowDisclosureController(doc, win, false);
-        this.textFade = new HighlightFade(doc, win, 'dsh-stream-think');
     }
     /** Start observing flat process rows. Idempotent. */
     start() {
@@ -100,8 +96,6 @@ export class FlatRowConductor {
             this.syncTimer = null;
         }
         this.detachOuterFollow();
-        this.textFade.stop();
-        this.fadeRoot = null;
         this.rows.reset();
         this.pendingClose.clear();
     }
@@ -139,7 +133,6 @@ export class FlatRowConductor {
             this.openRow(candidate.element);
             this.rows.markAuto(candidate.key);
         }
-        this.reconcileTextFade(elements);
         if (this.mode === 'detailed') {
             const targets = new Set(decision.targets);
             for (const key of decision.close) {
@@ -165,9 +158,6 @@ export class FlatRowConductor {
         }
         this.rows.reset();
         this.pendingClose.clear();
-        if (this.fadeRoot !== null)
-            this.textFade.unobserve(this.fadeRoot);
-        this.fadeRoot = null;
     }
     /**
      * Directly reconcile open Tool disclosures against the current targets.
@@ -192,24 +182,6 @@ export class FlatRowConductor {
                 continue;
             this.closeRow(candidate.element, true);
         }
-    }
-    /** Fade only the running thinking body; flat rows have no process content root. */
-    reconcileTextFade(elements) {
-        let target = null;
-        for (const candidate of elements.values()) {
-            if (candidate.kind !== 'reasoning' || !candidate.active)
-                continue;
-            target = findDisclosureBody(candidate.element);
-            if (target !== null)
-                break;
-        }
-        if (target === this.fadeRoot)
-            return;
-        if (this.fadeRoot !== null)
-            this.textFade.unobserve(this.fadeRoot);
-        this.fadeRoot = target;
-        if (target !== null)
-            this.textFade.observe(target);
     }
     attachOuterFollow() {
         const outer = outerScroller(this.doc);

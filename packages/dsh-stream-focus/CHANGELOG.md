@@ -17,7 +17,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - 思考切换到工具时改为交叉展开：新行先展开，旧行同时收起，不再出现两行都不展开的空白帧。
 - 将思考逐字渲染限制在每秒 60 次，减少高刷新率屏幕上的重复 Markdown 渲染和卡顿。
 - 修复 PTC `run_code` 工具外层 Code 行不收起的问题：优先控制外层工具 disclosure，直接收起不在当前目标中的工具行，并在轮次结束时复位自动展开状态。
-- 修复字符淡入的跳字：只对同一 Text 节点真正追加的后缀建 Range，Markdown 重建节点时不跨节点猜测旧文本；每帧校验 Range 内容。
+- 移除思考正文的 CSS 字符淡入，改为只依赖逐字揭示；这消除了 Markdown 重建时旧字符延迟补出和跳字。普通正文继续使用尾部字符淡入。
 - 恢复 Detailed / Verbose 模式下思考正文的尾部字符淡入；逐字揭示继续负责正文进度。
 
 ### English
@@ -31,7 +31,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - Cross-fade thinking-to-tool switches: the new row opens while the old row closes, so no frame leaves both rows closed.
 - Cap thinking repaints at 60fps to reduce repeated Markdown renders and stutter on high-refresh displays.
 - Fix PTC `run_code` rows leaving the outer Code disclosure open: target the outer tool control, close open non-target tool rows directly, and reset automatic expansion at Turn end.
-- Fix skipped characters in the character fade: only create ranges for suffixes appended to the same Text node, never guess across rebuilt Markdown nodes, and validate each range every frame.
+- Remove CSS character fading from reasoning and rely on character reveal alone, eliminating late-appearing old characters and skipped characters after Markdown rebuilds. Normal prose keeps suffix character fading.
 - Restore suffix character fading for thinking text in Detailed and Verbose; character reveal still drives progress.
 
 ## [0.2.0] - 2026-11-02

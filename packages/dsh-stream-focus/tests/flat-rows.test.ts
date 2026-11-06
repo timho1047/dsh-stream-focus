@@ -49,12 +49,6 @@ function open(key: string): boolean {
     ?.getAttribute('aria-expanded') === 'true'
 }
 
-class FakeHighlight extends Set<Range> {}
-
-function faded(registry: Map<string, FakeHighlight>): string {
-  return [...registry.values()].flatMap(highlight => [...highlight]).map(range => range.toString()).join('')
-}
-
 describe('FlatRowConductor', () => {
   let conductor: FlatRowConductor | null = null
 
@@ -72,32 +66,6 @@ describe('FlatRowConductor', () => {
     conductor = new FlatRowConductor('detailed', document, window)
     conductor.start()
     expect(open('r1')).toBe(true)
-  })
-
-  it('fades appended thinking text in flat mode', async () => {
-    const registry = new Map<string, FakeHighlight>()
-    vi.stubGlobal('Highlight', FakeHighlight)
-    vi.stubGlobal('CSS', { highlights: registry, supports: () => false })
-    wireDocument()
-    mount(`
-      <div data-chat-turn="1" data-chat-flow-kind="assistant-step" data-chat-flow-key="r1">
-        <div data-variant="think" data-state="running">
-          <div data-disclosure-row="true" role="button" aria-expanded="false"></div>
-          <div class="thinkBody">already visible</div>
-        </div>
-      </div>`)
-    const body = document.querySelector<HTMLElement>('.thinkBody')
-    if (body === null) throw new Error('missing thinking body')
-    Object.defineProperty(body, 'getBoundingClientRect', {
-      configurable: true,
-      value: () => ({ height: 120 } as DOMRect),
-    })
-    conductor = new FlatRowConductor('detailed', document, window)
-    conductor.start()
-    body.firstChild!.textContent = 'already visible plus new'
-    await new Promise(resolve => setTimeout(resolve, 0))
-    expect(faded(registry)).toBe(' plus new')
-    vi.unstubAllGlobals()
   })
 
   it('switches Detailed to the tool batch and closes the previous row', () => {

@@ -34,7 +34,7 @@ dsh plugin --profile web add dsh-stream-focus
 | Detailed | 当前轮次在官方容器内平铺，不伪造组级窗口；自动展开当前思考/工具行，并收起旧的自动展开行。 |
 | Verbose | 平铺显示，自动展开当前思考/工具行，但不自动收起旧行，尊重“永远展开”的语义。 |
 
-四档共享：思考正文逐字平滑、普通正文行级渐隐与字符淡入、新段落/列表/代码块淡入、自动操作不抢焦点。
+四档共享：思考正文逐字揭示、普通正文行级渐隐与尾部字符淡入、自动操作不抢焦点。
 
 - 思考流式输出时，自动展开当前思考行；官方过程组本身成为限高、内部自动贴底的窗口。
 - 思考正文用 CSS Custom Highlight API 对尾部新字素做透明度淡入，不插 span、不改 Markdown DOM；揭示速度按 elapsed time 归一化，60Hz/120Hz 手感一致。窗口内部滚动跟随使用官方 process scroll，插件不重复写 `scrollTop`，避免两套跟随互相抢滚动。
@@ -44,7 +44,7 @@ dsh plugin --profile web add dsh-stream-focus
 - 活动窗口保持已经出现过的最大高度；思考切换到工具时只滚动内部内容，不再让外层会话因窗口变矮而回滚。
 - 窗口底部有一层 16px 的轻渐隐，滚动跟随也更柔和，新行从底部淡入而不是硬切。
 - 普通助手正文流式输出时，在消息根部加 20px 的底部行渐隐；输出结束后立即移除。
-- 思考与普通正文都只对真正新增的文本做尾部字符淡入；Markdown 重渲染出来的旧段落不会整段淡入或消失。思考正文另有逐字揭示。逐字揭示会避开组合音标和 ZWJ emoji 边界。
+- 思考正文只使用逐字揭示，不再对字符做 CSS 透明度淡入，避免 Markdown 重渲染时旧字符延迟补出或跳字；普通正文使用行级渐隐与尾部字符淡入。逐字揭示会避开组合音标和 ZWJ emoji 边界。
 - 普通正文增长或工具行展开时，插件只在外层仍处于跟随状态时维持尾部；行切换通过冻结窗口高度避免外层位移，不在动画期间反复改外层滚动。
 - 不添加自定义背景、边框、圆角或内边距，窗口外观完全沿用官方过程组。
 - 自动展开时临时屏蔽标题按钮的 `focus()`；鼠标点击标题后也会移走焦点，不留下焦点环。键盘聚焦保持官方的可访问焦点行为。
@@ -177,7 +177,7 @@ dsh plugin --profile web add dsh-stream-focus@0.1.3
 
 ## 已知限制
 
-- 字符淡入依赖 CSS Custom Highlight API；不支持的浏览器会自动回退为普通文本渲染。
+- 普通正文的字符淡入依赖 CSS Custom Highlight API；不支持的浏览器会自动回退为普通文本渲染。思考正文不依赖该 API。
 - stream-focus 依赖 ui-chat 的语义 DOM（`data-chat-group-key`、`data-variant="think"`、`data-tool`、`data-sample="bash"`、`data-disclosure-row`、`data-chat-running`、`data-chat-following-tail`）。上游属性改名时 stream-focus 会静默不生效，需要跟进。
 - 只有 Compact / Standard 有官方过程组，窗口高度沿用其 `min(400px, 50vh)`；Detailed / Verbose 保持官方平铺结构，不添加组级限高。
 - 插件自动切换行时，思考和工具行的展开/收起使用约 180ms 的高度 + 透明度过渡；手动点击行仍沿用官方即时切换。过程组首次出现使用 180ms 透明度淡入。

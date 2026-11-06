@@ -1,5 +1,4 @@
-import { DISCLOSURE_MOTION_MS, closeDisclosure, findDisclosureBody, openDisclosure } from './disclosure-motion.ts'
-import { HighlightFade } from './highlight-fade.ts'
+import { DISCLOSURE_MOTION_MS, closeDisclosure, openDisclosure } from './disclosure-motion.ts'
 import { FollowSteward } from './follow-steward.ts'
 import { RowDisclosureController } from './row-disclosure.ts'
 import { latestTurnRows, outerScroller, runningFlow } from './live-transcript.ts'
@@ -51,8 +50,6 @@ export class FlatRowConductor {
   private observer: MutationObserver | null = null
   private readonly rows: RowDisclosureController
   private readonly pendingClose = new Set<HTMLElement>()
-  private readonly textFade: HighlightFade
-  private fadeRoot: HTMLElement | null = null
   private syncTimer: number | null = null
   private follow: FollowSteward | null = null
 
@@ -67,7 +64,6 @@ export class FlatRowConductor {
     private readonly win: Window & typeof globalThis = window,
   ) {
     this.rows = new RowDisclosureController(doc, win, false)
-    this.textFade = new HighlightFade(doc, win, 'dsh-stream-think')
   }
 
   /** Start observing flat process rows. Idempotent. */
@@ -109,8 +105,6 @@ export class FlatRowConductor {
       this.syncTimer = null
     }
     this.detachOuterFollow()
-    this.textFade.stop()
-    this.fadeRoot = null
     this.rows.reset()
     this.pendingClose.clear()
   }
@@ -147,7 +141,6 @@ export class FlatRowConductor {
       this.openRow(candidate.element)
       this.rows.markAuto(candidate.key)
     }
-    this.reconcileTextFade(elements)
     if (this.mode === 'detailed') {
       const targets = new Set(decision.targets)
       for (const key of decision.close) {
@@ -172,8 +165,6 @@ export class FlatRowConductor {
     }
     this.rows.reset()
     this.pendingClose.clear()
-    if (this.fadeRoot !== null) this.textFade.unobserve(this.fadeRoot)
-    this.fadeRoot = null
   }
 
   /**
@@ -198,20 +189,6 @@ export class FlatRowConductor {
         || candidate.active || candidate.manual === 'open') continue
       this.closeRow(candidate.element, true)
     }
-  }
-
-  /** Fade only the running thinking body; flat rows have no process content root. */
-  private reconcileTextFade(elements: ReadonlyMap<string, FlatCandidate>): void {
-    let target: HTMLElement | null = null
-    for (const candidate of elements.values()) {
-      if (candidate.kind !== 'reasoning' || !candidate.active) continue
-      target = findDisclosureBody(candidate.element)
-      if (target !== null) break
-    }
-    if (target === this.fadeRoot) return
-    if (this.fadeRoot !== null) this.textFade.unobserve(this.fadeRoot)
-    this.fadeRoot = target
-    if (target !== null) this.textFade.observe(target)
   }
 
   private attachOuterFollow(): void {

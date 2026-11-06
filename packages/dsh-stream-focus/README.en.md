@@ -34,16 +34,16 @@ The rows share one install entry and the same official thinking-row DOM, but the
 | Detailed | Keeps the current Turn flat inside the official container without faking a group cap; auto-opens the current thinking/tool row and closes older automatic rows. |
 | Verbose | Keeps the flat presentation; auto-opens the current thinking/tool row but never closes older rows, preserving “always expanded” semantics. |
 
-All modes share: character-paced reasoning, line-level fading plus suffix-only character highlighting for streamed prose, and focus-safe automatic actions.
+All modes share: character-paced reasoning, line-level fading plus suffix-only character highlighting for normal prose, and focus-safe automatic actions.
 
-- While reasoning streams, the current Think row opens automatically, and new tail graphemes fade in through the CSS Custom Highlight API without DOM spans. Reveal speed is normalized by elapsed time for consistent 60Hz/120Hz behavior. The official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
+- While reasoning streams, the current Think row opens automatically and graphemes are revealed without DOM spans. Reveal speed is normalized by elapsed time for consistent 60Hz/120Hz behavior; reasoning does not use CSS highlight transparency. The official process group becomes a capped window. Inner scrolling and bottom-following stay with the official process scroll, so the plugin never writes a second `scrollTop`.
 - A process group appears at its real height with a short ~180ms opacity fade instead of collapsing and expanding again.
 - Automatic disclosures use a native CSS `0 → auto` size transition where `interpolate-size` is supported, avoiding JS height writes on every frame; other browsers keep the WAAPI fallback.
 - The active window disables horizontal overflow and the official top/bottom edge masks, avoiding intermittent horizontal scrollbars and a partially faded vertical scrollbar. The native thumb is hidden in the active window and replaced with a 3px progress line whose height transitions smoothly, so it no longer flickers as content grows by line.
 - The active window keeps the tallest height it has shown; switching from thinking to tools only scrolls its inner content, so the outer transcript never rolls back because the window became shorter.
 - A light 16px fade at the window bottom makes new lines enter softly rather than snapping in.
 - Streaming assistant prose gets a 20px line fade at the message root; it is removed as soon as streaming ends.
-- Both reasoning and normal prose highlight only genuinely appended text. A paragraph rebuilt by Markdown keeps its old text fully opaque instead of fading as a whole. Reasoning additionally uses character reveal, which avoids splitting combining marks and ZWJ emoji.
+- Reasoning uses character reveal only; it never applies CSS transparency to individual characters, so a Markdown rebuild cannot leave an old character dimmed while the next line appears. Normal prose uses line-level fading and suffix-only character highlighting. Reveal avoids splitting combining marks and ZWJ emoji.
 - While normal prose grows or a tool row expands, the plugin keeps the outer transcript on its floor only while it is still following; row switches freeze the window height instead of moving the outer scroller during the animation.
 - No custom background, border, radius, or padding: the window keeps the official process-group appearance.
 - Automatic opens temporarily suppress the title button’s `focus()`, and pointer clicks move focus away afterwards, so no focus ring is left behind. Keyboard focus keeps the official accessible behavior.

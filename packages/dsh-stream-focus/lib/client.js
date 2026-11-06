@@ -188,208 +188,6 @@ window.__ModuleLoader__.load({
 			return typeof body.animate === "function" && (typeof win.matchMedia !== "function" || !win.matchMedia("(prefers-reduced-motion: reduce)").matches);
 		}
 		//#endregion
-		//#region lib/types/client/highlight-fade.js
-		/** CSS Custom Highlight based fade for streamed text without DOM mutation. */
-		const FADE_MS = 240;
-		const MAX_GLYPHS = 160;
-		const STEPS = 12;
-		const ALPHAS = [
-			.03,
-			.06,
-			.1,
-			.16,
-			.24,
-			.34,
-			.46,
-			.6,
-			.74,
-			.86,
-			.95,
-			1
-		];
-		const SKIP = "code,pre,a,.katex,script,style";
-		/**
-		* Fade newly appended text by highlighting its grapheme ranges.
-		*
-		* The browser's highlight registry styles text ranges without changing the
-		* DOM, so React ownership, Markdown structure, selection, and copy semantics
-		* stay untouched. Unsupported browsers simply see the normal output.
-		*/
-		var HighlightFade = class {
-			doc;
-			win;
-			name;
-			realm;
-			highlights = [];
-			observer;
-			roots = /* @__PURE__ */ new Set();
-			texts = /* @__PURE__ */ new WeakMap();
-			glyphs = [];
-			frame = null;
-			/**
-			* @param doc - document owning the text.
-			* @param win - window exposing CSS.highlights.
-			* @param name - unique highlight namespace for this fade instance.
-			*/
-			constructor(doc = document, win = window, name = "dsh-stream-fade") {
-				this.doc = doc;
-				this.win = win;
-				this.name = name;
-				this.realm = win;
-				const registry = this.realm.CSS?.highlights;
-				const Ctor = this.realm.Highlight;
-				if (registry === void 0 || Ctor === void 0) {
-					this.observer = null;
-					return;
-				}
-				for (let index = 0; index < STEPS; index += 1) {
-					const highlight = new Ctor();
-					this.highlights.push(highlight);
-					registry.set(`${name}-${index}`, highlight);
-				}
-				this.installStyle();
-				this.observer = new this.win.MutationObserver(() => {
-					this.scan();
-				});
-			}
-			/** Observe a root and start fading its newly appended text. */
-			observe(root) {
-				if (this.observer === null || this.roots.has(root)) return;
-				this.roots.add(root);
-				root.dataset.highlightFade = this.name;
-				this.record(root);
-				this.observer.observe(root, {
-					subtree: true,
-					childList: true,
-					characterData: true
-				});
-			}
-			/** Stop observing one root and drop its pending ranges. */
-			unobserve(root) {
-				this.roots.delete(root);
-				delete root.dataset.highlightFade;
-				this.dropRanges(root);
-				if (this.roots.size === 0) this.observer?.disconnect();
-			}
-			/** Stop observing everything and clear the registry. */
-			stop() {
-				for (const root of this.roots) delete root.dataset.highlightFade;
-				this.roots.clear();
-				this.glyphs.length = 0;
-				this.clearHighlights();
-				this.observer?.disconnect();
-				if (this.frame !== null) {
-					this.win.cancelAnimationFrame(this.frame);
-					this.frame = null;
-				}
-				const registry = this.realm.CSS?.highlights;
-				if (registry !== void 0) for (let index = 0; index < STEPS; index += 1) registry.delete(`${this.name}-${index}`);
-			}
-			installStyle() {
-				const id = `dsh-stream-focus-${this.name}`;
-				if (this.doc.getElementById(id) !== null) return;
-				const style = this.doc.createElement("style");
-				style.id = id;
-				style.textContent = ALPHAS.map((alpha, index) => `::highlight(${this.name}-${index}){color:color-mix(in srgb,currentColor ${Math.round(alpha * 100)}%,transparent)}`).join("\n");
-				this.doc.head.append(style);
-			}
-			scan() {
-				for (const root of this.roots) {
-					const walker = this.doc.createTreeWalker(root, 4);
-					let node = walker.nextNode();
-					while (node !== null) {
-						const text = node;
-						if (text.parentElement?.closest(SKIP) === null) this.recordText(text);
-						node = walker.nextNode();
-					}
-				}
-			}
-			record(root) {
-				const walker = this.doc.createTreeWalker(root, 4);
-				let node = walker.nextNode();
-				while (node !== null) {
-					const text = node;
-					if (text.parentElement?.closest(SKIP) === null) this.texts.set(text, text.data);
-					node = walker.nextNode();
-				}
-			}
-			recordText(text) {
-				const previous = this.texts.get(text);
-				const next = text.data;
-				this.texts.set(text, next);
-				if (next === previous) return;
-				if (previous === void 0 || !next.startsWith(previous)) return;
-				const start = previous.length;
-				const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(void 0, { granularity: "grapheme" }) : null;
-				const now = this.win.performance.now();
-				if (segmenter === null) for (let index = start; index < next.length; index += 1) this.pushGlyph(text, index, index + 1, now);
-				else for (const part of segmenter.segment(next.slice(start))) {
-					const from = start + part.index;
-					this.pushGlyph(text, from, from + part.segment.length, now);
-				}
-				while (this.glyphs.length > MAX_GLYPHS) {
-					const dropped = this.glyphs.shift();
-					if (dropped !== void 0) this.setBucket(dropped, STEPS - 1);
-				}
-				this.schedule();
-			}
-			pushGlyph(node, start, end, born) {
-				if (start >= end) return;
-				const range = this.doc.createRange();
-				range.setStart(node, start);
-				range.setEnd(node, end);
-				this.glyphs.push({
-					range,
-					text: range.toString(),
-					born,
-					bucket: 0
-				});
-				this.highlights[0]?.add(range);
-			}
-			schedule() {
-				if (this.frame !== null) return;
-				this.frame = this.win.requestAnimationFrame(() => {
-					this.frame = null;
-					this.update();
-				});
-			}
-			update() {
-				const now = this.win.performance.now();
-				let pending = false;
-				for (let index = this.glyphs.length - 1; index >= 0; index -= 1) {
-					const glyph = this.glyphs[index];
-					if (glyph === void 0) continue;
-					if (!glyph.range.startContainer.isConnected || glyph.range.toString() !== glyph.text || now - glyph.born >= FADE_MS) {
-						this.setBucket(glyph, STEPS - 1);
-						this.glyphs.splice(index, 1);
-						continue;
-					}
-					const bucket = Math.min(STEPS - 1, Math.floor((now - glyph.born) / FADE_MS * STEPS));
-					if (bucket !== glyph.bucket) this.setBucket(glyph, bucket);
-					pending = true;
-				}
-				if (pending) this.schedule();
-				else this.clearHighlights();
-			}
-			setBucket(glyph, bucket) {
-				this.highlights[glyph.bucket]?.delete(glyph.range);
-				glyph.bucket = bucket;
-				if (bucket < STEPS - 1) this.highlights[bucket]?.add(glyph.range);
-			}
-			clearHighlights() {
-				for (const highlight of this.highlights) for (const glyph of this.glyphs) highlight.delete(glyph.range);
-			}
-			dropRanges(root) {
-				for (let index = this.glyphs.length - 1; index >= 0; index -= 1) {
-					const glyph = this.glyphs[index];
-					if (glyph !== void 0 && root.contains(glyph.range.startContainer)) {
-						this.setBucket(glyph, STEPS - 1);
-						this.glyphs.splice(index, 1);
-					}
-				}
-			}
-		};
-		//#endregion
 		//#region lib/types/client/process-progress.js
 		/** The active process window's smooth replacement for the native scrollbar thumb. */
 		const STYLE_ID = "dsh-stream-focus-native-scrollbar";
@@ -832,7 +630,6 @@ window.__ModuleLoader__.load({
 			fadeElement = null;
 			fadeGroup = null;
 			fadeGroupPosition = "";
-			textFade = null;
 			progress = null;
 			follow = null;
 			openAnimation = null;
@@ -947,8 +744,6 @@ window.__ModuleLoader__.load({
 				this.progress = new ProcessProgress(this.doc, this.win);
 				this.progress.attach(group, body);
 				this.follow = FollowSteward.acquire(body, this.win);
-				this.textFade = new HighlightFade(this.doc, this.win, "dsh-stream-process");
-				this.textFade.observe(content ?? group);
 				body.addEventListener("scroll", this.onProgressScroll, { passive: true });
 				if (typeof this.win.ResizeObserver === "function") {
 					this.followObserver = new this.win.ResizeObserver(() => {
@@ -1403,6 +1198,208 @@ window.__ModuleLoader__.load({
 			return text.slice(0, Math.min(visible, text.length));
 		}
 		//#endregion
+		//#region lib/types/client/highlight-fade.js
+		/** CSS Custom Highlight based fade for streamed text without DOM mutation. */
+		const FADE_MS = 240;
+		const MAX_GLYPHS = 160;
+		const STEPS = 12;
+		const ALPHAS = [
+			.03,
+			.06,
+			.1,
+			.16,
+			.24,
+			.34,
+			.46,
+			.6,
+			.74,
+			.86,
+			.95,
+			1
+		];
+		const SKIP = "code,pre,a,.katex,script,style";
+		/**
+		* Fade newly appended text by highlighting its grapheme ranges.
+		*
+		* The browser's highlight registry styles text ranges without changing the
+		* DOM, so React ownership, Markdown structure, selection, and copy semantics
+		* stay untouched. Unsupported browsers simply see the normal output.
+		*/
+		var HighlightFade = class {
+			doc;
+			win;
+			name;
+			realm;
+			highlights = [];
+			observer;
+			roots = /* @__PURE__ */ new Set();
+			texts = /* @__PURE__ */ new WeakMap();
+			glyphs = [];
+			frame = null;
+			/**
+			* @param doc - document owning the text.
+			* @param win - window exposing CSS.highlights.
+			* @param name - unique highlight namespace for this fade instance.
+			*/
+			constructor(doc = document, win = window, name = "dsh-stream-fade") {
+				this.doc = doc;
+				this.win = win;
+				this.name = name;
+				this.realm = win;
+				const registry = this.realm.CSS?.highlights;
+				const Ctor = this.realm.Highlight;
+				if (registry === void 0 || Ctor === void 0) {
+					this.observer = null;
+					return;
+				}
+				for (let index = 0; index < STEPS; index += 1) {
+					const highlight = new Ctor();
+					this.highlights.push(highlight);
+					registry.set(`${name}-${index}`, highlight);
+				}
+				this.installStyle();
+				this.observer = new this.win.MutationObserver(() => {
+					this.scan();
+				});
+			}
+			/** Observe a root and start fading its newly appended text. */
+			observe(root) {
+				if (this.observer === null || this.roots.has(root)) return;
+				this.roots.add(root);
+				root.dataset.highlightFade = this.name;
+				this.record(root);
+				this.observer.observe(root, {
+					subtree: true,
+					childList: true,
+					characterData: true
+				});
+			}
+			/** Stop observing one root and drop its pending ranges. */
+			unobserve(root) {
+				this.roots.delete(root);
+				delete root.dataset.highlightFade;
+				this.dropRanges(root);
+				if (this.roots.size === 0) this.observer?.disconnect();
+			}
+			/** Stop observing everything and clear the registry. */
+			stop() {
+				for (const root of this.roots) delete root.dataset.highlightFade;
+				this.roots.clear();
+				this.glyphs.length = 0;
+				this.clearHighlights();
+				this.observer?.disconnect();
+				if (this.frame !== null) {
+					this.win.cancelAnimationFrame(this.frame);
+					this.frame = null;
+				}
+				const registry = this.realm.CSS?.highlights;
+				if (registry !== void 0) for (let index = 0; index < STEPS; index += 1) registry.delete(`${this.name}-${index}`);
+			}
+			installStyle() {
+				const id = `dsh-stream-focus-${this.name}`;
+				if (this.doc.getElementById(id) !== null) return;
+				const style = this.doc.createElement("style");
+				style.id = id;
+				style.textContent = ALPHAS.map((alpha, index) => `::highlight(${this.name}-${index}){color:color-mix(in srgb,currentColor ${Math.round(alpha * 100)}%,transparent)}`).join("\n");
+				this.doc.head.append(style);
+			}
+			scan() {
+				for (const root of this.roots) {
+					const walker = this.doc.createTreeWalker(root, 4);
+					let node = walker.nextNode();
+					while (node !== null) {
+						const text = node;
+						if (text.parentElement?.closest(SKIP) === null) this.recordText(text);
+						node = walker.nextNode();
+					}
+				}
+			}
+			record(root) {
+				const walker = this.doc.createTreeWalker(root, 4);
+				let node = walker.nextNode();
+				while (node !== null) {
+					const text = node;
+					if (text.parentElement?.closest(SKIP) === null) this.texts.set(text, text.data);
+					node = walker.nextNode();
+				}
+			}
+			recordText(text) {
+				const previous = this.texts.get(text);
+				const next = text.data;
+				this.texts.set(text, next);
+				if (next === previous) return;
+				if (previous === void 0 || !next.startsWith(previous)) return;
+				const start = previous.length;
+				const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(void 0, { granularity: "grapheme" }) : null;
+				const now = this.win.performance.now();
+				if (segmenter === null) for (let index = start; index < next.length; index += 1) this.pushGlyph(text, index, index + 1, now);
+				else for (const part of segmenter.segment(next.slice(start))) {
+					const from = start + part.index;
+					this.pushGlyph(text, from, from + part.segment.length, now);
+				}
+				while (this.glyphs.length > MAX_GLYPHS) {
+					const dropped = this.glyphs.shift();
+					if (dropped !== void 0) this.setBucket(dropped, STEPS - 1);
+				}
+				this.schedule();
+			}
+			pushGlyph(node, start, end, born) {
+				if (start >= end) return;
+				const range = this.doc.createRange();
+				range.setStart(node, start);
+				range.setEnd(node, end);
+				this.glyphs.push({
+					range,
+					text: range.toString(),
+					born,
+					bucket: 0
+				});
+				this.highlights[0]?.add(range);
+			}
+			schedule() {
+				if (this.frame !== null) return;
+				this.frame = this.win.requestAnimationFrame(() => {
+					this.frame = null;
+					this.update();
+				});
+			}
+			update() {
+				const now = this.win.performance.now();
+				let pending = false;
+				for (let index = this.glyphs.length - 1; index >= 0; index -= 1) {
+					const glyph = this.glyphs[index];
+					if (glyph === void 0) continue;
+					if (!glyph.range.startContainer.isConnected || glyph.range.toString() !== glyph.text || now - glyph.born >= FADE_MS) {
+						this.setBucket(glyph, STEPS - 1);
+						this.glyphs.splice(index, 1);
+						continue;
+					}
+					const bucket = Math.min(STEPS - 1, Math.floor((now - glyph.born) / FADE_MS * STEPS));
+					if (bucket !== glyph.bucket) this.setBucket(glyph, bucket);
+					pending = true;
+				}
+				if (pending) this.schedule();
+				else this.clearHighlights();
+			}
+			setBucket(glyph, bucket) {
+				this.highlights[glyph.bucket]?.delete(glyph.range);
+				glyph.bucket = bucket;
+				if (bucket < STEPS - 1) this.highlights[bucket]?.add(glyph.range);
+			}
+			clearHighlights() {
+				for (const highlight of this.highlights) for (const glyph of this.glyphs) highlight.delete(glyph.range);
+			}
+			dropRanges(root) {
+				for (let index = this.glyphs.length - 1; index >= 0; index -= 1) {
+					const glyph = this.glyphs[index];
+					if (glyph !== void 0 && root.contains(glyph.range.startContainer)) {
+						this.setBucket(glyph, STEPS - 1);
+						this.glyphs.splice(index, 1);
+					}
+				}
+			}
+		};
+		//#endregion
 		//#region lib/types/client/normal-smoothing.js
 		/**
 		* Line-edge fade for streaming Assistant prose.
@@ -1543,8 +1540,6 @@ window.__ModuleLoader__.load({
 			observer = null;
 			rows;
 			pendingClose = /* @__PURE__ */ new Set();
-			textFade;
-			fadeRoot = null;
 			syncTimer = null;
 			follow = null;
 			/**
@@ -1557,7 +1552,6 @@ window.__ModuleLoader__.load({
 				this.doc = doc;
 				this.win = win;
 				this.rows = new RowDisclosureController(doc, win, false);
-				this.textFade = new HighlightFade(doc, win, "dsh-stream-think");
 			}
 			/** Start observing flat process rows. Idempotent. */
 			start() {
@@ -1598,8 +1592,6 @@ window.__ModuleLoader__.load({
 					this.syncTimer = null;
 				}
 				this.detachOuterFollow();
-				this.textFade.stop();
-				this.fadeRoot = null;
 				this.rows.reset();
 				this.pendingClose.clear();
 			}
@@ -1633,7 +1625,6 @@ window.__ModuleLoader__.load({
 					this.openRow(candidate.element);
 					this.rows.markAuto(candidate.key);
 				}
-				this.reconcileTextFade(elements);
 				if (this.mode === "detailed") {
 					const targets = new Set(decision.targets);
 					for (const key of decision.close) {
@@ -1655,8 +1646,6 @@ window.__ModuleLoader__.load({
 				}
 				this.rows.reset();
 				this.pendingClose.clear();
-				if (this.fadeRoot !== null) this.textFade.unobserve(this.fadeRoot);
-				this.fadeRoot = null;
 			}
 			/**
 			* Directly reconcile open Tool disclosures against the current targets.
@@ -1678,19 +1667,6 @@ window.__ModuleLoader__.load({
 					if (candidate === void 0 || targets.has(candidate.key) || !candidate.open || candidate.active || candidate.manual === "open") continue;
 					this.closeRow(candidate.element, true);
 				}
-			}
-			/** Fade only the running thinking body; flat rows have no process content root. */
-			reconcileTextFade(elements) {
-				let target = null;
-				for (const candidate of elements.values()) {
-					if (candidate.kind !== "reasoning" || !candidate.active) continue;
-					target = findDisclosureBody(candidate.element);
-					if (target !== null) break;
-				}
-				if (target === this.fadeRoot) return;
-				if (this.fadeRoot !== null) this.textFade.unobserve(this.fadeRoot);
-				this.fadeRoot = target;
-				if (target !== null) this.textFade.observe(target);
 			}
 			attachOuterFollow() {
 				const outer = outerScroller(this.doc);

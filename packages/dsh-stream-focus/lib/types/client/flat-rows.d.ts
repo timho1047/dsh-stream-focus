@@ -15,8 +15,6 @@ export declare class FlatRowConductor {
     private observer;
     private readonly rows;
     private readonly pendingClose;
-    private readonly textFade;
-    private fadeRoot;
     private syncTimer;
     private follow;
     /**
@@ -42,8 +40,6 @@ export declare class FlatRowConductor {
     private closeOpenTools;
     /** Close automatic rows left open outside the current decision, including older Turns. */
     private closeStaleRows;
-    /** Fade only the running thinking body; flat rows have no process content root. */
-    private reconcileTextFade;
     private attachOuterFollow;
     private detachOuterFollow;
     private openRow;
