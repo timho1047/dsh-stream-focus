@@ -404,11 +404,13 @@ export class StreamWindowConductor {
       const genericTool = kind === 'tool' ? row.querySelector<HTMLElement>('[data-tool]') : null
       const disclosure = kind === 'reasoning'
         ? row.querySelector<HTMLElement>(DISCLOSURE_SELECTOR)
-        : bash ?? genericTool?.querySelector<HTMLElement>(DISCLOSURE_SELECTOR) ?? null
+        // PTC run_code wraps nested Bash subcalls; the outer tool control owns
+        // the visible Code row and is the row the process window must toggle.
+        : genericTool?.querySelector<HTMLElement>(DISCLOSURE_SELECTOR) ?? bash
       if (disclosure === null) continue
       const state = kind === 'reasoning'
         ? row.querySelector<HTMLElement>('[data-variant="think"]')?.getAttribute('data-state')
-        : bash?.getAttribute('data-state') ?? genericTool?.getAttribute('data-state')
+        : genericTool?.getAttribute('data-state') ?? bash?.getAttribute('data-state')
       const candidate: CandidateElement = {
         key: flowKey,
         kind,

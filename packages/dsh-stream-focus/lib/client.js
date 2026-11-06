@@ -1139,9 +1139,9 @@ window.__ModuleLoader__.load({
 					if (kind === void 0) continue;
 					const bash = kind === "tool" ? row.querySelector("[data-sample=\"bash\"]") : null;
 					const genericTool = kind === "tool" ? row.querySelector("[data-tool]") : null;
-					const disclosure = kind === "reasoning" ? row.querySelector(DISCLOSURE_SELECTOR$1) : bash ?? genericTool?.querySelector(DISCLOSURE_SELECTOR$1) ?? null;
+					const disclosure = kind === "reasoning" ? row.querySelector(DISCLOSURE_SELECTOR$1) : genericTool?.querySelector(DISCLOSURE_SELECTOR$1) ?? bash;
 					if (disclosure === null) continue;
-					const state = kind === "reasoning" ? row.querySelector("[data-variant=\"think\"]")?.getAttribute("data-state") : bash?.getAttribute("data-state") ?? genericTool?.getAttribute("data-state");
+					const state = kind === "reasoning" ? row.querySelector("[data-variant=\"think\"]")?.getAttribute("data-state") : genericTool?.getAttribute("data-state") ?? bash?.getAttribute("data-state");
 					const candidate = {
 						key: flowKey,
 						kind,
