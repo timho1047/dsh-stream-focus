@@ -99,8 +99,10 @@ export class HighlightFade {
         const next = nodes.map(entry => entry.text).join('');
         const previous = this.texts.get(root);
         this.texts.set(root, next);
-        if (previous === undefined || !next.startsWith(previous))
+        if (previous === undefined || !next.startsWith(previous)) {
+            this.dropRanges(root);
             return;
+        }
         const start = previous.length;
         if (start >= next.length)
             return;
@@ -161,7 +163,7 @@ export class HighlightFade {
         const range = this.doc.createRange();
         range.setStart(node, start);
         range.setEnd(node, end);
-        this.glyphs.push({ range, born, bucket: 0 });
+        this.glyphs.push({ range, text: range.toString(), born, bucket: 0 });
         this.highlights[0]?.add(range);
     }
     schedule() {
@@ -179,7 +181,11 @@ export class HighlightFade {
             const glyph = this.glyphs[index];
             if (glyph === undefined)
                 continue;
-            if (!glyph.range.startContainer.isConnected || now - glyph.born >= FADE_MS) {
+            // React can reuse a Text node while changing its content. The Range then
+            // still points at an offset that now names a different character; drop it
+            // instead of leaving that character transparent while its neighbour shows.
+            if (!glyph.range.startContainer.isConnected || glyph.range.toString() !== glyph.text
+                || now - glyph.born >= FADE_MS) {
                 this.setBucket(glyph, STEPS - 1);
                 this.glyphs.splice(index, 1);
                 continue;

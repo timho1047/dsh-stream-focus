@@ -22,6 +22,7 @@ interface HighlightRealm {
 
 interface Glyph {
   readonly range: Range
+  readonly text: string
   readonly born: number
   bucket: number
 }
@@ -121,7 +122,10 @@ export class HighlightFade {
     const next = nodes.map(entry => entry.text).join('')
     const previous = this.texts.get(root)
     this.texts.set(root, next)
-    if (previous === undefined || !next.startsWith(previous)) return
+    if (previous === undefined || !next.startsWith(previous)) {
+      this.dropRanges(root)
+      return
+    }
     const start = previous.length
     if (start >= next.length) return
     const segmenter = typeof Intl.Segmenter === 'function'
@@ -182,7 +186,7 @@ export class HighlightFade {
     const range = this.doc.createRange()
     range.setStart(node, start)
     range.setEnd(node, end)
-    this.glyphs.push({ range, born, bucket: 0 })
+    this.glyphs.push({ range, text: range.toString(), born, bucket: 0 })
     this.highlights[0]?.add(range)
   }
 
@@ -200,7 +204,11 @@ export class HighlightFade {
     for (let index = this.glyphs.length - 1; index >= 0; index -= 1) {
       const glyph = this.glyphs[index]
       if (glyph === undefined) continue
-      if (!glyph.range.startContainer.isConnected || now - glyph.born >= FADE_MS) {
+      // React can reuse a Text node while changing its content. The Range then
+      // still points at an offset that now names a different character; drop it
+      // instead of leaving that character transparent while its neighbour shows.
+      if (!glyph.range.startContainer.isConnected || glyph.range.toString() !== glyph.text
+        || now - glyph.born >= FADE_MS) {
         this.setBucket(glyph, STEPS - 1)
         this.glyphs.splice(index, 1)
         continue

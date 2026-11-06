@@ -302,7 +302,10 @@ window.__ModuleLoader__.load({
 				const next = nodes.map((entry) => entry.text).join("");
 				const previous = this.texts.get(root);
 				this.texts.set(root, next);
-				if (previous === void 0 || !next.startsWith(previous)) return;
+				if (previous === void 0 || !next.startsWith(previous)) {
+					this.dropRanges(root);
+					return;
+				}
 				const start = previous.length;
 				if (start >= next.length) return;
 				const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(void 0, { granularity: "grapheme" }) : null;
@@ -358,6 +361,7 @@ window.__ModuleLoader__.load({
 				range.setEnd(node, end);
 				this.glyphs.push({
 					range,
+					text: range.toString(),
 					born,
 					bucket: 0
 				});
@@ -376,7 +380,7 @@ window.__ModuleLoader__.load({
 				for (let index = this.glyphs.length - 1; index >= 0; index -= 1) {
 					const glyph = this.glyphs[index];
 					if (glyph === void 0) continue;
-					if (!glyph.range.startContainer.isConnected || now - glyph.born >= FADE_MS) {
+					if (!glyph.range.startContainer.isConnected || glyph.range.toString() !== glyph.text || now - glyph.born >= FADE_MS) {
 						this.setBucket(glyph, STEPS - 1);
 						this.glyphs.splice(index, 1);
 						continue;
