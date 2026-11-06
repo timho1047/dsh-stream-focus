@@ -257,7 +257,7 @@ window.__ModuleLoader__.load({
 				if (this.observer === null || this.roots.has(root)) return;
 				this.roots.add(root);
 				root.dataset.highlightFade = this.name;
-				this.texts.set(root, this.textOf(root));
+				this.record(root);
 				this.observer.observe(root, {
 					subtree: true,
 					childList: true,
@@ -294,65 +294,44 @@ window.__ModuleLoader__.load({
 				this.doc.head.append(style);
 			}
 			scan() {
-				for (const root of this.roots) this.scanRoot(root);
-			}
-			/** Diff one root's visible text and fade only a genuinely appended suffix. */
-			scanRoot(root) {
-				const nodes = this.textNodes(root);
-				const next = nodes.map((entry) => entry.text).join("");
-				const previous = this.texts.get(root);
-				this.texts.set(root, next);
-				if (previous === void 0 || !next.startsWith(previous)) {
-					this.dropRanges(root);
-					return;
+				for (const root of this.roots) {
+					const walker = this.doc.createTreeWalker(root, 4);
+					let node = walker.nextNode();
+					while (node !== null) {
+						const text = node;
+						if (text.parentElement?.closest(SKIP) === null) this.recordText(text);
+						node = walker.nextNode();
+					}
 				}
+			}
+			record(root) {
+				const walker = this.doc.createTreeWalker(root, 4);
+				let node = walker.nextNode();
+				while (node !== null) {
+					const text = node;
+					if (text.parentElement?.closest(SKIP) === null) this.texts.set(text, text.data);
+					node = walker.nextNode();
+				}
+			}
+			recordText(text) {
+				const previous = this.texts.get(text);
+				const next = text.data;
+				this.texts.set(text, next);
+				if (next === previous) return;
+				if (previous === void 0 || !next.startsWith(previous)) return;
 				const start = previous.length;
-				if (start >= next.length) return;
 				const segmenter = typeof Intl.Segmenter === "function" ? new Intl.Segmenter(void 0, { granularity: "grapheme" }) : null;
 				const now = this.win.performance.now();
-				if (segmenter === null) for (let index = start; index < next.length; index += 1) this.pushOffset(nodes, index, index + 1, now);
+				if (segmenter === null) for (let index = start; index < next.length; index += 1) this.pushGlyph(text, index, index + 1, now);
 				else for (const part of segmenter.segment(next.slice(start))) {
 					const from = start + part.index;
-					this.pushOffset(nodes, from, from + part.segment.length, now);
+					this.pushGlyph(text, from, from + part.segment.length, now);
 				}
 				while (this.glyphs.length > MAX_GLYPHS) {
 					const dropped = this.glyphs.shift();
 					if (dropped !== void 0) this.setBucket(dropped, STEPS - 1);
 				}
 				this.schedule();
-			}
-			/** Collect visible text nodes and their offsets in one pass. */
-			textNodes(root) {
-				const walker = this.doc.createTreeWalker(root, 4);
-				const nodes = [];
-				let offset = 0;
-				let node = walker.nextNode();
-				while (node !== null) {
-					const text = node;
-					if (text.parentElement?.closest(SKIP) === null) {
-						const data = text.data;
-						nodes.push({
-							node: text,
-							start: offset,
-							text: data
-						});
-						offset += data.length;
-					}
-					node = walker.nextNode();
-				}
-				return nodes;
-			}
-			textOf(root) {
-				return this.textNodes(root).map((entry) => entry.text).join("");
-			}
-			pushOffset(nodes, from, to, born) {
-				for (const entry of nodes) {
-					const end = entry.start + entry.text.length;
-					const start = Math.max(from, entry.start);
-					const finish = Math.min(to, end);
-					if (start >= finish) continue;
-					this.pushGlyph(entry.node, start - entry.start, finish - entry.start, born);
-				}
 			}
 			pushGlyph(node, start, end, born) {
 				if (start >= end) return;

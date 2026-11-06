@@ -52,7 +52,7 @@ export class HighlightFade {
             return;
         this.roots.add(root);
         root.dataset.highlightFade = this.name;
-        this.texts.set(root, this.textOf(root));
+        this.record(root);
         this.observer.observe(root, { subtree: true, childList: true, characterData: true });
     }
     /** Stop observing one root and drop its pending ranges. */
@@ -90,34 +90,51 @@ export class HighlightFade {
         this.doc.head.append(style);
     }
     scan() {
-        for (const root of this.roots)
-            this.scanRoot(root);
-    }
-    /** Diff one root's visible text and fade only a genuinely appended suffix. */
-    scanRoot(root) {
-        const nodes = this.textNodes(root);
-        const next = nodes.map(entry => entry.text).join('');
-        const previous = this.texts.get(root);
-        this.texts.set(root, next);
-        if (previous === undefined || !next.startsWith(previous)) {
-            this.dropRanges(root);
-            return;
+        for (const root of this.roots) {
+            const walker = this.doc.createTreeWalker(root, 4);
+            let node = walker.nextNode();
+            while (node !== null) {
+                const text = node;
+                if (text.parentElement?.closest(SKIP) === null)
+                    this.recordText(text);
+                node = walker.nextNode();
+            }
         }
-        const start = previous.length;
-        if (start >= next.length)
+    }
+    record(root) {
+        const walker = this.doc.createTreeWalker(root, 4);
+        let node = walker.nextNode();
+        while (node !== null) {
+            const text = node;
+            if (text.parentElement?.closest(SKIP) === null)
+                this.texts.set(text, text.data);
+            node = walker.nextNode();
+        }
+    }
+    recordText(text) {
+        const previous = this.texts.get(text);
+        const next = text.data;
+        this.texts.set(text, next);
+        if (next === previous)
             return;
+        // A replacement node is new DOM, not new output. Only text appended to an
+        // existing node is faded; block-level opacity is gone, so this avoids
+        // fading already visible Markdown.
+        if (previous === undefined || !next.startsWith(previous))
+            return;
+        const start = previous.length;
         const segmenter = typeof Intl.Segmenter === 'function'
             ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
             : null;
         const now = this.win.performance.now();
         if (segmenter === null) {
             for (let index = start; index < next.length; index += 1)
-                this.pushOffset(nodes, index, index + 1, now);
+                this.pushGlyph(text, index, index + 1, now);
         }
         else {
             for (const part of segmenter.segment(next.slice(start))) {
                 const from = start + part.index;
-                this.pushOffset(nodes, from, from + part.segment.length, now);
+                this.pushGlyph(text, from, from + part.segment.length, now);
             }
         }
         while (this.glyphs.length > MAX_GLYPHS) {
@@ -126,36 +143,6 @@ export class HighlightFade {
                 this.setBucket(dropped, STEPS - 1);
         }
         this.schedule();
-    }
-    /** Collect visible text nodes and their offsets in one pass. */
-    textNodes(root) {
-        const walker = this.doc.createTreeWalker(root, 4);
-        const nodes = [];
-        let offset = 0;
-        let node = walker.nextNode();
-        while (node !== null) {
-            const text = node;
-            if (text.parentElement?.closest(SKIP) === null) {
-                const data = text.data;
-                nodes.push({ node: text, start: offset, text: data });
-                offset += data.length;
-            }
-            node = walker.nextNode();
-        }
-        return nodes;
-    }
-    textOf(root) {
-        return this.textNodes(root).map(entry => entry.text).join('');
-    }
-    pushOffset(nodes, from, to, born) {
-        for (const entry of nodes) {
-            const end = entry.start + entry.text.length;
-            const start = Math.max(from, entry.start);
-            const finish = Math.min(to, end);
-            if (start >= finish)
-                continue;
-            this.pushGlyph(entry.node, start - entry.start, finish - entry.start, born);
-        }
     }
     pushGlyph(node, start, end, born) {
         if (start >= end)
@@ -181,9 +168,6 @@ export class HighlightFade {
             const glyph = this.glyphs[index];
             if (glyph === undefined)
                 continue;
-            // React can reuse a Text node while changing its content. The Range then
-            // still points at an offset that now names a different character; drop it
-            // instead of leaving that character transparent while its neighbour shows.
             if (!glyph.range.startContainer.isConnected || glyph.range.toString() !== glyph.text
                 || now - glyph.born >= FADE_MS) {
                 this.setBucket(glyph, STEPS - 1);

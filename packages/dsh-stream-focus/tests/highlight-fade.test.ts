@@ -34,7 +34,7 @@ describe('HighlightFade', () => {
     fade.stop()
   })
 
-  it('fades only the appended tail when Markdown replaces the text node', async () => {
+  it('does not fade a replaced text node', async () => {
     const registry = install()
     document.body.innerHTML = '<div id="root"><p><span>already visible</span></p></div>'
     const root = document.querySelector<HTMLElement>('#root')
@@ -43,7 +43,7 @@ describe('HighlightFade', () => {
     fade.observe(root)
     root.innerHTML = '<p><span>already visible</span> plus new</p>'
     await new Promise(resolve => setTimeout(resolve, 0))
-    expect(faded(registry)).toBe(' plus new')
+    expect(faded(registry)).toBe('')
     fade.stop()
   })
 

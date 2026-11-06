@@ -31,12 +31,8 @@ export declare class HighlightFade {
     stop(): void;
     private installStyle;
     private scan;
-    /** Diff one root's visible text and fade only a genuinely appended suffix. */
-    private scanRoot;
-    /** Collect visible text nodes and their offsets in one pass. */
-    private textNodes;
-    private textOf;
-    private pushOffset;
+    private record;
+    private recordText;
     private pushGlyph;
     private schedule;
     private update;
