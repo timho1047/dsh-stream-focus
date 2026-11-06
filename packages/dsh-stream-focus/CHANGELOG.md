@@ -16,6 +16,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - 移除整段透明度动画，思考与正文统一只对新文本做尾部字符淡入。
 - 思考切换到工具时改为交叉展开：新行先展开，旧行同时收起，不再出现两行都不展开的空白帧。
 - 将思考逐字渲染限制在每秒 60 次，减少高刷新率屏幕上的重复 Markdown 渲染和卡顿。
+- 恢复 Detailed / Verbose 模式下思考正文的尾部字符淡入；逐字揭示继续负责正文进度。
 
 ### English
 
@@ -27,6 +28,7 @@ All notable changes are documented here. Each release has Chinese first, English
 - Remove whole-block opacity animation; reasoning and prose now share suffix-only character fading.
 - Cross-fade thinking-to-tool switches: the new row opens while the old row closes, so no frame leaves both rows closed.
 - Cap thinking repaints at 60fps to reduce repeated Markdown renders and stutter on high-refresh displays.
+- Restore suffix character fading for thinking text in Detailed and Verbose; character reveal still drives progress.
 
 ## [0.2.0] - 2026-11-02
 

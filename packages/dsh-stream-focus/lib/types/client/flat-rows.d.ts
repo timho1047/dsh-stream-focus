@@ -15,6 +15,8 @@ export declare class FlatRowConductor {
     private observer;
     private readonly rows;
     private readonly pendingClose;
+    private readonly textFade;
+    private fadeRoot;
     private follow;
     /**
      * @param mode - Detailed or Verbose.
@@ -28,6 +30,8 @@ export declare class FlatRowConductor {
     stop(): void;
     /** Reconcile the newest Turn's flat rows. Public for tests. */
     sync(): void;
+    /** Fade only the running thinking body; flat rows have no process content root. */
+    private reconcileTextFade;
     private attachOuterFollow;
     private detachOuterFollow;
     private openRow;

@@ -1550,6 +1550,8 @@ window.__ModuleLoader__.load({
 			observer = null;
 			rows;
 			pendingClose = /* @__PURE__ */ new Set();
+			textFade;
+			fadeRoot = null;
 			follow = null;
 			/**
 			* @param mode - Detailed or Verbose.
@@ -1561,6 +1563,7 @@ window.__ModuleLoader__.load({
 				this.doc = doc;
 				this.win = win;
 				this.rows = new RowDisclosureController(doc, win, false);
+				this.textFade = new HighlightFade(doc, win, "dsh-stream-think");
 			}
 			/** Start observing flat process rows. Idempotent. */
 			start() {
@@ -1594,6 +1597,8 @@ window.__ModuleLoader__.load({
 					this.frame = null;
 				}
 				this.detachOuterFollow();
+				this.textFade.stop();
+				this.fadeRoot = null;
 				this.rows.reset();
 				this.pendingClose.clear();
 			}
@@ -1624,12 +1629,26 @@ window.__ModuleLoader__.load({
 					this.openRow(candidate.element);
 					this.rows.markAuto(candidate.key);
 				}
+				this.reconcileTextFade(elements);
 				if (this.mode === "detailed") for (const key of decision.close) {
 					const candidate = elements.get(key);
 					if (candidate === void 0 || !candidate.open || !candidate.element.isConnected) continue;
 					this.closeRow(candidate.element);
 				}
 				this.follow?.rearmAfterMotion(270);
+			}
+			/** Fade only the running thinking body; flat rows have no process content root. */
+			reconcileTextFade(elements) {
+				let target = null;
+				for (const candidate of elements.values()) {
+					if (candidate.kind !== "reasoning" || !candidate.active) continue;
+					target = findDisclosureBody(candidate.element);
+					if (target !== null) break;
+				}
+				if (target === this.fadeRoot) return;
+				if (this.fadeRoot !== null) this.textFade.unobserve(this.fadeRoot);
+				this.fadeRoot = target;
+				if (target !== null) this.textFade.observe(target);
 			}
 			attachOuterFollow() {
 				const outer = outerScroller(this.doc);
