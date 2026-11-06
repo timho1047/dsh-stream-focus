@@ -43,7 +43,6 @@ export class FlatRowConductor {
     observer = null;
     rows;
     pendingClose = new Set();
-    syncTimer = null;
     follow = null;
     /**
      * @param mode - Detailed or Verbose.
@@ -74,10 +73,6 @@ export class FlatRowConductor {
         }
         this.attachOuterFollow();
         this.sync();
-        // PTC can move from a Tool back to reasoning without a flow-row mutation
-        // this observer sees. A cheap reconciliation bound prevents a stale
-        // automatic row from surviving until the next unrelated event.
-        this.syncTimer = this.win.setInterval(() => { this.sync(); }, 500);
     }
     /** Stop observing. Verbose rows that were opened stay open by design. */
     stop() {
@@ -90,10 +85,6 @@ export class FlatRowConductor {
         if (this.frame !== null) {
             this.win.cancelAnimationFrame(this.frame);
             this.frame = null;
-        }
-        if (this.syncTimer !== null) {
-            this.win.clearInterval(this.syncTimer);
-            this.syncTimer = null;
         }
         this.detachOuterFollow();
         this.rows.reset();

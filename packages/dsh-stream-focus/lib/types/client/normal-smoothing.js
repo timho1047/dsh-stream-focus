@@ -34,10 +34,31 @@ export class NormalOutputSmoother {
         const body = this.doc.body;
         if (body !== null) {
             this.observer = new this.win.MutationObserver(records => {
-                if (records.some(record => record.target instanceof Element && record.target.closest('[data-streaming]') !== null)) {
-                    this.pinOuter();
+                let rootChanged = false;
+                let growth = false;
+                for (const record of records) {
+                    if (record.type === 'attributes') {
+                        rootChanged = true;
+                        continue;
+                    }
+                    if (record.type !== 'childList')
+                        continue;
+                    const target = record.target instanceof Element ? record.target : record.target.parentElement;
+                    if (target?.closest('[data-streaming]') != null)
+                        growth = true;
+                    for (const node of [...record.addedNodes, ...record.removedNodes]) {
+                        if (node.nodeType !== 1)
+                            continue;
+                        const element = node;
+                        if (element.matches('[data-streaming]') || element.querySelector('[data-streaming]') !== null) {
+                            rootChanged = true;
+                        }
+                    }
                 }
-                this.reconcile();
+                if (growth)
+                    this.pinOuter();
+                if (rootChanged)
+                    this.reconcile();
             });
             this.observer.observe(body, {
                 subtree: true,

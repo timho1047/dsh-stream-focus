@@ -15,7 +15,6 @@ export declare class FlatRowConductor {
     private observer;
     private readonly rows;
     private readonly pendingClose;
-    private syncTimer;
     private follow;
     /**
      * @param mode - Detailed or Verbose.

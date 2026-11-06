@@ -1113,6 +1113,9 @@ window.__ModuleLoader__.load({
 		//#region lib/types/client/paced-body.js
 		/** Cap Markdown re-renders at 60fps even on 120Hz displays. */
 		const PAINT_INTERVAL_MS = 1e3 / 60;
+		/** Large histories make per-frame Markdown work visible; native streaming is smoother there. */
+		const MAX_FLOW_ROWS = 150;
+		const MAX_PACED_CHARS = 4e3;
 		/**
 		* Pace the live reasoning text into the official Content Factory.
 		*
@@ -1124,8 +1127,10 @@ window.__ModuleLoader__.load({
 		*/
 		const PacedReasoningBody = (0, react.memo)(function PacedReasoningBody({ text, running, renderFactorySlot, usePacing }) {
 			const pacing = usePacing((value) => value);
+			const crowded = (0, react.useRef)(null);
+			if (crowded.current === null) crowded.current = document.querySelectorAll("[data-chat-flow-kind]").length > MAX_FLOW_ROWS;
 			return renderFactorySlot("conversation.chat.reasoning.content", {
-				text: usePacedText(text, running && pacing),
+				text: usePacedText(text, running && pacing && !crowded.current && text.length <= MAX_PACED_CHARS),
 				running
 			});
 		});
@@ -1433,8 +1438,23 @@ window.__ModuleLoader__.load({
 				const body = this.doc.body;
 				if (body !== null) {
 					this.observer = new this.win.MutationObserver((records) => {
-						if (records.some((record) => record.target instanceof Element && record.target.closest("[data-streaming]") !== null)) this.pinOuter();
-						this.reconcile();
+						let rootChanged = false;
+						let growth = false;
+						for (const record of records) {
+							if (record.type === "attributes") {
+								rootChanged = true;
+								continue;
+							}
+							if (record.type !== "childList") continue;
+							if ((record.target instanceof Element ? record.target : record.target.parentElement)?.closest("[data-streaming]") != null) growth = true;
+							for (const node of [...record.addedNodes, ...record.removedNodes]) {
+								if (node.nodeType !== 1) continue;
+								const element = node;
+								if (element.matches("[data-streaming]") || element.querySelector("[data-streaming]") !== null) rootChanged = true;
+							}
+						}
+						if (growth) this.pinOuter();
+						if (rootChanged) this.reconcile();
 					});
 					this.observer.observe(body, {
 						subtree: true,
@@ -1540,7 +1560,6 @@ window.__ModuleLoader__.load({
 			observer = null;
 			rows;
 			pendingClose = /* @__PURE__ */ new Set();
-			syncTimer = null;
 			follow = null;
 			/**
 			* @param mode - Detailed or Verbose.
@@ -1572,9 +1591,6 @@ window.__ModuleLoader__.load({
 				}
 				this.attachOuterFollow();
 				this.sync();
-				this.syncTimer = this.win.setInterval(() => {
-					this.sync();
-				}, 500);
 			}
 			/** Stop observing. Verbose rows that were opened stay open by design. */
 			stop() {
@@ -1586,10 +1602,6 @@ window.__ModuleLoader__.load({
 				if (this.frame !== null) {
 					this.win.cancelAnimationFrame(this.frame);
 					this.frame = null;
-				}
-				if (this.syncTimer !== null) {
-					this.win.clearInterval(this.syncTimer);
-					this.syncTimer = null;
 				}
 				this.detachOuterFollow();
 				this.rows.reset();

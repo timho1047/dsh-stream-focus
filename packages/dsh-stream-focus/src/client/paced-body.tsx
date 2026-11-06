@@ -8,6 +8,9 @@ import { nextRevealLength } from './pacing.ts'
 
 /** Cap Markdown re-renders at 60fps even on 120Hz displays. */
 const PAINT_INTERVAL_MS = 1000 / 60
+/** Large histories make per-frame Markdown work visible; native streaming is smoother there. */
+const MAX_FLOW_ROWS = 150
+const MAX_PACED_CHARS = 4_000
 
 /** The plugin's per-frame pacing preference supplied through the slot inject face. */
 interface PacingInjected {
@@ -33,7 +36,11 @@ export const PacedReasoningBody = memo(function PacedReasoningBody({
   text, running, renderFactorySlot, usePacing,
 }: PacedReasoningBodyProps) {
   const pacing = usePacing(value => value)
-  const visible = usePacedText(text, running && pacing)
+  const crowded = useRef<boolean | null>(null)
+  if (crowded.current === null) {
+    crowded.current = document.querySelectorAll('[data-chat-flow-kind]').length > MAX_FLOW_ROWS
+  }
+  const visible = usePacedText(text, running && pacing && !crowded.current && text.length <= MAX_PACED_CHARS)
   return renderFactorySlot('conversation.chat.reasoning.content', { text: visible, running })
 })
 
